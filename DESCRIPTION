@@ -3,7 +3,7 @@ Type: Package
 Title: An R package for causal inference by using G-computation
 Version: 0.1
 Depends: R (>= 4.0.0), survival, hdnom, glmnet, MASS, stats
-Imports: graphics, utils
+Imports: graphics, utils, methods, grDevices
 Description: Several functions and S3 methods for G-computation.
 License: GPL (>=2)
 LazyLoad: yes

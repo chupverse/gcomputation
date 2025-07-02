@@ -1,37 +1,37 @@
-\name{gc_survival}
-\alias{gc_survival}
-
+\name{gc_logistic}
+\alias{gc_logistic}
 \title{
 G-Computation to Estimate a Marginal Effect
 }
 \description{
-This function computes G-Computation (GC) with different working models or algorithms (Q-models) to estimate the marginal survival functions regarding two exposures.
+This function computes G-Computation (GC) with different working models or algorithms (Q-models) to estimate the marginal logistic functions regarding two exposures.
 }
 \usage{
-gc_survival(formula, data, group, max.time, effect="ATE", method,
+gc_logistic(formula, data, group, effect="ATE", method,
             param.tune=NULL, cv=10, boot.type="bcv", boot.number=500,
             boot.tune=FALSE, progress=TRUE)
 }
 
 \arguments{
-  \item{formula}{A survival formula related to the Q-model with the the variable \code{group} among the predictors.}
-  \item{data}{A data frame in which to look for the variables related to the status of the follow-up time, the event , the studied (\code{group}) and the covariables included in the previous model.}
+  \item{formula}{A logistic regression formula related to the Q-model with the the variable \code{group} among the predictors.}
+  \item{data}{A data frame in which to look for the variables related to the outcome, the studied (\code{group}) and the covariables included in the previous model.}
   \item{group}{The name of the variable related to the exposure/treatment. This variable shall have only two modalities encoded 0 for the untreated/unexposed patients and 1 for the treated/exposed ones.}
-   \item{max.time}{An optional value for censoring the follow-up times and obtaining survival curves and related restricted mean survival times up to \code{max.time}. The default value is median of the follow-up times.}
    \item{effect}{The type of the marginal effect to be estimated. Three types are possible : "ATE" (by default), "ATT" and "ATU". See details.}   
-   \item{method}{The method used to create the Q-model. Current implemented methods are : "all", "lasso", "ridge", "elasticnet", "aic" and "bic". See details.} 
+   \item{method}{The method used to create the Q-model. Current implemented methods are : "all", "lasso", "ridge", "elasticnet" and "aic". See details.} 
     \item{param.tune}{An optional argument to specify the tuning parameters for the Q-model.
 If \code{NULL} (the default), the tuning parameters of each algorithm are estimated by \code{cv}-fold cross-validation.
 Otherwise, the user can propose a tuning grid or specific values to use for each method. See details.}
     \item{cv}{The number of splits for cross-validation. The default value is 10.}
     \item{boot.type}{The type of bootstrap to use. Two types are possible: "bcv" (by default) and "boot". See details.}
      \item{boot.number}{The number of bootstrap resamples. The default value is 500.}
-     \item{boot.tune}{A logical value to estimate the tuning parameter inside of each bootstrap iteration, if \code{FALSE} it will estimate it once on the complete data set. The default is \code{FALSE}}  
+     \item{boot.tune}{A logical value to determine whether the tuning parameter should be estimated inside of each bootstrap iteration. See details.}
+
+
    \item{progress}{A logical value to print a progress bar in the R console. The default is \code{TRUE}}
  }
 
 \details{
-The ATE corresponds to Average Treatment effect on the Entire population, i.e. the marginal effect if all the sample is treated versus all the sample is untreated. The ATT corresponds to Average Treatment effect on the Treated, i.e. the marginal effect if the treated patients (\code{group = 1}) would have been untreated. The ATU corresponds to Average Treatment effect on the Untreated , i.e. the marginal effect if the untreated patients (\code{group = 0}) would have been treated.
+The ATE (Average Treatment effect on the Entire population) corresponds to the marginal effect if the entire sample were treated versus entirely untreated. The ATT (Average Treatment effect on the Treated) is the marginal effect if the treated patients (group = 1) would have been untreated. The ATU (Average Treatment effect on the Untreated) represents the marginal effect if the untreated patients (group = 0) would have been treated.
 
 For the group variable, it requires two modalities encoded as 0 (for non-treated/non-exposed patients) and 1 (for treated/exposed patients). Similarly, the outcome variable must also have two modalities encoded as 0 (for censored patients/non-events) and 1 (for events).
 
@@ -67,34 +67,33 @@ If \code{TRUE} and only a single \code{lambda} value is provided for "lasso" or 
 \item{method}{The given method.}
 \item{cv}{The number of splits for cross-validation.}
 \item{missing}{The number of observations with missing data excluded.}
-\item{max.time}{The max time point to estimate the RMST.}
 \item{boot.number}{Number of bootstrap resamples.}
-\item{outcomes}{A character vector with the name of the outcomes.}
+\item{outcome}{A character vector with the name of the outcome variable.}
 \item{group}{A character vector with the name of the group variable.}
 \item{n}{Sample size.}
 \item{nevent}{Number of events.}
-\item{RMST}{All results of the restricted mean survival time (RMST), defined as the area under the survival curve up to a specific time point \code{max.time}.}
-\item{AHR}{All results of the average Hazard Ratio.}
+\item{coefficients}{All results of the proportions and their difference.}
+\item{mOR}{All results of the marginal Odds Ratio.}
 \item{call}{The complete call.}
 }
 
 \references{
-Chatton et al. G-computation and doubly robust standardisation for continuous-time data: A comparison with inverse probability weighting. Stat Methods Med Res. 31(4):706-718. 2022. <doi: 10.1177/09622802211047345>. 
+Joe de Keizer et al. G-computation for increasing performances of clinical trials with individual randomization and binary response. ArXiv 2024-11. <doi: 10.48550/arXiv.2411.10089>.
+
 }
 
 \examples{
-data(dataPROPHYVAP)
+data("dataPROPHYVAP")
 
-dataPROPHYVAP$DEATH_J60_num <- ifelse(dataPROPHYVAP$DEATH_J60 == "Yes",1,0)
+dataPROPHYVAP$VAP_EARLY_num <- ifelse(dataPROPHYVAP$VAP_EARLY == "Yes",1,0)
 dataPROPHYVAP$GROUP_num <- ifelse(dataPROPHYVAP$GROUP == "Placebo",0,1)
 
-formula <- formula(Surv(FOLLOWUP_J60, DEATH_J60_num) ~ GROUP_num * (AGE +
-              SEXE + BMI + DIABETES))
 
-gc1 <- gc_survival(formula=formula, method="lasso", data=dataPROPHYVAP,
+formula <- formula(VAP_EARLY_num ~ GROUP_num * (AGE + SEXE + BMI + DIABETES))
+
+gc1 <- gc_logistic(formula=formula, method="ridge", data=dataPROPHYVAP,
               group="GROUP_num", param.tune=NULL, boot.type="bcv", cv=10,
-              boot.number=500,  effect="ATE", progress=TRUE , max.time=10,
-              boot.tune = TRUE)
+              boot.number=500,  effect="ATE", progress=TRUE, boot.tune = TRUE)
 
 print(gc1)
 summary(gc1)
@@ -102,13 +101,12 @@ plot(gc1)
 
 
 ### To specify specific tuning parameters:
-gc2 <- gc_survival(formula=formula, method="elasticnet", data=dataPROPHYVAP,
-              group="GROUP_num", param.tune=list(lambda=c(0.1,0.25,0.5),
-              alpha=0.5), boot.type="bcv", cv=10, boot.number=500, effect="ATE",
-              progress=TRUE , max.time=10, boot.tune = FALSE)
-              
-gc2$tuning.parameters
+gc2 <- gc_logistic(formula=formula, method="elasticnet", data=dataPROPHYVAP,
+              group="GROUP_num", param.tune=list(lambda=0.05, alpha=0.5),
+              boot.type="bcv", cv=10, boot.number=500,  effect="ATE",
+              progress=TRUE, boot.tune = FALSE)
+
 }
 
 \keyword{G-Computation}
-\keyword{Survival}
+\keyword{logistic}

@@ -1,4 +1,4 @@
-gc_survival <- function(formula, data, group, max.time, effect="ATE", method, param.tune=NULL, cv=10, boot.type="bcv",
+gc_logistic <- function(formula, data, group, effect="ATE", method, param.tune=NULL, cv=10, boot.type="bcv",
                         boot.number=500,  boot.tune=FALSE, progress=TRUE) {
   # Quality tests
   if(missing(formula)) {stop("The \"formula\" argument is missing (formula)")}
@@ -8,7 +8,7 @@ gc_survival <- function(formula, data, group, max.time, effect="ATE", method, pa
   if(length(method)!=1)
   { stop("Specify one method among : elasticnet, lasso, ridge, all, aic, bic")   }
   
-  if(!(method %in% c("elasticnet","lasso","ridge","all","aic","bic"))) {
+  if(!(method %in% c("elasticnet","lasso","ridge","all","aic", "bic"))) {
     stop("Specify one method among : elasticnet, lasso, ridge, all, aic, bic")
   }
   if(!is.data.frame(data)){stop("The argument \"data\" needs to be a data.frame") }
@@ -22,18 +22,9 @@ gc_survival <- function(formula, data, group, max.time, effect="ATE", method, pa
   
   if (as.character(class(formula)) != "formula") stop("The argument \"formula\" must be a formula")
   
-  times <- as.character(formula[[2]][2]) 
-  failures <- as.character(formula[[2]][3])
+  outcome <- as.character(formula[[2]])
   all_terms <- attr(terms(formula), "term.labels")
   formula.all <- formula
-  
-  
-  if (missing(max.time)) {
-    warning("The argument \"max.time\" is missing, the median value of the time variable will be used")
-    max.time <- median(data[,times])
-  }
-  if (max.time > max(data[,times])) {stop("The argument \"max.time\" is higher than the maximum value of the time variable")}
-  
   
   
   if(length(grep("tt\\(", all_terms, value = TRUE)) > 0 |
@@ -72,20 +63,10 @@ functions, stratification and clustering are not implemented") }
     stop("Two modalities encoded 0 (for non-treated/non-exposed patients) and 1 (for treated/exposed patients) are required in the \"group\" variable")
   }
   
-  
-  if(length(data[,times])!=length(data[,failures])){
-    stop("The length of the times must be equal to the length of the events in the training data") }
-  
-  mod2 <- unique(data[,failures])
+
+  mod2 <- unique(data[,outcome])
   if(length(mod2) != 2 | ((mod2[1] != 0 & mod2[2] != 1) & (mod2[1] != 1 & mod2[2] != 0))){
     stop("Two modalities encoded 0 (for censored patients) and 1 (for events) are required in the \"failures\" variable")
-  }
-  
-  if (!is.numeric(data[,times])){
-    stop("Time variable is not numeric")}
-  
-  if (min(data[,times])<=0){
-    stop("Time variable needs to be strictly positive")
   }
   
   
@@ -127,14 +108,15 @@ functions, stratification and clustering are not implemented") }
     stop("New \"method\" is not yet implemented, use one among the following : lasso, all, ridge, aic, bic or elasticnet") }
   
   
-  time.pred <- sort(unique(data[,times]))
-  
+
   if(progress==TRUE){
     max.progess <- boot.number
     pb <- txtProgressBar(min = 0, max = max.progess, style = 3, width = 50, char = "=")
     ip <- 0
     setTxtProgressBar(pb, ip)
   }
+  
+
   
   
   if(method == "lasso"){
@@ -202,17 +184,18 @@ functions, stratification and clustering are not implemented") }
   }else if(effect=="ATT"){ ttt <- which(data[,group] == 1)
   }else ttt <- which(data[,group] == 0 )
   data <- data[ttt,]
-  N <- length(data[,times])
+  N <- length(data[,outcome])
   
   ############# Method
 
   .x <- model.matrix(formula,data)[,-1]
-  .y <- Surv(data[,times], data[,failures])
+  .y <- data[,outcome]
+  
   
 if(method == "lasso"){
   if(is.null(param.tune$lambda)==T | length(param.tune$lambda)>1){
 
-    .cv.lasso <- cv.glmnet(x=.x, y=.y, family = "cox",  type.measure = "deviance",
+    .cv.lasso <- cv.glmnet(x=.x, y=.y, family = "binomial",  type.measure = "deviance",
                            nfolds = cv, parallel = FALSE, alpha=1, penalty.factor = .penalty.factor,keep=F,
                            lambda=param.tune$lambda)
 
@@ -221,7 +204,7 @@ if(method == "lasso"){
 }
   if(method == "ridge"){
     if(is.null(param.tune$lambda)==T | length(param.tune$lambda)>1){
-      .cv.ridge <- cv.glmnet(x=.x, y=.y, family = "cox",  type.measure = "deviance",
+      .cv.ridge <- cv.glmnet(x=.x, y=.y, family = "binomial",  type.measure = "deviance",
                              parallel = FALSE, alpha=0, penalty.factor = .penalty.factor, nfolds = cv,
                              lambda=param.tune$lambda)
       .tune.optimal=list(lambda=.cv.ridge$lambda.min)
@@ -232,7 +215,7 @@ if(method == "lasso"){
     if (is.null(param.tune$lambda)==T | length(param.tune$lambda)>1 | length(param.tune$alpha)>1){
       .results<-c()
       for( a in 1:length(param.tune$alpha)){
-        .cv.en<-glmnet::cv.glmnet(x=.x, y=.y, family = "cox",  type.measure = "deviance",
+        .cv.en<-glmnet::cv.glmnet(x=.x, y=.y, family = "binomial",  type.measure = "deviance",
                                   foldsid="folds", parallel = FALSE, alpha=param.tune$alpha[a],
                                   penalty.factor = .penalty.factor,
                                   lambda=param.tune$lambda)
@@ -250,101 +233,66 @@ if(method == "lasso"){
     if (.tune.optimal$alpha == 0 & boot.tune == FALSE) {.warnen=0}
   } 
   if(method == "aic"){
-    formula <- stepAIC( coxph(formula=formula(paste0("Surv(",times,",",failures,")~",group)), data=data),
-                     scope=list(lower = formula(paste0("Surv(",times,",",failures,")~",group)), upper = formula),
+    formula <- stepAIC( glm(formula=formula(paste0(outcome,"~",group)), data=data,family="binomial"),
+                     scope=list(lower = formula(paste0(outcome,"~",group)), upper = formula),
                      direction="forward", k=2, trace=FALSE)$formula
     .tune.optimal = NULL
   } 
   if(method == "bic"){
-    formula <- stepAIC( coxph(formula=formula(paste0("Surv(",times,",",failures,")~",group)), data=data),
-                        scope=list(lower = formula(paste0("Surv(",times,",",failures,")~",group)), upper = formula),
+    formula <- stepAIC( glm(formula=formula(paste0(outcome,"~",group)), data=data,family="binomial"),
+                        scope=list(lower = formula(paste0(outcome,"~",group)), upper = formula),
                         direction="forward", k=log(nrow(data)), trace=FALSE)$formula
     .tune.optimal = NULL
   } 
 
   
   
-  #### Calibration survival function
+  #### Calibration logistic function
+
   
   if(method == "all" | method == "aic" | method == "bic") {
-    fit <- coxph(formula = formula, data=data)
+    fit <- glm(formula = formula, data=data, family="binomial")
+    calibration.predict <- predict(fit, newdata = data, type = "response")
     
-    .lp.coxph <- predict(fit, newdata = data, type="lp")
-    .b <- glmnet_basesurv(data[,times], data[,failures], .lp.coxph, centered = FALSE)
-    hazard <- .b$cumulative_base_hazard
-    fit_times <- .b$times
+    calibration.p0 = 999
+    calibration.p1 = 999
   }
   if (method == "lasso") {
     fit <- glmnet(x = .x, y = .y, lambda = .tune.optimal$lambda,  type.measure = "deviance",
-                                family = "cox", alpha = 1, penalty.factor = .penalty.factor)
-    
-    .lp.lasso <- predict(fit, newx = .x)
-    .b <- glmnet_basesurv(data[,times], data[,failures], .lp.lasso, centered = FALSE)
-    hazard <- .b$cumulative_base_hazard
-    fit_times <- .b$times
+                                family = "binomial", alpha = 1, penalty.factor = .penalty.factor)
+    calibration.predict <- predict(fit, newx=.x, type="response")
+
+    calibration.p0 = 999
+    calibration.p1 = 999
   }
   if (method == "ridge") {
     fit <- glmnet(x = .x, y = .y, lambda = .tune.optimal$lambda,  type.measure = "deviance",
-                  family = "cox", alpha = 0, penalty.factor = .penalty.factor)
+                  family = "binomial", alpha = 0, penalty.factor = .penalty.factor)
+    calibration.predict <- predict(fit, newx=.x, type="response")
     
-    .lp.ridge <- predict(fit, newx = .x)
-    .b <- glmnet_basesurv(data[,times], data[,failures], .lp.ridge, centered = FALSE)
-    hazard <- .b$cumulative_base_hazard
-    fit_times <- .b$times
+    calibration.p0 = 999
+    calibration.p1 = 999
   }
   if (method == "elasticnet") {
     fit <- glmnet(x = .x, y = .y, lambda = .tune.optimal$lambda,  type.measure = "deviance",
-                  family = "cox", alpha = .tune.optimal$alpha, penalty.factor = .penalty.factor)
+                  family = "binomial", alpha = .tune.optimal$alpha, penalty.factor = .penalty.factor)
+    calibration.predict <- predict(fit, newx=.x, type="response")
     
-    .lp.elasticnet <- predict(fit, newx = .x)
-    .b <- glmnet_basesurv(data[,times], data[,failures], .lp.elasticnet, centered = FALSE)
-    hazard <- .b$cumulative_base_hazard
-    fit_times <- .b$times
+    calibration.p0 = 999
+    calibration.p1 = 999
   }
   
   
-  
-  baseline_hazard <- hazard
-  H0.multi <- c(0, baseline_hazard[fit_times %in% sort(unique(data[data[,failures]==1,times]))]  )
-  T.multi <- c(0, fit_times[fit_times %in% sort(unique(data[data[,failures]==1,times]))] )
-
-
-  if (method == "all" | method == "aic" | method == "bic") {.lp <- predict(fit, newdata = data, type="lp")} else{
-    .lp <- predict(fit, newx = .x)
-  }
-  
-  lp <- as.vector(.lp)
-  
-  h0 <- (H0.multi[2:length(T.multi)] - H0.multi[1:(length(T.multi)-1)]) 
-  hi <- exp(lp) * matrix(rep(h0,length(lp)), nrow=length(lp), byrow=TRUE)
-  Si <- exp(-exp(lp) * matrix(rep(H0.multi,length(lp)), nrow=length(lp), byrow=TRUE))
-  
-  hi <- cbind(rep(0,length(lp)),hi)
-  
-  h.mean <- apply(Si * hi, FUN="sum", MARGIN=2) / apply(Si, FUN="sum", MARGIN=2)
-  H.mean <- cumsum(h.mean)
-  S.mean <- exp(-H.mean)
-  
-
-  if (max(T.multi) != max(fit_times)) {
-    T.multi = c(T.multi, max(fit_times))
-    H.mean = c(H.mean, max(H.mean))
-    S.mean = c(S.mean, min(S.mean))
-  }
-  
-  
-  results.surv.calibration <- list(model=fit, time=T.multi, cumhaz=H.mean, surv=S.mean, H0.multi=H0.multi, lp=lp)
+  calibration.fit <- fit
   
 
   ###   Bootstrapping
 
-  delta <- rep(NA, boot.number)
-  max.time.extrapolate <- 0
-  RMST0 <- c()
-  RMST1 <- c()
-  deltaRMST <- c() 
+  p0 <- c()
+  p1 <- c()
+  mOR <- c() 
   BCVerror <- 0
-  AHR <- c()
+  delta <- c()
   for (b in 1:boot.number) {
     
     if(progress == TRUE){
@@ -384,78 +332,83 @@ if(method == "lasso"){
   
   
     
-    .y.learn <- Surv(data.learn[,times], data.learn[,failures])
+    .y.learn <- data.learn[,outcome]
 
     
     if (method == "aic") {
-      formula <- stepAIC( coxph(formula=formula(paste0("Surv(",times,",",failures,")~",group)), data=data.learn),
-                          scope=list(lower = formula(paste0("Surv(",times,",",failures,")~",group)), upper = formula.all),
+      formula <- stepAIC( glm(formula=formula(paste0(outcome,"~",group)), data=data.learn,family="binomial"),
+                          scope=list(lower = formula(paste0(outcome,"~",group)), upper = formula.all),
                           direction="forward", k=2, trace=FALSE)$formula
       
-      fit <- coxph(formula = formula, data=data.learn)
+      fit <- glm(formula = formula, data=data.learn, family="binomial")
       
-      .lp.coxph <- predict(fit, newdata = data.learn, type="lp")
-      .b <- glmnet_basesurv(data.learn[,times], data.learn[,failures], .lp.coxph, centered = FALSE)
-      hazard <- .b$cumulative_base_hazard
-      fit_times <- .b$times
+      .p0 = mean(predict(fit, newdata = data.valid0, type = "response"))
+      .p1 = mean(predict(fit, newdata = data.valid1, type = "response"))
+      
+      .mOR = (.p1*(1-.p0))/(.p0*(1-.p1))
+      .delta = .p1 - .p0
     }
     
     if (method == "bic") {
-      formula <- stepAIC( coxph(formula=formula(paste0("Surv(",times,",",failures,")~",group)), data=data.learn),
-                          scope=list(lower = formula(paste0("Surv(",times,",",failures,")~",group)), upper = formula.all),
+      formula <- stepAIC( glm(formula=formula(paste0(outcome,"~",group)), data=data.learn,family="binomial"),
+                          scope=list(lower = formula(paste0(outcome,"~",group)), upper = formula.all),
                           direction="forward", k=log(nrow(data.learn)), trace=FALSE)$formula
       
-      fit <- coxph(formula = formula, data=data.learn)
+      fit <- glm(formula = formula, data=data.learn, family="binomial")
       
-      .lp.coxph <- predict(fit, newdata = data.learn, type="lp")
-      .b <- glmnet_basesurv(data.learn[,times], data.learn[,failures], .lp.coxph, centered = FALSE)
-      hazard <- .b$cumulative_base_hazard
-      fit_times <- .b$times
+      .p0 = mean(predict(fit, newdata = data.valid0, type = "response"))
+      .p1 = mean(predict(fit, newdata = data.valid1, type = "response"))
+      
+      .mOR = (.p1*(1-.p0))/(.p0*(1-.p1))
+      .delta = .p1 - .p0
     }
     
     if(method == "all") {
-      fit <- coxph(formula = formula, data=data.learn)
+      fit <- glm(formula = formula, data=data.learn, family="binomial")
       
-      .lp.coxph <- predict(fit, newdata = data.learn, type="lp")
-      .b <- glmnet_basesurv(data.learn[,times], data.learn[,failures], .lp.coxph, centered = FALSE)
-      hazard <- .b$cumulative_base_hazard
-      fit_times <- .b$times
+      .p0 = mean(predict(fit, newdata = data.valid0, type = "response"))
+      .p1 = mean(predict(fit, newdata = data.valid1, type = "response"))
+      
+      .mOR = (.p1*(1-.p0))/(.p0*(1-.p1))
+      .delta = .p1 - .p0
     }
     if (method == "lasso") {
       if (boot.tune) {
-        .cv.lasso <- cv.glmnet(x=.x.learn, y=.y.learn, family = "cox",  type.measure = "deviance",
+        .cv.lasso <- cv.glmnet(x=.x.learn, y=.y.learn, family = "binomial",  type.measure = "deviance",
                                nfolds = cv, parallel = FALSE, alpha=1, penalty.factor = .penalty.factor,keep=F,
                                lambda=param.tune$lambda)
         .tune.optimal=list(lambda=.cv.lasso$lambda.min)
       }
       fit <- glmnet(x = .x.learn, y = .y.learn, lambda = .tune.optimal$lambda,  type.measure = "deviance",
-                    family = "cox", alpha = 1, penalty.factor = .penalty.factor)
+                    family = "binomial", alpha = 1, penalty.factor = .penalty.factor)
       
-      .lp.lasso <- predict(fit, newx = .x.learn)
-      .b <- glmnet_basesurv(data.learn[,times], data.learn[,failures], .lp.lasso, centered = FALSE)
-      hazard <- .b$cumulative_base_hazard
-      fit_times <- .b$times
+      .p0 = mean(predict(fit, newx=.x.valid0, type="response"))
+      .p1 = mean(predict(fit, newx=.x.valid1, type="response"))
+      
+      .mOR = (.p1*(1-.p0))/(.p0*(1-.p1))
+      .delta = .p1 - .p0
     }
     if (method == "ridge") {
       if (boot.tune) {
-        .cv.ridge <- cv.glmnet(x=.x.learn, y=.y.learn, family = "cox",  type.measure = "deviance",
+        .cv.ridge <- cv.glmnet(x=.x.learn, y=.y.learn, family = "binomial",  type.measure = "deviance",
                                parallel = FALSE, alpha=0, penalty.factor = .penalty.factor, nfolds = cv,
                                lambda=param.tune$lambda)
         .tune.optimal=list(lambda=.cv.ridge$lambda.min)
       }
       fit <- glmnet(x = .x.learn, y = .y.learn, lambda = .tune.optimal$lambda,  type.measure = "deviance",
-                    family = "cox", alpha = 0, penalty.factor = .penalty.factor)
+                    family = "binomial", alpha = 0, penalty.factor = .penalty.factor)
       
-      .lp.ridge <- predict(fit, newx = .x.learn)
-      .b <- glmnet_basesurv(data.learn[,times], data.learn[,failures], .lp.ridge, centered = FALSE)
-      hazard <- .b$cumulative_base_hazard
-      fit_times <- .b$times
+      .p0 = mean(predict(fit, newx=.x.valid0, type="response"))
+      .p1 = mean(predict(fit, newx=.x.valid1, type="response"))
+      
+      .mOR = (.p1*(1-.p0))/(.p0*(1-.p1))
+      .delta = .p1 - .p0
     }
     if (method == "elasticnet") {
       if (boot.tune) {
         .results<-c()
         for( a in 1:length(param.tune$alpha)){
-          .cv.en<-glmnet::cv.glmnet(x=.x.learn, y=.y.learn, family = "cox",  type.measure = "deviance",
+          .cv.en<-glmnet::cv.glmnet(x=.x.learn, y=.y.learn, family = "binomial",  type.measure = "deviance",
                                     foldsid="folds", parallel = FALSE, alpha=param.tune$alpha[a],
                                     penalty.factor = .penalty.factor,
                                     lambda=param.tune$lambda)
@@ -468,142 +421,79 @@ if(method == "lasso"){
                            lambda=.results[which(.results$cvm==min(.results$cvm)),2][1] )
       }
       fit <- glmnet(x = .x.learn, y = .y.learn, lambda = .tune.optimal$lambda,  type.measure = "deviance",
-                    family = "cox", alpha = .tune.optimal$alpha, penalty.factor = .penalty.factor)
+                    family = "binomial", alpha = .tune.optimal$alpha, penalty.factor = .penalty.factor)
       
-      .lp.elasticnet <- predict(fit, newx = .x.learn)
-      .b <- glmnet_basesurv(data.learn[,times], data.learn[,failures], .lp.elasticnet, centered = FALSE)
-      hazard <- .b$cumulative_base_hazard
-      fit_times <- .b$times
+      .p0 = mean(predict(fit, newx=.x.valid0, type="response"))
+      .p1 = mean(predict(fit, newx=.x.valid1, type="response"))
+      
+      .mOR = (.p1*(1-.p0))/(.p0*(1-.p1))
+      .delta = .p1 - .p0
     }
     
-    if (max(data.learn[,times]) < max.time) {
-      max.time.extrapolate = max.time.extrapolate + 1
-    }
-    
-    baseline_hazard <- hazard
-    H0.multi <- c(0, baseline_hazard[fit_times %in% sort(unique(data[data[,failures]==1,times]))]  )
-    T.multi <- c(0, fit_times[fit_times %in% sort(unique(data[data[,failures]==1,times]))] )
-    
-  
-    
-    
-    if (method == "all" | method == "aic" | method == "bic") {
-      .lp.0 <- tryCatch({predict(fit, newdata = data.valid0, type="lp")}, error = function(e) {return(NULL) })
-      if (is.null(.lp.0)) {BCVerror <- BCVerror + 1 ; next}
-      .lp.1 <- predict(fit, newdata = data.valid1, type="lp")
-    } else{ 
-      .lp.0 <- predict(fit, newx = .x.valid0) 
-      .lp.1 <- predict(fit, newx = .x.valid1)
-    }
-    
-    lp.0 <- as.vector(.lp.0)
-    lp.1 <- as.vector(.lp.1)
-    
-    h0 <- (H0.multi[2:length(T.multi)] - H0.multi[1:(length(T.multi)-1)]) 
-    
-    hi.0 <- exp(lp.0) * matrix(rep(h0,length(lp.0)), nrow=length(lp.0), byrow=TRUE)
-    Si.0 <- exp(-exp(lp.0) * matrix(rep(H0.multi,length(lp.0)), nrow=length(lp.0), byrow=TRUE))
-    hi.0 <- cbind(rep(0,length(lp.0)),hi.0)
-    hi.1 <- exp(lp.1) * matrix(rep(h0,length(lp.1)), nrow=length(lp.1), byrow=TRUE)
-    Si.1 <- exp(-exp(lp.1) * matrix(rep(H0.multi,length(lp.1)), nrow=length(lp.1), byrow=TRUE))
-    hi.1 <- cbind(rep(0,length(lp.1)),hi.1)
-    
-    h.mean.0 <- apply(Si.0 * hi.0, FUN="sum", MARGIN=2) / apply(Si.0, FUN="sum", MARGIN=2)
-    H.mean.0 <- cumsum(h.mean.0)
-    S.mean.0 <- exp(-H.mean.0)
-    h.mean.1 <- apply(Si.1 * hi.1, FUN="sum", MARGIN=2) / apply(Si.1, FUN="sum", MARGIN=2)
-    H.mean.1 <- cumsum(h.mean.1)
-    S.mean.1 <- exp(-H.mean.1)
-    
-    # Extrapolate max time
-    if (max(T.multi) != max(fit_times)) {
-      T.multi = c(T.multi, max(fit_times))
-      H.mean.0 = c(H.mean.0, max(H.mean.0))
-      S.mean.0 = c(S.mean.0, min(S.mean.0))
-      H.mean.1 = c(H.mean.1, max(H.mean.1))
-      S.mean.1 = c(S.mean.1, min(S.mean.1))
-    }
-    
-    # HR
-    AHR <- c(AHR, sum(h.mean.1) / sum(h.mean.0) )
-    
-      # RMST step function
-      .S.mean.0 <- S.mean.0[order(T.multi)]
-      .S.mean.1 <- S.mean.1[order(T.multi)]
-      .T.multi <- T.multi[order(T.multi)]
-      .t <- c(.T.multi[.T.multi <= max.time], min(max.time, max(.T.multi)))
-      .s0 <- c(.S.mean.0[.T.multi <= max.time], .S.mean.0[length(.S.mean.0)]) 
-      .s1 <- c(.S.mean.1[.T.multi <= max.time], .S.mean.1[length(.S.mean.1)]) 
-      .RMST0 <- sum((.t[2:length(.t)] - .t[1:(length(.t) - 1)]) * .s0[1:(length(.s0) - 1)])
-      .RMST1 <- sum((.t[2:length(.t)] - .t[1:(length(.t) - 1)]) * .s1[1:(length(.s1) - 1)])  
-    
-    
-  RMST0 <- c(RMST0, .RMST0)
-  RMST1 <- c(RMST1, .RMST1)
-
-  deltaRMST <- c(deltaRMST, .RMST1 - .RMST0)
+    p0 <- c(p0, .p0)
+    p1 <- c(p1, .p1)
+    mOR <- c(mOR, .mOR)
+    delta <- c(delta, .delta)
     }
     
   if(progress==TRUE){ close(pb) }
 
-if (max.time.extrapolate > 1) {warning(paste0("In at least one boostrap sample the \"max.time\" was higher than the maximum follow-up time (survival was extrapolated in ",max.time.extrapolate," bootstrap samples). It is advised to pick a lower value for \"max.time\""))}
 if (BCVerror > 1) {warning(paste0("Skipped ",BCVerror," bootstrap iterations due to the validation dataset containing factors not in the train dataset. Either use type=\"boot\" instead of \"bcv\" or remove factors with rare modalities."))}  
 if (!is.null(.warnen)) {warning(paste0("The optimal tuning parameter alpha was equal to ",.warnen,", using ",ifelse(.warnen==0,"ridge","lasso")," instead"))}  
   
   if (method == "aic" | method == "bic") {.tune.optimal = NULL}
   
-datakeep <- data[,which(colnames(data) %in% c(times,failures,group,all_terms))]
+datakeep <- data[,which(colnames(data) %in% c(outcome,group,all_terms))]
   
-res <- list(calibration=as.list(results.surv.calibration),
+res <- list(calibration=list(fit=calibration.fit,p0=calibration.p0,p1=calibration.p1,predict=calibration.predict),
             tuning.parameters=.tune.optimal,
             data=datakeep,
             formula=formula.all,
             method=method,
             cv=cv,
             missing=nmiss,
-            max.time=max.time,
             boot.number = boot.number,
-            outcome=list(times=times, failures=failures),
+            outcome=outcome,
             group=group,
             n = nrow(datakeep),
-            nevent = sum(datakeep[,failures]),
-            RMST = list(all.RMST0 = RMST0,
-                        mean.RMST0=mean(RMST0, na.rm=TRUE),
-                        se.RMST0 = sd(RMST0, na.rm=TRUE),
-                        ci.low.asympt.RMST0 = mean(RMST0, na.rm=TRUE) - qnorm(0.975, 0, 1)*sd(RMST0, na.rm=TRUE),
-                        ci.upp.asympt.RMST0 = mean(RMST0, na.rm=TRUE) + qnorm(0.975, 0, 1)*sd(RMST0, na.rm=TRUE),
-                        ci.low.nonpara.RMST0 = quantile(RMST0, probs = 0.025, na.rm = T),
-                        ci.upp.nonpara.RMST0 = quantile(RMST0, probs = 0.975, na.rm = T),
+            nevent = sum(datakeep[,outcome]),
+            coefficients = list(all.p0 = p0,
+                        mean.p0=mean(p0, na.rm=TRUE),
+                        se.p0 = sd(p0, na.rm=TRUE),
+                        ci.low.asympt.p0 = mean(p0, na.rm=TRUE) - qnorm(0.975, 0, 1)*sd(p0, na.rm=TRUE),
+                        ci.upp.asympt.p0 = mean(p0, na.rm=TRUE) + qnorm(0.975, 0, 1)*sd(p0, na.rm=TRUE),
+                        ci.low.nonpara.p0 = quantile(p0, probs = 0.025, na.rm = T),
+                        ci.upp.nonpara.p0 = quantile(p0, probs = 0.975, na.rm = T),
                         
-                        all.RMST1 = RMST1,
-                        mean.RMST1=mean(RMST1, na.rm=TRUE),
-                        se.RMST1 = sd(RMST1, na.rm=TRUE),
-                        ci.low.asympt.RMST1 = mean(RMST1, na.rm=TRUE) - qnorm(0.975, 0, 1)*sd(RMST1, na.rm=TRUE),
-                        ci.upp.asympt.RMST1 = mean(RMST1, na.rm=TRUE) + qnorm(0.975, 0, 1)*sd(RMST1, na.rm=TRUE),
-                        ci.low.nonpara.RMST1 = quantile(RMST1, probs = 0.025, na.rm = T),
-                        ci.upp.nonpara.RMST1 = quantile(RMST1, probs = 0.975, na.rm = T),
+                        all.p1 = p1,
+                        mean.p1=mean(p1, na.rm=TRUE),
+                        se.p1 = sd(p1, na.rm=TRUE),
+                        ci.low.asympt.p1 = mean(p1, na.rm=TRUE) - qnorm(0.975, 0, 1)*sd(p1, na.rm=TRUE),
+                        ci.upp.asympt.p1 = mean(p1, na.rm=TRUE) + qnorm(0.975, 0, 1)*sd(p1, na.rm=TRUE),
+                        ci.low.nonpara.p1 = quantile(p1, probs = 0.025, na.rm = T),
+                        ci.upp.nonpara.p1 = quantile(p1, probs = 0.975, na.rm = T),
               
-                        all.deltaRMST=deltaRMST, 
-                        mean.deltaRMST=mean(deltaRMST, na.rm=TRUE),
-                         se.deltaRMST = sd(deltaRMST, na.rm=TRUE),
-                         ci.low.asympt.deltaRMST = mean(deltaRMST, na.rm=TRUE) - qnorm(0.975, 0, 1)*sd(deltaRMST, na.rm=TRUE),
-                         ci.upp.asympt.deltaRMST = mean(deltaRMST, na.rm=TRUE) + qnorm(0.975, 0, 1)*sd(deltaRMST, na.rm=TRUE),
-                        ci.low.nonpara.deltaRMST = quantile(deltaRMST, probs = 0.025, na.rm = T),
-                        ci.upp.nonpara.deltaRMST = quantile(deltaRMST, probs = 0.975, na.rm = T),
-                         p.value.deltaRMST = ifelse(mean(deltaRMST, na.rm=TRUE)/sd(deltaRMST, na.rm=TRUE)<0,2*pnorm(mean(deltaRMST, na.rm=TRUE)/sd(deltaRMST, na.rm=TRUE)),2*(1-pnorm(mean(deltaRMST, na.rm=TRUE)/sd(deltaRMST, na.rm=TRUE))))
+                        all.delta=delta, 
+                        mean.delta=mean(delta, na.rm=TRUE),
+                         se.delta = sd(delta, na.rm=TRUE),
+                         ci.low.asympt.delta = mean(delta, na.rm=TRUE) - qnorm(0.975, 0, 1)*sd(delta, na.rm=TRUE),
+                         ci.upp.asympt.delta = mean(delta, na.rm=TRUE) + qnorm(0.975, 0, 1)*sd(delta, na.rm=TRUE),
+                        ci.low.nonpara.delta = quantile(delta, probs = 0.025, na.rm = T),
+                        ci.upp.nonpara.delta = quantile(delta, probs = 0.975, na.rm = T),
+                         p.value.delta = ifelse(mean(delta, na.rm=TRUE)/sd(delta, na.rm=TRUE)<0,2*pnorm(mean(delta, na.rm=TRUE)/sd(delta, na.rm=TRUE)),2*(1-pnorm(mean(delta, na.rm=TRUE)/sd(delta, na.rm=TRUE))))
                           ),
-            AHR = list(all.AHR=AHR, 
-                       mean.AHR=mean(AHR, na.rm=TRUE),
-                       se.AHR = sd(AHR, na.rm=TRUE),
-                       ci.low.asympt.AHR = mean(AHR, na.rm=TRUE) - qnorm(0.975, 0, 1)*sd(AHR, na.rm=TRUE),
-                       ci.upp.asympt.AHR = mean(AHR, na.rm=TRUE) + qnorm(0.975, 0, 1)*sd(AHR, na.rm=TRUE),
-                       ci.low.nonpara.AHR = quantile(AHR, probs = 0.025, na.rm = T),
-                       ci.upp.nonpara.AHR = quantile(AHR, probs = 0.975, na.rm = T),
-                       p.value.AHR = ifelse(mean(AHR, na.rm=TRUE)/sd(AHR, na.rm=TRUE)<0,2*pnorm(mean(AHR, na.rm=TRUE)/sd(AHR, na.rm=TRUE)),2*(1-pnorm(mean(AHR, na.rm=TRUE)/sd(AHR, na.rm=TRUE))))),
+            mOR = list(all.mOR=mOR, 
+                       mean.mOR=mean(mOR, na.rm=TRUE),
+                       se.mOR = sd(mOR, na.rm=TRUE),
+                       ci.low.asympt.mOR = mean(mOR, na.rm=TRUE) - qnorm(0.975, 0, 1)*sd(mOR, na.rm=TRUE),
+                       ci.upp.asympt.mOR = mean(mOR, na.rm=TRUE) + qnorm(0.975, 0, 1)*sd(mOR, na.rm=TRUE),
+                       ci.low.nonpara.mOR = quantile(mOR, probs = 0.025, na.rm = T),
+                       ci.upp.nonpara.mOR = quantile(mOR, probs = 0.975, na.rm = T),
+                       p.value.mOR = ifelse(mean(mOR, na.rm=TRUE)/sd(mOR, na.rm=TRUE)<0,2*pnorm(mean(mOR, na.rm=TRUE)/sd(mOR, na.rm=TRUE)),2*(1-pnorm(mean(mOR, na.rm=TRUE)/sd(mOR, na.rm=TRUE))))),
             call = match.call()
             )
 
-class(res) <- "gcsurv"
+class(res) <- "gclogi"
 
 return(res)
 }
