@@ -74,5 +74,5 @@ plot(gc1, method="survival")
 
 }
 \keyword{Plotting}
-\keyword{G-Computation}
+\keyword{G-computation}
 \keyword{Survival}

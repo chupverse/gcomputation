@@ -69,5 +69,5 @@ plot(gc1, method="proportion")
 }
 
 \keyword{Plotting}
-\keyword{G-Computation}
+\keyword{G-computation}
 \keyword{Logistic}

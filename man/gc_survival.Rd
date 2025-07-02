@@ -110,5 +110,5 @@ gc2 <- gc_survival(formula=formula, method="elasticnet", data=dataPROPHYVAP,
 gc2$tuning.parameters
 }
 
-\keyword{G-Computation}
+\keyword{G-computation}
 \keyword{Survival}

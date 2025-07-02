@@ -108,5 +108,5 @@ gc2 <- gc_logistic(formula=formula, method="elasticnet", data=dataPROPHYVAP,
 
 }
 
-\keyword{G-Computation}
+\keyword{G-computation}
 \keyword{logistic}

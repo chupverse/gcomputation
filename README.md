@@ -4,7 +4,7 @@ gcomputation: an R Package for Estimating Marginal Effects Using G-Computation
 
 ## Description
 
-The R package ‘gcomputation’ provides functions to compute G-Computation (GC) to estimate marginal effects. It has both estimating marginal logistic functions and marginal survival functions regarding two exposures. The package implements G-Computation with various working models or algorithms, referred to as Q-models.
+The R package ‘gcomputation’ provides functions to compute G-Computation (GC) to estimate marginal effects. It has both estimating marginal logistic functions and marginal survival functions regarding two exposures. The package implements GC with various working models or algorithms, referred to as Q-models.
 
 ## Key Features
 
@@ -14,7 +14,7 @@ The package supports several methods to construct the Q-model:
 *   "ridge": Applies L2 regularization for logistic or Cox regression, also utilizing the glmnet package. This is equivalent to Elastic Net with an alpha value of 0.
 *   "elasticnet": Combines both L1 and L2 regularizations for logistic or Cox regression, also using the glmnet package. The alpha parameter controls the mix between L1 and L2, typically ranging from 0 to 1.
 *   "aic": Performs forward selection for logistic or Cox regression based on the Akaike Information Criterion (AIC), using stepAIC.
-*   "bic": Performs forward selection for logistic or Cox regression based on the Bayesian Information Criterion (BIC), also using stepAIC with k=log(nrow(data)).
+*   "bic": Performs forward selection for logistic or Cox regression based on the Bayesian Information Criterion (BIC), also using stepAIC with `k=log(nrow(data))`.
 
 The package offers estimation of three types of marginal effects:
 *   "ATE" (Average Treatment effect on the entire population): The marginal effect if the entire sample were treated versus entirely untreated.
@@ -68,13 +68,7 @@ plot(gc1)
 
 ## Installation
 
-To install the latest release from CRAN:
-
-``` r
-install.packages("gcomputation")
-```
-
-To install the development version from GitHub:
+To install the version from GitHub:
 
 ``` r
 remotes::install_github("chupverse/gcomputation")
