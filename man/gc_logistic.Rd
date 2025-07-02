@@ -4,7 +4,7 @@
 G-Computation to Estimate a Marginal Effect
 }
 \description{
-This function computes G-Computation (GC) with different working models or algorithms (Q-models) to estimate the marginal logistic functions regarding two exposures.
+This function computes G-computation (GC) with different working models or algorithms (Q-models) to estimate the marginal logistic functions regarding two exposures.
 }
 \usage{
 gc_logistic(formula, data, group, effect="ATE", method,
