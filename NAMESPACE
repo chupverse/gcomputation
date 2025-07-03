@@ -5,11 +5,16 @@ import(MASS)
 import(stats)
 
 importFrom("utils", "txtProgressBar", "setTxtProgressBar")
-  
-importFrom("graphics", "abline", "lines", "plot.default", "grid", "segments")
+importFrom("graphics", "abline", "lines", "plot.default", "grid", "segments", "legend")
+importFrom("grDevices", "adjustcolor")
+importFrom("methods", "hasArg")
 
 export(gc_survival)
+export(gc_logistic)
 
 S3method(print, gcsurv)
-#S3method(plot, gcsurv)
-#S3method(summary, gcsurv)
+S3method(plot, gcsurv)
+S3method(summary, gcsurv)
+S3method(print, gclogi)
+S3method(plot, gclogi)
+S3method(summary, gclogi)
