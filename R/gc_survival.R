@@ -173,7 +173,9 @@ functions, stratification and clustering are not implemented") }
     if (!is.list(param.tune) & !is.vector(param.tune) & !is.null(param.tune)) {stop("Tune parameter needs to be a list or a vector (lambda then alpha) or NULL")}
     if (is.list(param.tune) & length(param.tune) != 2) {stop("List tune parameter needs to have a length of 2 (lambda then alpha)")}
     if (is.vector(param.tune) & length(param.tune) != 2) {stop("Vector tune parameter needs to have a length of 2 (lambda then alpha)")}
-    if (is.list(param.tune) & names(param.tune[1]) != "lambda" & names(param.tune[2]) != "alpha") {stop("List needs to start with lambda then alpha")}
+    if (!is.null(names(param.tune[1]))) {
+      if (is.list(param.tune) & names(param.tune[1]) != "lambda" & names(param.tune[2]) != "alpha") {stop("List needs to start with lambda then alpha")}
+    }
     if (is.list(param.tune) & length(param.tune[[1]]) == 1 & length(param.tune[[2]]) > 1) {stop("Lambda needs more than 1 value if more than 1 alpha is provided")} 
     if (is.null(param.tune)) {
       param.tune = list(lambda=NULL, alpha=seq(0,1,.1) )
