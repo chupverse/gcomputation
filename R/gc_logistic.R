@@ -1,3 +1,8 @@
+
+# REMARQUES
+   # AJOUTER UN ARGUMENT SEED COMME DANS survivalSL parmet de reproduire les résultats.
+   # Dans l'AIDE :  \item{calibration}{A list of predictions and the fit obtained on the whole data set.} -> Ce n'est pas assez explicite pour que l'utilisateur comprenne les objets dans cette list -> A developper
+
 gc_logistic <- function(formula, data, group, effect="ATE", method, param.tune=NULL, cv=10, boot.type="bcv",
                         boot.number=500,  boot.tune=FALSE, progress=TRUE) {
   # Quality tests
@@ -181,14 +186,13 @@ functions, stratification and clustering are not implemented") }
   
   ### Effect  
 
-  
   if(effect=="ATE"){ ttt <- which(data[,group] %in% c(0,1))
   }else if(effect=="ATT"){ ttt <- which(data[,group] == 1)
   }else ttt <- which(data[,group] == 0 )
   data <- data[ttt,]
   N <- length(data[,outcome])
   
-  ############# Method
+  ### Method
 
   .x <- model.matrix(formula,data)[,-1]
   .y <- data[,outcome]
@@ -295,6 +299,8 @@ if(method == "lasso"){
   mOR <- c() 
   BCVerror <- 0
   delta <- c()
+  ratio <- c()
+  
   for (b in 1:boot.number) {
     
     if(progress == TRUE){
@@ -347,8 +353,9 @@ if(method == "lasso"){
       .p0 = mean(predict(fit, newdata = data.valid0, type = "response"))
       .p1 = mean(predict(fit, newdata = data.valid1, type = "response"))
       
-      .mOR = (.p1*(1-.p0))/(.p0*(1-.p1))
+      .OR = (.p1*(1-.p0))/(.p0*(1-.p1))
       .delta = .p1 - .p0
+      .ratio = .p1 / .p0
     }
     
     if (method == "bic") {
@@ -363,6 +370,7 @@ if(method == "lasso"){
       
       .mOR = (.p1*(1-.p0))/(.p0*(1-.p1))
       .delta = .p1 - .p0
+      .ratio = .p1 / .p0
     }
     
     if(method == "all") {
@@ -373,7 +381,9 @@ if(method == "lasso"){
       
       .mOR = (.p1*(1-.p0))/(.p0*(1-.p1))
       .delta = .p1 - .p0
+      .ratio = .p1 / .p0
     }
+    
     if (method == "lasso") {
       if (boot.tune) {
         .cv.lasso <- cv.glmnet(x=.x.learn, y=.y.learn, family = "binomial",  type.measure = "deviance",
@@ -389,7 +399,9 @@ if(method == "lasso"){
       
       .mOR = (.p1*(1-.p0))/(.p0*(1-.p1))
       .delta = .p1 - .p0
+      .ratio = .p1 / .p0
     }
+    
     if (method == "ridge") {
       if (boot.tune) {
         .cv.ridge <- cv.glmnet(x=.x.learn, y=.y.learn, family = "binomial",  type.measure = "deviance",
@@ -405,6 +417,7 @@ if(method == "lasso"){
       
       .mOR = (.p1*(1-.p0))/(.p0*(1-.p1))
       .delta = .p1 - .p0
+      .ratio = .p1 / .p0
     }
     if (method == "elasticnet") {
       if (boot.tune) {
@@ -430,12 +443,14 @@ if(method == "lasso"){
       
       .mOR = (.p1*(1-.p0))/(.p0*(1-.p1))
       .delta = .p1 - .p0
+      .ratio = .p1 / .p0
     }
     
     p0 <- c(p0, .p0)
     p1 <- c(p1, .p1)
     mOR <- c(mOR, .mOR)
     delta <- c(delta, .delta)
+    ratio <- c(ratio, .ratio)
     }
     
   if(progress==TRUE){ close(pb) }
@@ -459,39 +474,44 @@ res <- list(calibration=list(fit=calibration.fit,p0=calibration.p0,p1=calibratio
             group=group,
             n = nrow(datakeep),
             nevent = sum(datakeep[,outcome]),
-            coefficients = list(all.p0 = p0,
-                        mean.p0=mean(p0, na.rm=TRUE),
-                        se.p0 = sd(p0, na.rm=TRUE),
-                        ci.low.asympt.p0 = mean(p0, na.rm=TRUE) - qnorm(0.975, 0, 1)*sd(p0, na.rm=TRUE),
-                        ci.upp.asympt.p0 = mean(p0, na.rm=TRUE) + qnorm(0.975, 0, 1)*sd(p0, na.rm=TRUE),
-                        ci.low.nonpara.p0 = quantile(p0, probs = 0.025, na.rm = T),
-                        ci.upp.nonpara.p0 = quantile(p0, probs = 0.975, na.rm = T),
+            
+            p0 = list(values=p0,
+                      estim=mean(p0, na.rm=TRUE),
+                      se=sd(p0, na.rm=TRUE),
+                      ci.asympt = c(mean(p0, na.rm=TRUE) - qnorm(0.975, 0, 1)*sd(p0, na.rm=TRUE),
+                                    mean(p0, na.rm=TRUE) + qnorm(0.975, 0, 1)*sd(p0, na.rm=TRUE)),
+                      ci.nonpara = c(quantile(p0, probs = 0.025, na.rm = T),
+                                     quantile(p0, probs = 0.975, na.rm = T))),
                         
-                        all.p1 = p1,
-                        mean.p1=mean(p1, na.rm=TRUE),
-                        se.p1 = sd(p1, na.rm=TRUE),
-                        ci.low.asympt.p1 = mean(p1, na.rm=TRUE) - qnorm(0.975, 0, 1)*sd(p1, na.rm=TRUE),
-                        ci.upp.asympt.p1 = mean(p1, na.rm=TRUE) + qnorm(0.975, 0, 1)*sd(p1, na.rm=TRUE),
-                        ci.low.nonpara.p1 = quantile(p1, probs = 0.025, na.rm = T),
-                        ci.upp.nonpara.p1 = quantile(p1, probs = 0.975, na.rm = T),
+            p1 = list(values=p0,
+                      estim=mean(p0, na.rm=TRUE),
+                      se=sd(p0, na.rm=TRUE),
+                      ci.asympt = c(mean(p0, na.rm=TRUE) - qnorm(0.975, 0, 1)*sd(p0, na.rm=TRUE),
+                                    mean(p0, na.rm=TRUE) + qnorm(0.975, 0, 1)*sd(p0, na.rm=TRUE)),
+                      ci.nonpara = c(quantile(p0, probs = 0.025, na.rm = T),
+                                     quantile(p0, probs = 0.975, na.rm = T))),
               
-                        all.delta=delta, 
-                        mean.delta=mean(delta, na.rm=TRUE),
-                         se.delta = sd(delta, na.rm=TRUE),
-                         ci.low.asympt.delta = mean(delta, na.rm=TRUE) - qnorm(0.975, 0, 1)*sd(delta, na.rm=TRUE),
-                         ci.upp.asympt.delta = mean(delta, na.rm=TRUE) + qnorm(0.975, 0, 1)*sd(delta, na.rm=TRUE),
-                        ci.low.nonpara.delta = quantile(delta, probs = 0.025, na.rm = T),
-                        ci.upp.nonpara.delta = quantile(delta, probs = 0.975, na.rm = T),
-                         p.value.delta = ifelse(mean(delta, na.rm=TRUE)/sd(delta, na.rm=TRUE)<0,2*pnorm(mean(delta, na.rm=TRUE)/sd(delta, na.rm=TRUE)),2*(1-pnorm(mean(delta, na.rm=TRUE)/sd(delta, na.rm=TRUE))))
-                          ),
-            mOR = list(all.mOR=mOR, 
-                       mean.mOR=mean(mOR, na.rm=TRUE),
-                       se.mOR = sd(mOR, na.rm=TRUE),
-                       ci.low.asympt.mOR = mean(mOR, na.rm=TRUE) - qnorm(0.975, 0, 1)*sd(mOR, na.rm=TRUE),
-                       ci.upp.asympt.mOR = mean(mOR, na.rm=TRUE) + qnorm(0.975, 0, 1)*sd(mOR, na.rm=TRUE),
-                       ci.low.nonpara.mOR = quantile(mOR, probs = 0.025, na.rm = T),
-                       ci.upp.nonpara.mOR = quantile(mOR, probs = 0.975, na.rm = T),
-                       p.value.mOR = ifelse(mean(mOR, na.rm=TRUE)/sd(mOR, na.rm=TRUE)<0,2*pnorm(mean(mOR, na.rm=TRUE)/sd(mOR, na.rm=TRUE)),2*(1-pnorm(mean(mOR, na.rm=TRUE)/sd(mOR, na.rm=TRUE))))),
+            delta = list(values=delta, 
+                         estim=mean(delta, na.rm=TRUE),
+                         se = sd(delta, na.rm=TRUE),
+                         ci.asympt = c(mean(delta, na.rm=TRUE) - qnorm(0.975, 0, 1)*sd(delta, na.rm=TRUE),
+                                       mean(delta, na.rm=TRUE) + qnorm(0.975, 0, 1)*sd(delta, na.rm=TRUE)),
+                         ci.nonpara = c(quantile(delta, probs = 0.025, na.rm = T),
+                                        quantile(delta, probs = 0.975, na.rm = T)),
+                         p.value = ifelse(mean(delta, na.rm=TRUE)/sd(delta, na.rm=TRUE)<0,
+                                          2*pnorm(mean(delta, na.rm=TRUE)/sd(delta, na.rm=TRUE)),
+                                          2*(1-pnorm(mean(delta, na.rm=TRUE)/sd(delta, na.rm=TRUE))))),
+            
+            OR = list(values=mOR, 
+                      estim=mean(mOR, na.rm=TRUE),
+                      se = sd(mOR, na.rm=TRUE),
+                      ci.asympt = c(mean(mOR, na.rm=TRUE) - qnorm(0.975, 0, 1)*sd(mOR, na.rm=TRUE),
+                                    mean(mOR, na.rm=TRUE) + qnorm(0.975, 0, 1)*sd(mOR, na.rm=TRUE)),
+                      ci.nonpara = c(quantile(mOR, probs = 0.025, na.rm = T),
+                                     quantile(mOR, probs = 0.975, na.rm = T)),
+                       p.value = ifelse(mean(mOR, na.rm=TRUE)/sd(mOR, na.rm=TRUE)<0,
+                                        2*pnorm(mean(mOR, na.rm=TRUE)/sd(mOR, na.rm=TRUE)),
+                                        2*(1-pnorm(mean(mOR, na.rm=TRUE)/sd(mOR, na.rm=TRUE))))),
             call = match.call()
             )
 
