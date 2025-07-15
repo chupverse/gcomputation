@@ -20,7 +20,7 @@ plot.gclogi <- function (x, method="calibration", n.groups=5, pro.time=NULL, ...
   
   if (method == "calibration") {
     
-    .event <- x$data[,x$outcome]
+    .event = x$data[,x$outcome]
     .pred = x$calibration$predict
     data = x$data
     outcome = x$data[,x$outcome]
