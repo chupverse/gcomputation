@@ -53,15 +53,15 @@ This plotting method supports two distinct types of visualizations:
 \examples{
 data(dataPROPHYVAP)
 
-dataPROPHYVAP$DEATH_J60_num <- ifelse(dataPROPHYVAP$DEATH_J60 == "Yes", 1, 0)
+dataPROPHYVAP$DEATH_num <- ifelse(dataPROPHYVAP$DEATH == "Yes", 1, 0)
 dataPROPHYVAP$GROUP_num <- ifelse(dataPROPHYVAP$GROUP == "Placebo", 0, 1)
 
-formula <- formula(Surv(FOLLOWUP_J60, DEATH_J60_num) ~ GROUP_num * (AGE + SEXE +
+formula <- formula(Surv(TIME_DEATH, DEATH_num) ~ GROUP_num * (AGE + SEX +
               BMI + DIABETES))
 
 gc1 <- gc_survival(formula=formula, method="lasso", data=dataPROPHYVAP,
               group="GROUP_num", param.tune=NULL, boot.type="bcv", cv=10,
-              boot.number=500, effect="ATE", progress=TRUE , max.time=10,
+              boot.number=500, effect="ATE", progress=TRUE , pro.time=10,
               boot.tune = TRUE)
 
 plot(gc1)

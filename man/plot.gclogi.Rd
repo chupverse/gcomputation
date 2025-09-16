@@ -13,7 +13,7 @@ This S3 method offers two types of plots: a calibration plot and a proportion pl
 }
 \usage{
 
-\method{plot}{gclogi}(x, method="calibration", n.groups=5, pro.time=NULL, ...)
+\method{plot}{gclogi}(x, method="calibration", n.groups=5, ...)
 
 }
 \arguments{
@@ -23,8 +23,6 @@ This S3 method offers two types of plots: a calibration plot and a proportion pl
 \item{method}{A character string specifying the type of plot. Possible values are \code{calibration} (default) or \code{proportion}.}
 
 \item{n.groups}{An integer for the number of groups to divide the predicted probabilities into when \code{method="calibration"} is used. The default is 5.}
-
-\item{pro.time}{This argument is included for consistency with related S3 methods but is not applicable or used for logistic models.}
 
 \item{...}{Additional graphical parameters that can be passed to the underlying plot function.}
 
@@ -52,12 +50,12 @@ This plotting method supports two distinct types of visualizations:
 \examples{
 data(dataPROPHYVAP)
 
-dataPROPHYVAP$VAP_EARLY_num <- ifelse(dataPROPHYVAP$VAP_EARLY == "Yes", 1, 0)
+dataPROPHYVAP$VAP_num <- ifelse(dataPROPHYVAP$VAP == "Yes", 1, 0)
 dataPROPHYVAP$GROUP_num <- ifelse(dataPROPHYVAP$GROUP == "Placebo", 0, 1)
 
-formula <- formula(VAP_EARLY_num ~ GROUP_num * (AGE + SEXE + BMI + DIABETES))
+.f <- formula(VAP_num ~ GROUP_num * (AGE + SEX + BMI + DIABETES))
 
-gc1 <- gc_logistic(formula=formula, method="ridge", data=dataPROPHYVAP,
+gc1 <- gc_logistic(formula=.f, method="ridge", data=dataPROPHYVAP,
               group="GROUP_num", param.tune=NULL, boot.type="bcv", cv=10,
               boot.number=500, effect="ATE", progress=TRUE , boot.tune = TRUE)
 

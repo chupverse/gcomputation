@@ -8,8 +8,8 @@ This function computes G-computation (GC) with different working models or algor
 }
 \usage{
 gc_logistic(formula, data, group, effect="ATE", method,
-            param.tune=NULL, cv=10, boot.type="bcv", boot.number=500,
-            boot.tune=FALSE, progress=TRUE)
+            param.tune=NULL, cv=10, boot.type="bcv", boot.number=50000,
+            boot.tune=FALSE, progress=TRUE, seed=NULL)
 }
 
 \arguments{
@@ -24,6 +24,7 @@ gc_logistic(formula, data, group, effect="ATE", method,
     \item{boot.number}{The number of bootstrap resamples. The default value is 500.}
     \item{boot.tune}{A logical value to determine whether the tuning parameter should be estimated inside of each bootstrap iteration. See details.}
     \item{progress}{A logical value to print a progress bar in the R console. The default is \code{TRUE}}
+    \item{seed}{A random seed to ensure reproducibility during the cv process. If \code{NULL}, a seed is randomly assigned.}
  }
 
 \details{
@@ -50,24 +51,30 @@ This logical value determines whether the tuning parameter should be estimated i
 }
 
 \value{
-\item{calibration}{A list of predictions and the fit obtained on the whole data set.}
-\item{tuning.parameters}{The estimated tunning parameters.}
-\item{data}{The data frame used in the function.}
-\item{formula}{The given formula.}
-\item{method}{The given method.}
-\item{cv}{The number of splits for cross-validation.}
-\item{missing}{The number of observations with missing data excluded.}
-\item{boot.number}{Number of bootstrap resamples.}
-\item{outcome}{A character vector with the name of the outcome variable.}
-\item{group}{A character vector with the name of the group variable.}
-\item{n}{The sample size.}
-\item{nevent}{Number of events.}
-\item{p0}{A list with the results related to the proportion of events in the control group.}
-\item{p1}{A list with the results related to the proportion of events in the experimental group.}
-\item{delta}{A list with the results related to the difference between the proportions of events (\code{p1}-\code{p0)}.}
-\item{ratio}{A list with the results related to the ration between the proportions of events (\code{p1}/\code{p0}).}
-\item{OR}{A list with the results related to the odds ratio.}
-\item{call}{The complete call.}
+\item{calibration}{A list containing the final fitted Q-model (\code{fit}) and the outcome predictions (\code{predict}) for each patient on the complete dataset.}
+\item{tuning.parameters}{The estimated tuning parameters for the Q-model. For "aic" and "bic" methods, this represents the final formula chosen; otherwise, it is a list containing the optimal lambda and alpha values.}
+\item{data}{The data frame used in the function, after any rows with missing data have been removed.}
+\item{formula}{The original formula provided to the function.}
+\item{method}{The method used for the Q-model (e.g., "lasso", "ridge", "aic").}
+\item{cv}{The number of splits used for cross-validation.}
+\item{missing}{The number of observations that were removed from the original dataset due to missing values.}
+\item{boot.number}{The total number of bootstrap resamples performed.}
+\item{boot.type}{The type of bootstrap resamples performed.}
+\item{outcome}{A character string specifying the name of the outcome variable.}
+\item{group}{A character string specifying the name of the grouping (exposure/treatment) variable.}
+\item{n}{The sample size of the dataset used in calculations, after missing data removal.}
+\item{nevent}{The total number of events (outcomes coded as 1) in the dataset used in calculations.}
+\item{p0}{A numeric vector containing the raw bootstrap samples of the estimated proportion of events in the control group.}
+\item{p1}{A numeric vector containing the raw bootstrap samples of the estimated proportion of events in the experimental group.}
+\item{delta}{A numeric vector containing the raw bootstrap samples of the estimated difference in proportions of events (\code{p1} - \code{p0}).}
+\item{ratio}{A numeric vector containing the raw bootstrap samples of the estimated ratio of proportions of events (\code{p1} / \code{p0}).}
+\item{OR}{A numeric vector containing the raw bootstrap samples of the estimated odds ratio.}
+\item{p0.unadj}{A numeric vector containing the raw bootstrap samples of the unadjusted proportion of events in the control group.}
+\item{p1.unadj}{A numeric vector containing the raw bootstrap samples of the unadjusted proportion of events in the experimental group.}
+\item{delta.unadj}{A numeric vector containing the raw bootstrap samples of the unadjusted difference in proportions of events (\code{p1.unadj} - \code{p0.unadj}).}
+\item{ratio.unadj}{A numeric vector containing the raw bootstrap samples of the unadjusted ratio of proportions of events (\code{p1.unadj} / \code{p0.unadj}).}
+\item{OR.unadj}{A numeric vector containing the raw bootstrap samples of the unadjusted odds ratio.}
+\item{call}{The function call that generated the \code{gclogi} object.}
 }
 
 \references{
@@ -78,13 +85,13 @@ Joe de Keizer et al. G-computation for increasing performances of clinical trial
 \examples{
 data("dataPROPHYVAP")
 
-dataPROPHYVAP$VAP_EARLY_num <- ifelse(dataPROPHYVAP$VAP_EARLY == "Yes",1,0)
+dataPROPHYVAP$VAP_num <- ifelse(dataPROPHYVAP$VAP == "Yes",1,0)
 dataPROPHYVAP$GROUP_num <- ifelse(dataPROPHYVAP$GROUP == "Placebo",0,1)
 
 
-formula <- formula(VAP_EARLY_num ~ GROUP_num * (AGE + SEXE + BMI + DIABETES))
+.f <- formula(VAP_num ~ GROUP_num * (AGE + SEX + BMI + DIABETES))
 
-gc1 <- gc_logistic(formula=formula, method="ridge", data=dataPROPHYVAP,
+gc1 <- gc_logistic(formula=.f, method="ridge", data=dataPROPHYVAP,
               group="GROUP_num", param.tune=NULL, boot.type="bcv", cv=10,
               boot.number=500,  effect="ATE", progress=TRUE, boot.tune = TRUE)
 
@@ -94,7 +101,7 @@ plot(gc1)
 
 
 ### To specify specific tuning parameters:
-gc2 <- gc_logistic(formula=formula, method="elasticnet", data=dataPROPHYVAP,
+gc2 <- gc_logistic(formula=.f, method="elasticnet", data=dataPROPHYVAP,
               group="GROUP_num", param.tune=list(lambda=0.05, alpha=0.5),
               boot.type="bcv", cv=10, boot.number=500,  effect="ATE",
               progress=TRUE, boot.tune = FALSE)

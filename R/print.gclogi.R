@@ -1,23 +1,31 @@
 print.gclogi <- function (x, digits=4, ...)
 {
-  cat("Call:", "\n", sep = "")
-  dput(x$formula)
+  if (x$method %in% c("lasso","ridge","elasticnet")) {cat("Method: ",x$method,", tuning parameters: ", sep = "")
+    if (x$method == "elasticnet") {
+      cat("lambda= ",round(x$tuning.parameters$lambda,digits=digits), " alpha= ",round(x$tuning.parameters$alpha,digits=digits),sep="")}
+    if (x$method == "lasso") {
+      cat("lambda= ",round(x$tuning.parameters$lambda,digits=digits),sep="")}
+    if (x$method == "ridge") {
+      cat("lambda= ",round(x$tuning.parameters$lambda,digits=digits),sep="")}
+    cat("\nCall:", "\n", sep = "")
+    dput(x$formula)}
+  if (x$method %in% c("all","aic","bic")) {cat(x$method," method \nCall:", "\n", sep = "")
+    dput(x$tuning.parameters)}
   cat("\n")
   
-  tmp <- matrix(c(x$delta$estim, x$delta$se, x$delta$estim/x$delta$se, x$delta$p.value),nrow=1)
+  cat("Estimates : \n")
+  res <- matrix(c(mean(x$p0, na.rm=TRUE),
+      mean(x$p1, na.rm=TRUE),
+      mean(x$delta, na.rm=TRUE),
+      mean(x$ratio, na.rm=TRUE),
+      mean(x$OR, na.rm=TRUE)),
+    nrow = 1)
+  colnames(res) <- c("P0", "P1", "Difference(1-0)", "Ratio(1/0)", "OR")
+  rownames(res) <-  ""
   
-  colnames(tmp) <- c("delta","se(delta)","z", "p")
-  rownames(tmp) = ""
-  printCoefmat(tmp, digits = digits, P.values = TRUE, 
-               has.Pvalue = TRUE, signif.stars = FALSE, ...)
-  cat("\n")
+  printCoefmat(res, digits = digits, ..., P.values = FALSE, has.Pvalue = FALSE, na.print = "")
   
-  tmp <- matrix(c(x$OR$estim, x$OR$se, x$OR$estim/x$OR$se, x$OR$p.value),nrow=1)
   
-  colnames(tmp) <- c("mOR","se(mOR)","z", "p")
-  rownames(tmp) = ""
-  printCoefmat(tmp, digits = digits, P.values = TRUE, 
-               has.Pvalue = TRUE, signif.stars = FALSE, ...)
   cat("\n")
   
   cat(paste0("n= ",x$n,", number of events= ",x$nevent))

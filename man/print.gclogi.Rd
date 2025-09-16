@@ -28,10 +28,13 @@ Print a summary of the \code{gclogi} object returned from gc_logistic function.
 \examples{
 
 data(dataPROPHYVAP)
-dataPROPHYVAP$VAP_EARLY_num <- ifelse(dataPROPHYVAP$VAP_EARLY == "Yes",1,0)
+
+dataPROPHYVAP$VAP_num <- ifelse(dataPROPHYVAP$VAP == "Yes",1,0)
 dataPROPHYVAP$GROUP_num <- ifelse(dataPROPHYVAP$GROUP == "Placebo",0,1)
-formula <- formula(VAP_EARLY_num ~ GROUP_num * AGE + SEXE + BMI + DIABETES)
-gc1 <- gc_logistic(formula=formula, method="ridge", data=dataPROPHYVAP,
+
+.f <- formula(VAP_num ~ GROUP_num * AGE + SEX + BMI + DIABETES)
+
+gc1 <- gc_logistic(formula=.f, method="ridge", data=dataPROPHYVAP,
               group="GROUP_num", param.tune=NULL, boot.type="bcv", cv=10,
               boot.number=500, effect="ATE", progress=TRUE, boot.tune = TRUE)
 print(gc1)
