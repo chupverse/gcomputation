@@ -1,10 +1,5 @@
-
-# REMARQUES
-   # AJOUTER UN ARGUMENT SEED COMME DANS survivalSL parmet de reproduire les résultats.
-   # Dans l'AIDE :  \item{calibration}{A list of predictions and the fit obtained on the whole data set.} -> Ce n'est pas assez explicite pour que l'utilisateur comprenne les objets dans cette list -> A developper
-
 gc_logistic <- function(formula, data, group, effect="ATE", method, param.tune=NULL, cv=10, boot.type="bcv",
-                        boot.number=500,  boot.tune=FALSE, progress=TRUE) {
+                        boot.number=500,  boot.tune=FALSE, progress=TRUE, seed=NULL) {
   # Quality tests
   if(missing(formula)) {stop("The \"formula\" argument is missing (formula)")}
   if(missing(data)) {stop("The \"data\" argument is missing (data.frame)")}
@@ -30,6 +25,8 @@ gc_logistic <- function(formula, data, group, effect="ATE", method, param.tune=N
   outcome <- as.character(formula[[2]])
   all_terms <- attr(terms(formula), "term.labels")
   formula.all <- formula
+  
+  if(is.null(seed)) {seed <- sample(1:1000,1)}
   
   
   if(length(grep("tt\\(", all_terms, value = TRUE)) > 0 |
@@ -198,12 +195,15 @@ functions, stratification and clustering are not implemented") }
   .y <- data[,outcome]
   
   
+  set.seed(seed)
+  foldid <- sample(rep(seq(cv), length.out = nrow(.x)))
+  
 if(method == "lasso"){
   if(is.null(param.tune$lambda)==T | length(param.tune$lambda)>1){
 
     .cv.lasso <- cv.glmnet(x=.x, y=.y, family = "binomial",  type.measure = "deviance",
                            nfolds = cv, parallel = FALSE, alpha=1, penalty.factor = .penalty.factor,keep=F,
-                           lambda=param.tune$lambda)
+                           lambda=param.tune$lambda, foldid = foldid)
 
     .tune.optimal=list(lambda=.cv.lasso$lambda.min)
     rm(.cv.lasso)  }   else{ .tune.optimal=list(lambda=param.tune$lambda) }
@@ -212,7 +212,7 @@ if(method == "lasso"){
     if(is.null(param.tune$lambda)==T | length(param.tune$lambda)>1){
       .cv.ridge <- cv.glmnet(x=.x, y=.y, family = "binomial",  type.measure = "deviance",
                              parallel = FALSE, alpha=0, penalty.factor = .penalty.factor, nfolds = cv,
-                             lambda=param.tune$lambda)
+                             lambda=param.tune$lambda, foldid = foldid)
       .tune.optimal=list(lambda=.cv.ridge$lambda.min)
       rm(.cv.ridge)  } else{ .tune.optimal=list(lambda=param.tune$lambda) }
   }
@@ -224,7 +224,7 @@ if(method == "lasso"){
         .cv.en<-glmnet::cv.glmnet(x=.x, y=.y, family = "binomial",  type.measure = "deviance",
                                   foldsid="folds", parallel = FALSE, alpha=param.tune$alpha[a],
                                   penalty.factor = .penalty.factor,
-                                  lambda=param.tune$lambda)
+                                  lambda=param.tune$lambda, foldid = foldid)
         .results<-rbind(.results,
                         cbind(rep(param.tune$alpha[a],length(.cv.en$lambda)),.cv.en$lambda,.cv.en$cvm))
       }
@@ -242,13 +242,11 @@ if(method == "lasso"){
     formula <- stepAIC( glm(formula=formula(paste0(outcome,"~",group)), data=data,family="binomial"),
                      scope=list(lower = formula(paste0(outcome,"~",group)), upper = formula),
                      direction="forward", k=2, trace=FALSE)$formula
-    .tune.optimal = NULL
   } 
   if(method == "bic"){
     formula <- stepAIC( glm(formula=formula(paste0(outcome,"~",group)), data=data,family="binomial"),
                         scope=list(lower = formula(paste0(outcome,"~",group)), upper = formula),
                         direction="forward", k=log(nrow(data)), trace=FALSE)$formula
-    .tune.optimal = NULL
   } 
 
   
@@ -257,49 +255,44 @@ if(method == "lasso"){
 
   
   if(method == "all" | method == "aic" | method == "bic") {
+    .tune.optimal = formula
     fit <- glm(formula = formula, data=data, family="binomial")
     calibration.predict <- predict(fit, newdata = data, type = "response")
-    
-    calibration.p0 = 999
-    calibration.p1 = 999
   }
   if (method == "lasso") {
     fit <- glmnet(x = .x, y = .y, lambda = .tune.optimal$lambda,  type.measure = "deviance",
                                 family = "binomial", alpha = 1, penalty.factor = .penalty.factor)
     calibration.predict <- predict(fit, newx=.x, type="response")
-
-    calibration.p0 = 999
-    calibration.p1 = 999
   }
   if (method == "ridge") {
     fit <- glmnet(x = .x, y = .y, lambda = .tune.optimal$lambda,  type.measure = "deviance",
                   family = "binomial", alpha = 0, penalty.factor = .penalty.factor)
     calibration.predict <- predict(fit, newx=.x, type="response")
-    
-    calibration.p0 = 999
-    calibration.p1 = 999
   }
   if (method == "elasticnet") {
     fit <- glmnet(x = .x, y = .y, lambda = .tune.optimal$lambda,  type.measure = "deviance",
                   family = "binomial", alpha = .tune.optimal$alpha, penalty.factor = .penalty.factor)
     calibration.predict <- predict(fit, newx=.x, type="response")
-    
-    calibration.p0 = 999
-    calibration.p1 = 999
   }
   
-  
+  .tune.optimal.totalpop <- .tune.optimal
   calibration.fit <- fit
   
 
   ###   Bootstrapping
-
+  
+  BCVerror <- 0
   p0 <- c()
   p1 <- c()
-  mOR <- c() 
-  BCVerror <- 0
+  OR <- c() 
   delta <- c()
   ratio <- c()
+  
+  p0.unadj <- c()
+  p1.unadj <- c()
+  OR.unadj <- c() 
+  delta.unadj <- c()
+  ratio.unadj <- c()
   
   for (b in 1:boot.number) {
     
@@ -338,11 +331,21 @@ if(method == "lasso"){
     .x.valid0 = model.matrix(formula.all,data0)[,-1][-sort(unique(id)),]
     .x.valid1 = model.matrix(formula.all,data1)[,-1][-sort(unique(id)),]
   
-  
-    
     .y.learn <- data.learn[,outcome]
 
     
+    ### Unadjusted results
+    fit <- glm(formula = as.formula(paste(outcome,"~",group)), data=data.learn, family="binomial")
+    
+    .p0.unadj = mean(predict(fit, newdata = data.valid0, type = "response"))
+    .p1.unadj = mean(predict(fit, newdata = data.valid1, type = "response"))
+    
+    .OR.unadj = (.p1.unadj*(1-.p0.unadj))/(.p0.unadj*(1-.p1.unadj))
+    .delta.unadj = .p1.unadj - .p0.unadj
+    .ratio.unadj = .p1.unadj / .p0.unadj
+    
+    
+    ### GC
     if (method == "aic") {
       formula <- stepAIC( glm(formula=formula(paste0(outcome,"~",group)), data=data.learn,family="binomial"),
                           scope=list(lower = formula(paste0(outcome,"~",group)), upper = formula.all),
@@ -368,7 +371,7 @@ if(method == "lasso"){
       .p0 = mean(predict(fit, newdata = data.valid0, type = "response"))
       .p1 = mean(predict(fit, newdata = data.valid1, type = "response"))
       
-      .mOR = (.p1*(1-.p0))/(.p0*(1-.p1))
+      .OR = (.p1*(1-.p0))/(.p0*(1-.p1))
       .delta = .p1 - .p0
       .ratio = .p1 / .p0
     }
@@ -379,7 +382,7 @@ if(method == "lasso"){
       .p0 = mean(predict(fit, newdata = data.valid0, type = "response"))
       .p1 = mean(predict(fit, newdata = data.valid1, type = "response"))
       
-      .mOR = (.p1*(1-.p0))/(.p0*(1-.p1))
+      .OR = (.p1*(1-.p0))/(.p0*(1-.p1))
       .delta = .p1 - .p0
       .ratio = .p1 / .p0
     }
@@ -397,7 +400,7 @@ if(method == "lasso"){
       .p0 = mean(predict(fit, newx=.x.valid0, type="response"))
       .p1 = mean(predict(fit, newx=.x.valid1, type="response"))
       
-      .mOR = (.p1*(1-.p0))/(.p0*(1-.p1))
+      .OR = (.p1*(1-.p0))/(.p0*(1-.p1))
       .delta = .p1 - .p0
       .ratio = .p1 / .p0
     }
@@ -415,7 +418,7 @@ if(method == "lasso"){
       .p0 = mean(predict(fit, newx=.x.valid0, type="response"))
       .p1 = mean(predict(fit, newx=.x.valid1, type="response"))
       
-      .mOR = (.p1*(1-.p0))/(.p0*(1-.p1))
+      .OR = (.p1*(1-.p0))/(.p0*(1-.p1))
       .delta = .p1 - .p0
       .ratio = .p1 / .p0
     }
@@ -441,16 +444,22 @@ if(method == "lasso"){
       .p0 = mean(predict(fit, newx=.x.valid0, type="response"))
       .p1 = mean(predict(fit, newx=.x.valid1, type="response"))
       
-      .mOR = (.p1*(1-.p0))/(.p0*(1-.p1))
+      .OR = (.p1*(1-.p0))/(.p0*(1-.p1))
       .delta = .p1 - .p0
       .ratio = .p1 / .p0
     }
     
     p0 <- c(p0, .p0)
     p1 <- c(p1, .p1)
-    mOR <- c(mOR, .mOR)
+    OR <- c(OR, .OR)
     delta <- c(delta, .delta)
     ratio <- c(ratio, .ratio)
+    
+    p0.unadj <- c(p0.unadj, .p0.unadj)
+    p1.unadj <- c(p1.unadj, .p1.unadj)
+    OR.unadj <- c(OR.unadj, .OR.unadj)
+    delta.unadj <- c(delta.unadj, .delta.unadj)
+    ratio.unadj <- c(ratio.unadj, .ratio.unadj)
     }
     
   if(progress==TRUE){ close(pb) }
@@ -458,60 +467,32 @@ if(method == "lasso"){
 if (BCVerror > 1) {warning(paste0("Skipped ",BCVerror," bootstrap iterations due to the validation dataset containing factors not in the train dataset. Either use type=\"boot\" instead of \"bcv\" or remove factors with rare modalities."))}  
 if (!is.null(.warnen)) {warning(paste0("The optimal tuning parameter alpha was equal to ",.warnen,", using ",ifelse(.warnen==0,"ridge","lasso")," instead"))}  
   
-  if (method == "aic" | method == "bic") {.tune.optimal = NULL}
   
 datakeep <- data[,which(colnames(data) %in% c(outcome,group,all_terms))]
   
-res <- list(calibration=list(fit=calibration.fit,p0=calibration.p0,p1=calibration.p1,predict=calibration.predict),
-            tuning.parameters=.tune.optimal,
+res <- list(calibration=list(fit=calibration.fit,predict=calibration.predict),
+            tuning.parameters=.tune.optimal.totalpop,
             data=datakeep,
             formula=formula.all,
             method=method,
             cv=cv,
             missing=nmiss,
             boot.number = boot.number,
+            boot.type = boot.type,
             outcome=outcome,
             group=group,
             n = nrow(datakeep),
             nevent = sum(datakeep[,outcome]),
-            
-            p0 = list(values=p0,
-                      estim=mean(p0, na.rm=TRUE),
-                      se=sd(p0, na.rm=TRUE),
-                      ci.asympt = c(mean(p0, na.rm=TRUE) - qnorm(0.975, 0, 1)*sd(p0, na.rm=TRUE),
-                                    mean(p0, na.rm=TRUE) + qnorm(0.975, 0, 1)*sd(p0, na.rm=TRUE)),
-                      ci.nonpara = c(quantile(p0, probs = 0.025, na.rm = T),
-                                     quantile(p0, probs = 0.975, na.rm = T))),
-                        
-            p1 = list(values=p0,
-                      estim=mean(p0, na.rm=TRUE),
-                      se=sd(p0, na.rm=TRUE),
-                      ci.asympt = c(mean(p0, na.rm=TRUE) - qnorm(0.975, 0, 1)*sd(p0, na.rm=TRUE),
-                                    mean(p0, na.rm=TRUE) + qnorm(0.975, 0, 1)*sd(p0, na.rm=TRUE)),
-                      ci.nonpara = c(quantile(p0, probs = 0.025, na.rm = T),
-                                     quantile(p0, probs = 0.975, na.rm = T))),
-              
-            delta = list(values=delta, 
-                         estim=mean(delta, na.rm=TRUE),
-                         se = sd(delta, na.rm=TRUE),
-                         ci.asympt = c(mean(delta, na.rm=TRUE) - qnorm(0.975, 0, 1)*sd(delta, na.rm=TRUE),
-                                       mean(delta, na.rm=TRUE) + qnorm(0.975, 0, 1)*sd(delta, na.rm=TRUE)),
-                         ci.nonpara = c(quantile(delta, probs = 0.025, na.rm = T),
-                                        quantile(delta, probs = 0.975, na.rm = T)),
-                         p.value = ifelse(mean(delta, na.rm=TRUE)/sd(delta, na.rm=TRUE)<0,
-                                          2*pnorm(mean(delta, na.rm=TRUE)/sd(delta, na.rm=TRUE)),
-                                          2*(1-pnorm(mean(delta, na.rm=TRUE)/sd(delta, na.rm=TRUE))))),
-            
-            OR = list(values=mOR, 
-                      estim=mean(mOR, na.rm=TRUE),
-                      se = sd(mOR, na.rm=TRUE),
-                      ci.asympt = c(mean(mOR, na.rm=TRUE) - qnorm(0.975, 0, 1)*sd(mOR, na.rm=TRUE),
-                                    mean(mOR, na.rm=TRUE) + qnorm(0.975, 0, 1)*sd(mOR, na.rm=TRUE)),
-                      ci.nonpara = c(quantile(mOR, probs = 0.025, na.rm = T),
-                                     quantile(mOR, probs = 0.975, na.rm = T)),
-                       p.value = ifelse(mean(mOR, na.rm=TRUE)/sd(mOR, na.rm=TRUE)<0,
-                                        2*pnorm(mean(mOR, na.rm=TRUE)/sd(mOR, na.rm=TRUE)),
-                                        2*(1-pnorm(mean(mOR, na.rm=TRUE)/sd(mOR, na.rm=TRUE))))),
+            p0 = p0,  
+            p1 = p1,
+            delta = delta,
+            ratio = ratio,
+            OR = OR,
+            p0.unadj = p0.unadj,
+            p1.unadj = p1.unadj,
+            delta.unadj = delta.unadj,
+            ratio.unadj = ratio.unadj,
+            OR.unadj = OR.unadj,
             call = match.call()
             )
 

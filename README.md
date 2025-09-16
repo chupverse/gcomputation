@@ -33,18 +33,18 @@ For a binary outcome:
 ``` r
 data("dataPROPHYVAP")
 
-dataPROPHYVAP$VAP_EARLY_num <- ifelse(dataPROPHYVAP$VAP_EARLY == "Yes",1,0)
+dataPROPHYVAP$VAP_num <- ifelse(dataPROPHYVAP$VAP == "Yes",1,0)
 dataPROPHYVAP$GROUP_num <- ifelse(dataPROPHYVAP$GROUP == "Placebo",0,1)
 
 
-formula <- formula(VAP_EARLY_num ~ GROUP_num * AGE + SEXE + BMI + DIABETES)
+formula <- formula(VAP_EARLY_num ~ GROUP_num * AGE + SEX + BMI + DIABETES)
 
 gc1 <- gc_logistic(formula=formula, method="ridge", data=dataPROPHYVAP, group="GROUP_num",
               param.tune=NULL, boot.type="bcv", cv=10, boot.number=500,  effect="ATE",
-              progress=TRUE, boot.tune = TRUE)
+              progress=TRUE, boot.tune = TRUE, seed=8471)
 
 print(gc1)
-summary(gc1)
+summary(gc1, ci.type="norm")
 plot(gc1)
 ```
 
@@ -52,17 +52,17 @@ For a survival outcome:
 ``` r
 data(dataPROPHYVAP)
 
-dataPROPHYVAP$DEATH_J60_num <- ifelse(dataPROPHYVAP$DEATH_J60 == "Yes",1,0)
+dataPROPHYVAP$DEATH_num <- ifelse(dataPROPHYVAP$DEATH == "Yes",1,0)
 dataPROPHYVAP$GROUP_num <- ifelse(dataPROPHYVAP$GROUP == "Placebo",0,1)
 
-formula <- formula(Surv(FOLLOWUP_J60, DEATH_J60_num) ~ GROUP_num * AGE + SEXE + BMI + DIABETES)
+formula <- formula(Surv(TIME_DEATH, DEATH_num) ~ GROUP_num * AGE + SEX + BMI + DIABETES)
 
 gc1 <- gc_survival(formula=formula, method="lasso", data=dataPROPHYVAP, group="GROUP_num",
               param.tune=NULL, boot.type="bcv", cv=10, boot.number=500,  effect="ATE",
-              progress=TRUE , max.time=10, boot.tune = TRUE)
+              progress=TRUE , pro.time=10, boot.tune = TRUE, seed = 5312)
 
 print(gc1)
-summary(gc1)
+summary(gc1, ci.type="perc")
 plot(gc1)
 ```
 

@@ -1,5 +1,5 @@
-gc_survival <- function(formula, data, group, max.time, effect="ATE", method, param.tune=NULL, cv=10, boot.type="bcv",
-                        boot.number=500,  boot.tune=FALSE, progress=TRUE) {
+gc_survival <- function(formula, data, group, pro.time, effect="ATE", method, param.tune=NULL, cv=10, boot.type="bcv",
+                        boot.number=500,  boot.tune=FALSE, progress=TRUE, seed=NULL) {
   # Quality tests
   if(missing(formula)) {stop("The \"formula\" argument is missing (formula)")}
   if(missing(data)) {stop("The \"data\" argument is missing (data.frame)")}
@@ -27,12 +27,14 @@ gc_survival <- function(formula, data, group, max.time, effect="ATE", method, pa
   all_terms <- attr(terms(formula), "term.labels")
   formula.all <- formula
   
+  if(is.null(seed)) {seed <- sample(1:1000,1)}
   
-  if (missing(max.time)) {
-    warning("The argument \"max.time\" is missing, the median value of the time variable will be used")
-    max.time <- median(data[,times])
+  
+  if (missing(pro.time) | is.null(pro.time)) {
+    warning("The argument \"pro.time\" is missing, the median value of the time variable will be used")
+    pro.time <- median(data[,times])
   }
-  if (max.time > max(data[,times])) {stop("The argument \"max.time\" is higher than the maximum value of the time variable")}
+  if (pro.time > max(data[,times])) {stop("The argument \"pro.time\" is higher than the maximum value of the time variable")}
   
   
   
@@ -206,17 +208,21 @@ functions, stratification and clustering are not implemented") }
   data <- data[ttt,]
   N <- length(data[,times])
   
-  ############# Method
+  ### Method
 
   .x <- model.matrix(formula,data)[,-1]
   .y <- Surv(data[,times], data[,failures])
+  
+  
+  set.seed(seed)
+  foldid <- sample(rep(seq(cv), length.out = nrow(.x)))
   
 if(method == "lasso"){
   if(is.null(param.tune$lambda)==T | length(param.tune$lambda)>1){
 
     .cv.lasso <- cv.glmnet(x=.x, y=.y, family = "cox",  type.measure = "deviance",
                            nfolds = cv, parallel = FALSE, alpha=1, penalty.factor = .penalty.factor,keep=F,
-                           lambda=param.tune$lambda)
+                           lambda=param.tune$lambda, foldid = foldid)
 
     .tune.optimal=list(lambda=.cv.lasso$lambda.min)
     rm(.cv.lasso)  }   else{ .tune.optimal=list(lambda=param.tune$lambda) }
@@ -225,7 +231,7 @@ if(method == "lasso"){
     if(is.null(param.tune$lambda)==T | length(param.tune$lambda)>1){
       .cv.ridge <- cv.glmnet(x=.x, y=.y, family = "cox",  type.measure = "deviance",
                              parallel = FALSE, alpha=0, penalty.factor = .penalty.factor, nfolds = cv,
-                             lambda=param.tune$lambda)
+                             lambda=param.tune$lambda, foldid = foldid)
       .tune.optimal=list(lambda=.cv.ridge$lambda.min)
       rm(.cv.ridge)  } else{ .tune.optimal=list(lambda=param.tune$lambda) }
   }
@@ -237,7 +243,7 @@ if(method == "lasso"){
         .cv.en<-glmnet::cv.glmnet(x=.x, y=.y, family = "cox",  type.measure = "deviance",
                                   foldsid="folds", parallel = FALSE, alpha=param.tune$alpha[a],
                                   penalty.factor = .penalty.factor,
-                                  lambda=param.tune$lambda)
+                                  lambda=param.tune$lambda, foldid = foldid)
         .results<-rbind(.results,
                         cbind(rep(param.tune$alpha[a],length(.cv.en$lambda)),.cv.en$lambda,.cv.en$cvm))
       }
@@ -255,18 +261,16 @@ if(method == "lasso"){
     formula <- stepAIC( coxph(formula=formula(paste0("Surv(",times,",",failures,")~",group)), data=data),
                      scope=list(lower = formula(paste0("Surv(",times,",",failures,")~",group)), upper = formula),
                      direction="forward", k=2, trace=FALSE)$formula
-    .tune.optimal = NULL
   } 
   if(method == "bic"){
     formula <- stepAIC( coxph(formula=formula(paste0("Surv(",times,",",failures,")~",group)), data=data),
                         scope=list(lower = formula(paste0("Surv(",times,",",failures,")~",group)), upper = formula),
                         direction="forward", k=log(nrow(data)), trace=FALSE)$formula
-    .tune.optimal = NULL
   } 
 
   
   
-  #### Calibration survival function
+  ### Calibration survival function
   
   if(method == "all" | method == "aic" | method == "bic") {
     fit <- coxph(formula = formula, data=data)
@@ -275,6 +279,7 @@ if(method == "lasso"){
     .b <- glmnet_basesurv(data[,times], data[,failures], .lp.coxph, centered = FALSE)
     hazard <- .b$cumulative_base_hazard
     fit_times <- .b$times
+    .tune.optimal = NULL
   }
   if (method == "lasso") {
     fit <- glmnet(x = .x, y = .y, lambda = .tune.optimal$lambda,  type.measure = "deviance",
@@ -335,18 +340,29 @@ if(method == "lasso"){
   }
   
   
-  results.surv.calibration <- list(model=fit, time=T.multi, cumhaz=H.mean, surv=S.mean, H0.multi=H0.multi, lp=lp)
+  results.surv.calibration <- list(fit=fit, time=T.multi, cumhaz=H.mean, surv=S.mean, H0.multi=H0.multi, lp=lp)
   
 
-  ###   Bootstrapping
 
-  delta <- rep(NA, boot.number)
-  max.time.extrapolate <- 0
+  BCVerror <- 0
+  pro.time.extrapolate <- 0
+  
+  AHR <- c()
   RMST0 <- c()
   RMST1 <- c()
   deltaRMST <- c() 
-  BCVerror <- 0
-  AHR <- c()
+  surv0 <- c()
+  surv1 <- c()
+  deltasurv <- c()
+  
+  AHR.unadj <- c()
+  RMST0.unadj <- c()
+  RMST1.unadj <- c()
+  deltaRMST.unadj <- c()
+  surv0.unadj <- c()
+  surv1.unadj <- c()
+  deltasurv.unadj <- c()
+  
   for (b in 1:boot.number) {
     
     if(progress == TRUE){
@@ -378,8 +394,7 @@ if(method == "lasso"){
     data1[,group] = 1
   
 
-    ### Fixes the issue when there is modalities not present in valid or not in train
-    
+
     .x.learn = model.matrix(formula.all,data)[,-1][id,]
     .x.valid0 = model.matrix(formula.all,data0)[,-1][-sort(unique(id)),]
     .x.valid1 = model.matrix(formula.all,data1)[,-1][-sort(unique(id)),]
@@ -389,6 +404,78 @@ if(method == "lasso"){
     .y.learn <- Surv(data.learn[,times], data.learn[,failures])
 
     
+    
+    ### Unadjusted results
+    formula.unadj <- as.formula(paste0("Surv(",times,",",failures,")~",group))
+    fit <- coxph(formula = formula.unadj, data=data.learn)
+    
+    .lp.0.unadj <- predict(fit, newdata = data.valid0, type="lp")
+    .lp.1.unadj <- predict(fit, newdata = data.valid1, type="lp")
+    
+    .lp.unadj_learn <- predict(fit, newdata = data.learn, type="lp")
+    .b.unadj <- glmnet_basesurv(data.learn[,times], data.learn[,failures], .lp.unadj_learn, centered = FALSE)
+    hazard.unadj <- .b.unadj$cumulative_base_hazard
+    fit_times.unadj <- .b.unadj$times
+    
+    H0.multi.unadj <- c(0, hazard.unadj[fit_times.unadj %in% sort(unique(data.learn[data.learn[,failures]==1,times]))] )
+    T.multi.unadj <- c(0, fit_times.unadj[fit_times.unadj %in% sort(unique(data.learn[data.learn[,failures]==1,times]))] )
+    
+    lp.0.unadj <- as.vector(.lp.0.unadj)
+    lp.1.unadj <- as.vector(.lp.1.unadj)
+    
+    h0.unadj <- (H0.multi.unadj[2:length(T.multi.unadj)] - H0.multi.unadj[1:(length(T.multi.unadj)-1)])
+    hi.0.unadj <- exp(lp.0.unadj) * matrix(rep(h0.unadj,length(lp.0.unadj)), nrow=length(lp.0.unadj), byrow=TRUE)
+    Si.0.unadj <- exp(-exp(lp.0.unadj) * matrix(rep(H0.multi.unadj,length(lp.0.unadj)), nrow=length(lp.0.unadj), byrow=TRUE))
+    hi.0.unadj <- cbind(rep(0,length(lp.0.unadj)),hi.0.unadj)
+
+    h.mean.0.unadj <- apply(Si.0.unadj * hi.0.unadj, FUN="sum", MARGIN=2) / apply(Si.0.unadj, FUN="sum", MARGIN=2)
+    H.mean.0.unadj <- cumsum(h.mean.0.unadj)
+    S.mean.0.unadj <- exp(-H.mean.0.unadj) 
+    
+    hi.1.unadj <- exp(lp.1.unadj) * matrix(rep(h0.unadj,length(lp.1.unadj)), nrow=length(lp.1.unadj), byrow=TRUE)
+    Si.1.unadj <- exp(-exp(lp.1.unadj) * matrix(rep(H0.multi.unadj,length(lp.1.unadj)), nrow=length(lp.1.unadj), byrow=TRUE))
+    hi.1.unadj <- cbind(rep(0,length(lp.1.unadj)),hi.1.unadj)
+    h.mean.1.unadj <- apply(Si.1.unadj * hi.1.unadj, FUN="sum", MARGIN=2) / apply(Si.1.unadj, FUN="sum", MARGIN=2)
+    H.mean.1.unadj <- cumsum(h.mean.1.unadj)
+    S.mean.1.unadj <- exp(-H.mean.1.unadj)
+    
+    if (max(T.multi.unadj) != max(fit_times.unadj)) {
+      T.multi.unadj = c(T.multi.unadj, max(fit_times.unadj))
+      H.mean.0.unadj = c(H.mean.0.unadj, max(H.mean.0.unadj))
+      S.mean.0.unadj = c(S.mean.0.unadj, min(S.mean.0.unadj))
+      H.mean.1.unadj = c(H.mean.1.unadj, max(H.mean.1.unadj))
+      S.mean.1.unadj = c(S.mean.1.unadj, min(S.mean.1.unadj))
+    }
+    
+    .AHR.unadj <- sum(h.mean.1.unadj) / sum(h.mean.0.unadj)
+    
+    .S.mean.0.unadj_ord <- S.mean.0.unadj[order(T.multi.unadj)]
+    .S.mean.1.unadj_ord <- S.mean.1.unadj[order(T.multi.unadj)]
+    .T.multi.unadj_ord <- T.multi.unadj[order(T.multi.unadj)]
+    
+    .t.unadj <- c(.T.multi.unadj_ord[.T.multi.unadj_ord <= pro.time], min(pro.time, max(.T.multi.unadj_ord)))
+    .s0.unadj <- c(.S.mean.0.unadj_ord[.T.multi.unadj_ord <= pro.time], .S.mean.0.unadj_ord[length(.S.mean.0.unadj_ord)])
+    .s1.unadj <- c(.S.mean.1.unadj_ord[.T.multi.unadj_ord <= pro.time], .S.mean.1.unadj_ord[length(.S.mean.1.unadj_ord)])
+    
+    .RMST0.unadj <- sum((.t.unadj[2:length(.t.unadj)] - .t.unadj[1:(length(.t.unadj) - 1)]) * .s0.unadj[1:(length(.s0.unadj) - 1)])
+    .RMST1.unadj <- sum((.t.unadj[2:length(.t.unadj)] - .t.unadj[1:(length(.t.unadj) - 1)]) * .s1.unadj[1:(length(.s1.unadj) - 1)])
+    .deltaRMST.unadj <- .RMST1.unadj - .RMST0.unadj
+    
+    .surv0.unadj <- .S.mean.0.unadj_ord[findInterval(pro.time, .T.multi.unadj_ord, rightmost.closed = TRUE)]
+    .surv1.unadj <- .S.mean.1.unadj_ord[findInterval(pro.time, .T.multi.unadj_ord, rightmost.closed = TRUE)]
+    .deltasurv.unadj <- .surv1.unadj - .surv0.unadj
+    
+    AHR.unadj <- c(AHR.unadj, .AHR.unadj)
+    RMST0.unadj <- c(RMST0.unadj, .RMST0.unadj)
+    RMST1.unadj <- c(RMST1.unadj, .RMST1.unadj)
+    deltaRMST.unadj <- c(deltaRMST.unadj, .deltaRMST.unadj)
+    surv0.unadj <- c(surv0.unadj, .surv0.unadj)
+    surv1.unadj <- c(surv1.unadj, .surv1.unadj)
+    deltasurv.unadj <- c(deltasurv.unadj, .deltasurv.unadj)
+    
+
+    
+    ### GC
     if (method == "aic") {
       formula <- stepAIC( coxph(formula=formula(paste0("Surv(",times,",",failures,")~",group)), data=data.learn),
                           scope=list(lower = formula(paste0("Surv(",times,",",failures,")~",group)), upper = formula.all),
@@ -478,8 +565,8 @@ if(method == "lasso"){
       fit_times <- .b$times
     }
     
-    if (max(data.learn[,times]) < max.time) {
-      max.time.extrapolate = max.time.extrapolate + 1
+    if (max(data.learn[,times]) < pro.time) {
+      pro.time.extrapolate = pro.time.extrapolate + 1
     }
     
     baseline_hazard <- hazard
@@ -517,7 +604,6 @@ if(method == "lasso"){
     H.mean.1 <- cumsum(h.mean.1)
     S.mean.1 <- exp(-H.mean.1)
     
-    # Extrapolate max time
     if (max(T.multi) != max(fit_times)) {
       T.multi = c(T.multi, max(fit_times))
       H.mean.0 = c(H.mean.0, max(H.mean.0))
@@ -526,19 +612,26 @@ if(method == "lasso"){
       S.mean.1 = c(S.mean.1, min(S.mean.1))
     }
     
-    # HR
     AHR <- c(AHR, sum(h.mean.1) / sum(h.mean.0) )
     
-      # RMST step function
       .S.mean.0 <- S.mean.0[order(T.multi)]
       .S.mean.1 <- S.mean.1[order(T.multi)]
       .T.multi <- T.multi[order(T.multi)]
-      .t <- c(.T.multi[.T.multi <= max.time], min(max.time, max(.T.multi)))
-      .s0 <- c(.S.mean.0[.T.multi <= max.time], .S.mean.0[length(.S.mean.0)]) 
-      .s1 <- c(.S.mean.1[.T.multi <= max.time], .S.mean.1[length(.S.mean.1)]) 
+      .t <- c(.T.multi[.T.multi <= pro.time], min(pro.time, max(.T.multi)))
+      .s0 <- c(.S.mean.0[.T.multi <= pro.time], .S.mean.0[length(.S.mean.0)]) 
+      .s1 <- c(.S.mean.1[.T.multi <= pro.time], .S.mean.1[length(.S.mean.1)]) 
       .RMST0 <- sum((.t[2:length(.t)] - .t[1:(length(.t) - 1)]) * .s0[1:(length(.s0) - 1)])
       .RMST1 <- sum((.t[2:length(.t)] - .t[1:(length(.t) - 1)]) * .s1[1:(length(.s1) - 1)])  
     
+      
+      
+      .surv1 <- .S.mean.1[findInterval(pro.time, T.multi, rightmost.closed = TRUE)]
+      .surv0 <- .S.mean.0[findInterval(pro.time, T.multi, rightmost.closed = TRUE)]
+        
+      surv1 <- c(surv1,.surv1)
+      surv0 <- c(surv0,.surv0)
+      deltasurv <- c(deltasurv, .surv1 - .surv0)
+      
     
   RMST0 <- c(RMST0, .RMST0)
   RMST1 <- c(RMST1, .RMST1)
@@ -547,8 +640,8 @@ if(method == "lasso"){
     }
     
   if(progress==TRUE){ close(pb) }
-
-if (max.time.extrapolate > 1) {warning(paste0("In at least one boostrap sample the \"max.time\" was higher than the maximum follow-up time (survival was extrapolated in ",max.time.extrapolate," bootstrap samples). It is advised to pick a lower value for \"max.time\""))}
+  
+if (pro.time.extrapolate > 1) {warning(paste0("In at least one boostrap sample the \"pro.time\" was higher than the maximum follow-up time (survival was extrapolated in ",pro.time.extrapolate," bootstrap samples). It is advised to pick a lower value for \"pro.time\""))}
 if (BCVerror > 1) {warning(paste0("Skipped ",BCVerror," bootstrap iterations due to the validation dataset containing factors not in the train dataset. Either use type=\"boot\" instead of \"bcv\" or remove factors with rare modalities."))}  
 if (!is.null(.warnen)) {warning(paste0("The optimal tuning parameter alpha was equal to ",.warnen,", using ",ifelse(.warnen==0,"ridge","lasso")," instead"))}  
   
@@ -556,6 +649,7 @@ if (!is.null(.warnen)) {warning(paste0("The optimal tuning parameter alpha was e
   
 datakeep <- data[,which(colnames(data) %in% c(times,failures,group,all_terms))]
   
+
 res <- list(calibration=as.list(results.surv.calibration),
             tuning.parameters=.tune.optimal,
             data=datakeep,
@@ -563,47 +657,31 @@ res <- list(calibration=as.list(results.surv.calibration),
             method=method,
             cv=cv,
             missing=nmiss,
-            max.time=max.time,
+            pro.time=pro.time,
             boot.number = boot.number,
+            boot.type = boot.type,
             outcome=list(times=times, failures=failures),
             group=group,
             n = nrow(datakeep),
             nevent = sum(datakeep[,failures]),
-            RMST = list(all.RMST0 = RMST0,
-                        mean.RMST0=mean(RMST0, na.rm=TRUE),
-                        se.RMST0 = sd(RMST0, na.rm=TRUE),
-                        ci.low.asympt.RMST0 = mean(RMST0, na.rm=TRUE) - qnorm(0.975, 0, 1)*sd(RMST0, na.rm=TRUE),
-                        ci.upp.asympt.RMST0 = mean(RMST0, na.rm=TRUE) + qnorm(0.975, 0, 1)*sd(RMST0, na.rm=TRUE),
-                        ci.low.nonpara.RMST0 = quantile(RMST0, probs = 0.025, na.rm = T),
-                        ci.upp.nonpara.RMST0 = quantile(RMST0, probs = 0.975, na.rm = T),
-                        
-                        all.RMST1 = RMST1,
-                        mean.RMST1=mean(RMST1, na.rm=TRUE),
-                        se.RMST1 = sd(RMST1, na.rm=TRUE),
-                        ci.low.asympt.RMST1 = mean(RMST1, na.rm=TRUE) - qnorm(0.975, 0, 1)*sd(RMST1, na.rm=TRUE),
-                        ci.upp.asympt.RMST1 = mean(RMST1, na.rm=TRUE) + qnorm(0.975, 0, 1)*sd(RMST1, na.rm=TRUE),
-                        ci.low.nonpara.RMST1 = quantile(RMST1, probs = 0.025, na.rm = T),
-                        ci.upp.nonpara.RMST1 = quantile(RMST1, probs = 0.975, na.rm = T),
-              
-                        all.deltaRMST=deltaRMST, 
-                        mean.deltaRMST=mean(deltaRMST, na.rm=TRUE),
-                         se.deltaRMST = sd(deltaRMST, na.rm=TRUE),
-                         ci.low.asympt.deltaRMST = mean(deltaRMST, na.rm=TRUE) - qnorm(0.975, 0, 1)*sd(deltaRMST, na.rm=TRUE),
-                         ci.upp.asympt.deltaRMST = mean(deltaRMST, na.rm=TRUE) + qnorm(0.975, 0, 1)*sd(deltaRMST, na.rm=TRUE),
-                        ci.low.nonpara.deltaRMST = quantile(deltaRMST, probs = 0.025, na.rm = T),
-                        ci.upp.nonpara.deltaRMST = quantile(deltaRMST, probs = 0.975, na.rm = T),
-                         p.value.deltaRMST = ifelse(mean(deltaRMST, na.rm=TRUE)/sd(deltaRMST, na.rm=TRUE)<0,2*pnorm(mean(deltaRMST, na.rm=TRUE)/sd(deltaRMST, na.rm=TRUE)),2*(1-pnorm(mean(deltaRMST, na.rm=TRUE)/sd(deltaRMST, na.rm=TRUE))))
-                          ),
-            AHR = list(all.AHR=AHR, 
-                       mean.AHR=mean(AHR, na.rm=TRUE),
-                       se.AHR = sd(AHR, na.rm=TRUE),
-                       ci.low.asympt.AHR = mean(AHR, na.rm=TRUE) - qnorm(0.975, 0, 1)*sd(AHR, na.rm=TRUE),
-                       ci.upp.asympt.AHR = mean(AHR, na.rm=TRUE) + qnorm(0.975, 0, 1)*sd(AHR, na.rm=TRUE),
-                       ci.low.nonpara.AHR = quantile(AHR, probs = 0.025, na.rm = T),
-                       ci.upp.nonpara.AHR = quantile(AHR, probs = 0.975, na.rm = T),
-                       p.value.AHR = ifelse(mean(AHR, na.rm=TRUE)/sd(AHR, na.rm=TRUE)<0,2*pnorm(mean(AHR, na.rm=TRUE)/sd(AHR, na.rm=TRUE)),2*(1-pnorm(mean(AHR, na.rm=TRUE)/sd(AHR, na.rm=TRUE))))),
+            AHR = AHR,
+            RMST0 = RMST0,
+            RMST1 = RMST1,
+            deltaRMST = deltaRMST,
+            surv0 = surv0,
+            surv1 = surv1,
+            deltasurv = deltasurv,
+            AHR.unadj = AHR.unadj,
+            RMST0.unadj = RMST0.unadj,
+            RMST1.unadj = RMST1.unadj,
+            deltaRMST.unadj = deltaRMST.unadj,
+            surv0.unadj = surv0.unadj,
+            surv1.unadj = surv1.unadj,
+            deltasurv.unadj = deltasurv.unadj,
+            b=b,
             call = match.call()
-            )
+)
+
 
 class(res) <- "gcsurv"
 

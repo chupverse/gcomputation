@@ -12,7 +12,7 @@ Summarize an object returned by the function \code{gc_logistic}.
 }
 \usage{
 
-\method{summary}{gclogi}(object, digits=4, ...)
+\method{summary}{gclogi}(object, digits=4, ci.type=NULL, ci.level=0.95, ...)
 
 }
 \arguments{
@@ -21,22 +21,30 @@ Summarize an object returned by the function \code{gc_logistic}.
 
 \item{digits}{An optional integer for the number of digits to print when summarizing numeric values.}
 
+\item{ci.type}{The type of confidence intervals to calculate. Two types are possible: "norm" (asymptotic) and "perc" (non parametric).}
+
+\item{ci.level}{The confidence level required.}
+
 \item{...}{For future methods.}
 
 }
-\value{No return value for this S3 method.}
+\value{
+\item{GC}{The data.frame of the G-computation summary results.}
+\item{unadjusted}{The data.frame of the unadjusted summary results.}
+}
 \examples{
 data(dataPROPHYVAP)
 
-dataPROPHYVAP$VAP_EARLY_num <- ifelse(dataPROPHYVAP$VAP_EARLY == "Yes",1,0)
+dataPROPHYVAP$VAP_num <- ifelse(dataPROPHYVAP$VAP == "Yes",1,0)
 dataPROPHYVAP$GROUP_num <- ifelse(dataPROPHYVAP$GROUP == "Placebo",0,1)
 
-formula <- formula(VAP_EARLY_num ~ GROUP_num * AGE + SEXE + BMI + DIABETES)
+.f <- formula(VAP_num ~ GROUP_num * AGE + SEX + BMI + DIABETES)
 
-gc1 <- gc_logistic(formula=formula, method="ridge", data=dataPROPHYVAP,
+gc1 <- gc_logistic(formula=.f, method="ridge", data=dataPROPHYVAP,
               group="GROUP_num", param.tune=NULL, boot.type="bcv", cv=10,
               boot.number=500, effect="ATE", progress=TRUE, boot.tune = TRUE)
 summary(gc1)
 
+summary(gc1,ci.type="norm",ci.level=0.99)
 }
 \keyword{Summarizing}
