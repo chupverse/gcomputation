@@ -26,6 +26,9 @@ gc_logistic <- function(formula, data, group, effect="ATE", method, param.tune=N
   all_terms <- attr(terms(formula), "term.labels")
   formula.all <- formula
   
+  datakeep <- data[,which(colnames(data) %in% c(outcome,group,all_terms))]
+  data <- data[,which(colnames(data) %in% c(outcome,group,all_terms))]
+  
   if(is.null(seed)) {seed <- sample(1:1000,1)}
   
   
@@ -467,8 +470,7 @@ if(method == "lasso"){
 if (BCVerror > 1) {warning(paste0("Skipped ",BCVerror," bootstrap iterations due to the validation dataset containing factors not in the train dataset. Either use type=\"boot\" instead of \"bcv\" or remove factors with rare modalities."))}  
 if (!is.null(.warnen)) {warning(paste0("The optimal tuning parameter alpha was equal to ",.warnen,", using ",ifelse(.warnen==0,"ridge","lasso")," instead"))}  
   
-  
-datakeep <- data[,which(colnames(data) %in% c(outcome,group,all_terms))]
+
   
 res <- list(calibration=list(fit=calibration.fit,predict=calibration.predict),
             tuning.parameters=.tune.optimal.totalpop,

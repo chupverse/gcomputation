@@ -9,6 +9,8 @@ transpose <- function(object, newdata, effect="ATE", boot.number=500, seed=NULL)
   formula <- object$formula
   group <- object$group
   
+  newdata <- newdata[,which(colnames(newdata) %in% c(outcome,group,all_terms))]
+  
   if (any(is.na(newdata))){
     nmiss <- nrow(newdata)
     newdata <- na.omit(newdata)
