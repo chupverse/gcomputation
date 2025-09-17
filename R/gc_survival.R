@@ -27,6 +27,9 @@ gc_survival <- function(formula, data, group, pro.time, effect="ATE", method, pa
   all_terms <- attr(terms(formula), "term.labels")
   formula.all <- formula
   
+  datakeep <- data[,which(colnames(data) %in% c(outcome,group,all_terms))]
+  data <- data[,which(colnames(data) %in% c(outcome,group,all_terms))]
+  
   if(is.null(seed)) {seed <- sample(1:1000,1)}
   
   
