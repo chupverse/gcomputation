@@ -32,7 +32,7 @@ The \code{transport} function allows for applying a previously fitted G-computat
 The type of bootstrap ("bcv" or "boot") used for the variance estimation on \code{newdata} is inherited from the original \code{object} (i.e., \code{object$boot.type}).
 }
 \value{
-The function returns an object of the same class as the input \code{object} (\code{gclogi} or \code{gcsurv}), but with results updated for the \code{newdata}. The returned object is a list containing the same arguments as in \code{\link{gc_binary}} or \code{\link{gc_times}}.
+The function returns an object of the same class as the input \code{object} (\code{gcbinary} or \code{gctimes}), but with results updated for the \code{newdata}. The returned object is a list containing the same arguments as in \code{\link{gc_binary}} or \code{\link{gc_times}}.
 }
 \references{
 Joe de Keizer et al. G-computation for increasing performances of clinical trials with individual randomization and binary response. ArXiv 2024-11.
@@ -66,14 +66,14 @@ plot(gc1)
 newdata_binary <- subset(dataPROPHYVAP, AGE <= 50)
 
 ### transport the gc_binary model to the new dataset
-gclogi_transport <- transport(object=gc1, newdata=newdata_binary,
+gc1_tr <- transport(object=gc1, newdata=newdata_binary,
                                 effect="ATE",boot.number=500)
 
-print(gclogi_transport)
-summary(gclogi_transport, ci.type = "norm")
+print(gc1_tr)
+summary(gc1_tr, ci.type = "norm")
 
 
-### For continuous-time data
+### For time-to-event data
 data("dataPROPHYVAP")
 
 dataPROPHYVAP$DEATH_num <- ifelse(dataPROPHYVAP$DEATH == "Yes", 1, 0)
@@ -81,23 +81,23 @@ dataPROPHYVAP$GROUP_num <- ifelse(dataPROPHYVAP$GROUP == "Placebo", 0, 1)
 
 .f <- formula(Surv(TIME_DEATH, DEATH_num) ~ GROUP_num * (AGE + SEX + BMI + DIABETES))
 
-gcsurv1 <- gc_times(formula=.f, model="ridge",
+gc2 <- gc_times(formula=.f, model="ridge",
                        data=dataPROPHYVAP, group="GROUP_num",
                        pro.time=60, param.tune=NULL, boot.type="bcv", cv=10,
                        boot.number=500, effect="ATE", progress=TRUE, boot.tune=TRUE)
 
-print(gcsurv1)
-summary(gcsurv1)
-plot(gcsurv1)
+print(gc2)
+summary(gc2)
+plot(gc2)
 
 ### New dataset (for example a subset of younger patients)
 newdata_times <- subset(dataPROPHYVAP, AGE <= 50)
 
-gcsurv_transport <- transport(object=gcsurv1, newdata=newdata_times,
+gc2_tr <- transport(object=gc2, newdata=newdata_times,
                                 effect="ATE", boot.number=500, seed=4132)
 
-print(gcsurv_transport)
-summary(gcsurv_transport, ci.type="perc")
+print(gc2_tr)
+summary(gc2_tr, ci.type="perc")
 }
 \keyword{Causal inference}
 \keyword{G-computation}
