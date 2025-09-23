@@ -1,19 +1,19 @@
-\name{print.gcsurv}
-\alias{print.gcsurv}
+\name{print.gctimes}
+\alias{print.gctimes}
 
 \title{
-S3 Method for Printing an 'gcsurv' Object
+S3 Method for Printing an 'gctimes' Object
 }
 \description{
-Print a summary of the \code{gcsurv} object returned from gc_survival function
+Print a summary of the \code{gctimes} object returned from gc_times function
 }
 
 \usage{
-\method{print}{gcsurv}(x,  digits=4, ...)
+\method{print}{gctimes}(x,  digits=4, ...)
 }
 
 \arguments{
-  \item{x}{An object returned by the function \code{gc_survival}.}
+  \item{x}{An object returned by the function \code{gc_times}.}
   \item{digits}{An optional integer for the number of digits to print when printing numeric values.}
   \item{...}{For future methods.}
 }
@@ -30,9 +30,9 @@ formula <- formula(Surv(TIME_DEATH, DEATH_num) ~ GROUP_num * AGE + SEX +
               BMI + DIABETES)
 
 set.seed(12251)
-gc1 <- gc_survival(formula=formula, method="lasso", data=dataPROPHYVAP,
+gc1 <- gc_times(formula=formula, model="lasso", data=dataPROPHYVAP,
 group="GROUP_num", param.tune=NULL, boot.type="bcv", cv=10, boot.number=500,
-              effect="ATE", progress=TRUE , pro.time=10, boot.tune = FALSE)
+              effect="ATE", progress=TRUE , pro.time=10, boot.tune=FALSE)
 
 print(gc1)
 }

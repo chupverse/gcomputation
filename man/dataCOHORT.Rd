@@ -12,7 +12,7 @@ the 12 hours postintubation after severe brain injury can decrease the risk of e
 \format{
 A data frame with 2000 observations for the following variables:
 \describe{
-\item{\code{GROUP}}{This character vector represents the treatment group (Ceftriaxone/Placebo).}
+\item{\code{GROUP}}{This character vector represents the treatment group (Ceftriaxone/Untreated).}
 \item{\code{AGE}}{This numeric vector represents the age in years}
 \item{\code{SEX}}{This character vector represents the sex (F=female/M=male)}
 \item{\code{BMI}}{This numeric vector represents the body mass index}
@@ -44,7 +44,7 @@ plot(survfit(Surv(TIME_DEATH, DEATH_num) ~ GROUP, data = dataCOHORT),
  xlab="Post-randomiszation time (in days)", ylab="Patient survival",
  mark.time=FALSE, col=c(2,1), lty=c(2,1))
  
-legend("bottomleft", c("Placebo",
+legend("bottomleft", c("Untreated",
  "Ceftriaxone"), col=1:2, lty=1:2) 
 }
 \keyword{Dataset}

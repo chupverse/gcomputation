@@ -1,6 +1,6 @@
-plot.gclogi <- function (x, method="calibration", n.groups=5, ...) {
+plot.gcbinary <- function (x, method="calibration", n.groups=5, smooth=FALSE, ...) {
   if (!(method %in% c("calibration","proportion"))) {stop("Method needs to be calibration or proportion")}
-  if (!is.null(x$newdata)) {stop("Plots do not work on a transposed object")}
+  if (!is.null(x$newdata)) {stop("Plots do not work on a transposed object, use the original object")}
   if (method == "proportion") {
     data = x$data
     outcome = x$outcome
@@ -32,6 +32,30 @@ plot.gclogi <- function (x, method="calibration", n.groups=5, ...) {
   if (method == "calibration") {
     
     if (!is.null(x$m)) {
+      
+      if (smooth) {
+        all_pred <- unlist(lapply(1:x$m, function(i) x$calibration[[i]]$predict))
+        all_outcome <- unlist(lapply(1:x$m, function(i) x$data[[i]][, x$outcome]))
+        
+        col <- if(hasArg(col)) list(...)$col else 1
+        lwd <- if(hasArg(lwd)) list(...)$lwd else 2
+        xlim <- if(hasArg(xlim)) list(...)$xlim else c(0,1)
+        ylim <- if(hasArg(ylim)) list(...)$ylim else c(0,1)
+        xlab <- if(hasArg(xlab)) list(...)$xlab else "Predicted proportions"
+        ylab <- if(hasArg(ylab)) list(...)$ylab else "Observed proportions"
+        main <- if(hasArg(main)) list(...)$main else ""
+        
+        plot(0, 0, type="n", xlim=xlim, ylim=ylim, xlab=xlab, ylab=ylab, main=main)
+        
+        fit <- loess(all_outcome ~ all_pred)
+        ord <- order(all_pred)
+        lines(all_pred[ord], predict(fit)[ord], col=col, lwd=lwd)
+        abline(c(0,1), lty=2)
+        
+      } else {
+      
+      cols <- if (hasArg(col)) rep(list(...)$col, length.out = x$m) else rainbow(x$m)
+      ltys <- if (hasArg(lty)) rep(list(...)$lty, length.out = x$m) else rep(1, x$m)
       for (i in 1:x$m) {
         .event = x$data[[i]][,x$outcome]
         .pred = x$calibration[[i]]$predict
@@ -88,17 +112,27 @@ plot.gclogi <- function (x, method="calibration", n.groups=5, ...) {
         if(hasArg(xlab)==FALSE) {xlab <- "Predicted proportions"} else {xlab <- list(...)$xlab}
         if(hasArg(main)==FALSE) {main <- ""} else {main <- list(...)$main}
         
-        plot(.est, .obs, cex = cex, cex.lab = cex.lab, cex.axis = cex.axis, cex.main = cex.main,
-             type = type, col = col, lty = lty, lwd = lwd, main=main,
-             pch = pch, ylim = ylim, xlim = xlim, ylab=ylab, xlab=xlab)
+        if (i == 1) {
+          plot(.est, .obs, type = type, col = cols[i], lty = ltys[i],
+               cex = cex, cex.lab = cex.lab, cex.axis = cex.axis, cex.main = cex.main,
+               lwd = lwd, pch = pch, ylim = ylim, xlim = xlim,
+               ylab = ylab, xlab = xlab, main = main)
+          abline(c(0,1), lty = 2)
+        } else {
+          points(.est, .obs, type = type, col = cols[i], lty = ltys[i],
+                 cex = cex, lwd = lwd, pch = pch)
+        }
         
         abline(c(0,1), lty=2)
         
         segments(x0 = .est, y0 = .lower, x1 = .est, y1 = .upper, col = col, lwd = lwd)
       }
-      
+      }
       
     } else {
+      
+      if (any(is.na(x$data))){x$data <- na.omit(x$data) }
+      
       .event = x$data[,x$outcome]
       .pred = x$calibration$predict
       data = x$data
