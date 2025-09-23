@@ -4,9 +4,11 @@ gcomputation: an R Package for Estimating Marginal Effects Using G-Computation
 
 ## Description
 
-The R package ‘gcomputation’ provides functions to compute G-Computation (GC) to estimate marginal effects. It has both estimating marginal logistic functions and marginal survival functions regarding two exposures. The package implements GC with various working models or algorithms, referred to as Q-models.
+The R package ‘gcomputation’ provides functions to compute G-Computation (GC) to estimate marginal effects. It has both estimating marginal functions for binary and time-to-event outcomes regarding two exposures. The package implements GC with various working models or algorithms, referred to as Q-models.
 
 ## Key Features
+
+`gc_binary` and `gc_times` are the two main functions, implementing GC to estimate marginal functions for binary and time-to-event outcomes regarding two exposures using a variety of modeling strategies.
 
 The package supports several methods to construct the Q-model:
 *   "all": Uses a usual logistic or Cox model, incorporating all variables provided in the formula.
