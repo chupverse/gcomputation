@@ -75,8 +75,8 @@ summary(gc_mi, ci.type="perc")
 # Define a new dataset (e.g., a subset of younger patients, AGE<=50)
 newdata_binary <- subset(dataPROPHYVAP, AGE<=50)
 
-# Transport the fitted gc1 model to the new dataset
-gc_transport <- transport(object=gc1, newdata=newdata_binary,
+# Transport the fitted gc_bin model to the new dataset
+gc_transport <- transport(object=gc_bin, newdata=newdata_binary,
                               effect="ATE", boot.number=500)
 
 summary(gc_transport, ci.type="norm")
