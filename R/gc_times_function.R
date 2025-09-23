@@ -1,15 +1,15 @@
-gc_survival <- function(formula, data, group, pro.time, effect="ATE", method, param.tune=NULL, cv=10, boot.type="bcv",
-                        boot.number=500,  boot.tune=FALSE, progress=TRUE, seed=NULL) {
+.gc_times <- function(formula, data, group, pro.time, effect="ATE", model, param.tune=NULL, cv=10, boot.type="bcv",
+                        boot.number=500, boot.tune=FALSE, progress=TRUE, seed=NULL) {
   # Quality tests
   if(missing(formula)) {stop("The \"formula\" argument is missing (formula)")}
   if(missing(data)) {stop("The \"data\" argument is missing (data.frame)")}
   if(missing(group)) {stop("The \"group\" argument is missing (character string, name of the binary grouping variable in the formula)")}
-  if(missing(method)) {stop("Specify one method among : elasticnet, lasso, ridge, all, aic, bic")}
-  if(length(method)!=1)
-  { stop("Specify one method among : elasticnet, lasso, ridge, all, aic, bic")   }
+  if(missing(model)) {stop("Specify one model among : elasticnet, lasso, ridge, all, aic, bic")}
+  if(length(model)!=1)
+  { stop("Specify one model among : elasticnet, lasso, ridge, all, aic, bic")   }
   
-  if(!(method %in% c("elasticnet","lasso","ridge","all","aic","bic"))) {
-    stop("Specify one method among : elasticnet, lasso, ridge, all, aic, bic")
+  if(!(model %in% c("elasticnet","lasso","ridge","all","aic","bic"))) {
+    stop("Specify one model among : elasticnet, lasso, ridge, all, aic, bic")
   }
   if(!is.data.frame(data)){stop("The argument \"data\" needs to be a data.frame") }
   
@@ -128,8 +128,8 @@ functions, stratification and clustering are not implemented") }
   # Initialisation of the tuning parameter
 
 
-  if(!(method %in% c("lasso","all","ridge","aic","bic","elasticnet"))){
-    stop("New \"method\" is not yet implemented, use one among the following : lasso, all, ridge, aic, bic or elasticnet") }
+  if(!(model %in% c("lasso","all","ridge","aic","bic","elasticnet"))){
+    stop("New \"model\" is not yet implemented, use one among the following : lasso, all, ridge, aic, bic or elasticnet") }
   
   
   time.pred <- sort(unique(data[,times]))
@@ -142,9 +142,9 @@ functions, stratification and clustering are not implemented") }
   }
   
   
-  if(method == "lasso"){
+  if(model == "lasso"){
     if(!(is.numeric(param.tune) | is.null(param.tune))){
-      stop("Tune parameter lambda for Lasso method needs to be a scalar or a vector or NULL")
+      stop("Tune parameter lambda for Lasso model needs to be a scalar or a vector or NULL")
     }
 
     if (is.null(param.tune)) {
@@ -158,9 +158,9 @@ functions, stratification and clustering are not implemented") }
     }
   }  
   
-  if(method == "ridge"){
+  if(model == "ridge"){
     if(!(is.numeric(param.tune) | is.null(param.tune))){
-      stop("Tune parameter lambda for Ridge method needs to be a scalar or a vector or NULL")
+      stop("Tune parameter lambda for Ridge model needs to be a scalar or a vector or NULL")
     }
     
     if (is.null(param.tune)) {
@@ -174,7 +174,7 @@ functions, stratification and clustering are not implemented") }
     }
   }
   
-  if (method == "elasticnet") {
+  if (model == "elasticnet") {
     if (!is.list(param.tune) & !is.vector(param.tune) & !is.null(param.tune)) {stop("Tune parameter needs to be a list or a vector (lambda then alpha) or NULL")}
     if (is.list(param.tune) & length(param.tune) != 2) {stop("List tune parameter needs to have a length of 2 (lambda then alpha)")}
     if (is.vector(param.tune) & length(param.tune) != 2) {stop("Vector tune parameter needs to have a length of 2 (lambda then alpha)")}
@@ -211,7 +211,7 @@ functions, stratification and clustering are not implemented") }
   data <- data[ttt,]
   N <- length(data[,times])
   
-  ### Method
+  ### model
 
   .x <- model.matrix(formula,data)[,-1]
   .y <- Surv(data[,times], data[,failures])
@@ -220,7 +220,7 @@ functions, stratification and clustering are not implemented") }
   set.seed(seed)
   foldid <- sample(rep(seq(cv), length.out = nrow(.x)))
   
-if(method == "lasso"){
+if(model == "lasso"){
   if(is.null(param.tune$lambda)==T | length(param.tune$lambda)>1){
 
     .cv.lasso <- cv.glmnet(x=.x, y=.y, family = "cox",  type.measure = "deviance",
@@ -230,7 +230,7 @@ if(method == "lasso"){
     .tune.optimal=list(lambda=.cv.lasso$lambda.min)
     rm(.cv.lasso)  }   else{ .tune.optimal=list(lambda=param.tune$lambda) }
 }
-  if(method == "ridge"){
+  if(model == "ridge"){
     if(is.null(param.tune$lambda)==T | length(param.tune$lambda)>1){
       .cv.ridge <- cv.glmnet(x=.x, y=.y, family = "cox",  type.measure = "deviance",
                              parallel = FALSE, alpha=0, penalty.factor = .penalty.factor, nfolds = cv,
@@ -239,7 +239,7 @@ if(method == "lasso"){
       rm(.cv.ridge)  } else{ .tune.optimal=list(lambda=param.tune$lambda) }
   }
   .warnen = NULL
-  if(method == "elasticnet"){
+  if(model == "elasticnet"){
     if (is.null(param.tune$lambda)==T | length(param.tune$lambda)>1 | length(param.tune$alpha)>1){
       .results<-c()
       for( a in 1:length(param.tune$alpha)){
@@ -260,12 +260,12 @@ if(method == "lasso"){
     if (.tune.optimal$alpha == 1 & boot.tune == FALSE) {.warnen=1}
     if (.tune.optimal$alpha == 0 & boot.tune == FALSE) {.warnen=0}
   } 
-  if(method == "aic"){
+  if(model == "aic"){
     formula <- stepAIC( coxph(formula=formula(paste0("Surv(",times,",",failures,")~",group)), data=data),
                      scope=list(lower = formula(paste0("Surv(",times,",",failures,")~",group)), upper = formula),
                      direction="forward", k=2, trace=FALSE)$formula
   } 
-  if(method == "bic"){
+  if(model == "bic"){
     formula <- stepAIC( coxph(formula=formula(paste0("Surv(",times,",",failures,")~",group)), data=data),
                         scope=list(lower = formula(paste0("Surv(",times,",",failures,")~",group)), upper = formula),
                         direction="forward", k=log(nrow(data)), trace=FALSE)$formula
@@ -275,7 +275,7 @@ if(method == "lasso"){
   
   ### Calibration survival function
   
-  if(method == "all" | method == "aic" | method == "bic") {
+  if(model == "all" | model == "aic" | model == "bic") {
     fit <- coxph(formula = formula, data=data)
     
     .lp.coxph <- predict(fit, newdata = data, type="lp")
@@ -284,7 +284,7 @@ if(method == "lasso"){
     fit_times <- .b$times
     .tune.optimal = NULL
   }
-  if (method == "lasso") {
+  if (model == "lasso") {
     fit <- glmnet(x = .x, y = .y, lambda = .tune.optimal$lambda,  type.measure = "deviance",
                                 family = "cox", alpha = 1, penalty.factor = .penalty.factor)
     
@@ -293,7 +293,7 @@ if(method == "lasso"){
     hazard <- .b$cumulative_base_hazard
     fit_times <- .b$times
   }
-  if (method == "ridge") {
+  if (model == "ridge") {
     fit <- glmnet(x = .x, y = .y, lambda = .tune.optimal$lambda,  type.measure = "deviance",
                   family = "cox", alpha = 0, penalty.factor = .penalty.factor)
     
@@ -302,7 +302,7 @@ if(method == "lasso"){
     hazard <- .b$cumulative_base_hazard
     fit_times <- .b$times
   }
-  if (method == "elasticnet") {
+  if (model == "elasticnet") {
     fit <- glmnet(x = .x, y = .y, lambda = .tune.optimal$lambda,  type.measure = "deviance",
                   family = "cox", alpha = .tune.optimal$alpha, penalty.factor = .penalty.factor)
     
@@ -319,7 +319,7 @@ if(method == "lasso"){
   T.multi <- c(0, fit_times[fit_times %in% sort(unique(data[data[,failures]==1,times]))] )
 
 
-  if (method == "all" | method == "aic" | method == "bic") {.lp <- predict(fit, newdata = data, type="lp")} else{
+  if (model == "all" | model == "aic" | model == "bic") {.lp <- predict(fit, newdata = data, type="lp")} else{
     .lp <- predict(fit, newx = .x)
   }
   
@@ -479,7 +479,7 @@ if(method == "lasso"){
 
     
     ### GC
-    if (method == "aic") {
+    if (model == "aic") {
       formula <- stepAIC( coxph(formula=formula(paste0("Surv(",times,",",failures,")~",group)), data=data.learn),
                           scope=list(lower = formula(paste0("Surv(",times,",",failures,")~",group)), upper = formula.all),
                           direction="forward", k=2, trace=FALSE)$formula
@@ -492,7 +492,7 @@ if(method == "lasso"){
       fit_times <- .b$times
     }
     
-    if (method == "bic") {
+    if (model == "bic") {
       formula <- stepAIC( coxph(formula=formula(paste0("Surv(",times,",",failures,")~",group)), data=data.learn),
                           scope=list(lower = formula(paste0("Surv(",times,",",failures,")~",group)), upper = formula.all),
                           direction="forward", k=log(nrow(data.learn)), trace=FALSE)$formula
@@ -505,7 +505,7 @@ if(method == "lasso"){
       fit_times <- .b$times
     }
     
-    if(method == "all") {
+    if(model == "all") {
       fit <- coxph(formula = formula, data=data.learn)
       
       .lp.coxph <- predict(fit, newdata = data.learn, type="lp")
@@ -513,7 +513,7 @@ if(method == "lasso"){
       hazard <- .b$cumulative_base_hazard
       fit_times <- .b$times
     }
-    if (method == "lasso") {
+    if (model == "lasso") {
       if (boot.tune) {
         .cv.lasso <- cv.glmnet(x=.x.learn, y=.y.learn, family = "cox",  type.measure = "deviance",
                                nfolds = cv, parallel = FALSE, alpha=1, penalty.factor = .penalty.factor,keep=F,
@@ -528,7 +528,7 @@ if(method == "lasso"){
       hazard <- .b$cumulative_base_hazard
       fit_times <- .b$times
     }
-    if (method == "ridge") {
+    if (model == "ridge") {
       if (boot.tune) {
         .cv.ridge <- cv.glmnet(x=.x.learn, y=.y.learn, family = "cox",  type.measure = "deviance",
                                parallel = FALSE, alpha=0, penalty.factor = .penalty.factor, nfolds = cv,
@@ -543,7 +543,7 @@ if(method == "lasso"){
       hazard <- .b$cumulative_base_hazard
       fit_times <- .b$times
     }
-    if (method == "elasticnet") {
+    if (model == "elasticnet") {
       if (boot.tune) {
         .results<-c()
         for( a in 1:length(param.tune$alpha)){
@@ -579,7 +579,7 @@ if(method == "lasso"){
   
     
     
-    if (method == "all" | method == "aic" | method == "bic") {
+    if (model == "all" | model == "aic" | model == "bic") {
       .lp.0 <- tryCatch({predict(fit, newdata = data.valid0, type="lp")}, error = function(e) {return(NULL) })
       if (is.null(.lp.0)) {BCVerror <- BCVerror + 1 ; next}
       .lp.1 <- predict(fit, newdata = data.valid1, type="lp")
@@ -648,7 +648,7 @@ if (pro.time.extrapolate > 1) {warning(paste0("In at least one boostrap sample t
 if (BCVerror > 1) {warning(paste0("Skipped ",BCVerror," bootstrap iterations due to the validation dataset containing factors not in the train dataset. Either use type=\"boot\" instead of \"bcv\" or remove factors with rare modalities."))}  
 if (!is.null(.warnen)) {warning(paste0("The optimal tuning parameter alpha was equal to ",.warnen,", using ",ifelse(.warnen==0,"ridge","lasso")," instead"))}  
   
-  if (method == "aic" | method == "bic") {.tune.optimal = NULL}
+  if (model == "aic" | model == "bic") {.tune.optimal = NULL}
   
   
 
@@ -656,7 +656,7 @@ res <- list(calibration=as.list(results.surv.calibration),
             tuning.parameters=.tune.optimal,
             data=datakeep,
             formula=formula.all,
-            method=method,
+            model=model,
             cv=cv,
             missing=nmiss,
             pro.time=pro.time,
@@ -680,12 +680,11 @@ res <- list(calibration=as.list(results.surv.calibration),
             surv0.unadj = surv0.unadj,
             surv1.unadj = surv1.unadj,
             deltasurv.unadj = deltasurv.unadj,
-            b=b,
             call = match.call()
 )
 
 
-class(res) <- "gcsurv"
+class(res) <- "gctimes"
 
 return(res)
 }

@@ -1,29 +1,32 @@
-\name{summary.gcsurv}
-\alias{summary.gcsurv}
+\name{summary.gctimes}
+\alias{summary.gctimes}
 \title{
 
-S3 Method for Summarizing an 'gcsurv' Object
+S3 Method for Summarizing an 'gctimes' Object
 
 }
 \description{
 
-Summarize an object returned by the function \code{gc_survival}.
+Summarize an object returned by the function \code{gc_times}.
 
 }
 \usage{
 
-\method{summary}{gcsurv}(object, digits=4, ci.type=NULL, ci.level=0.95, ...)
+\method{summary}{gctimes}(object, digits=4, ci.type=NULL, ci.level=0.95,
+                         unadjusted=TRUE, ...)
 
 }
 \arguments{
 
-\item{object}{An object returned by the function \code{gc_survival}.}
+\item{object}{An object returned by the function \code{gc_times}.}
 
 \item{digits}{An optional integer for the number of digits to print when summarizing numeric values.}
 
 \item{ci.type}{The type of confidence intervals to calculate. Two types are possible: "norm" (asymptotic) and "perc" (non parametric).}
 
 \item{ci.level}{The confidence level required.}
+
+\item{unadjusted}{A logicical value to print the unadjusted results. The default is \code{TRUE}}
 
 \item{...}{For future methods.}
 
@@ -41,10 +44,10 @@ dataPROPHYVAP$GROUP_num <- ifelse(dataPROPHYVAP$GROUP == "Placebo",0,1)
 formula <- formula(Surv(TIME_DEATH, DEATH_num) ~ GROUP_num * AGE +
               SEX + BMI + DIABETES)
               
-gc1 <- gc_survival(formula=formula, method="lasso", data=dataPROPHYVAP,
+gc1 <- gc_times(formula=formula, model="lasso", data=dataPROPHYVAP,
               group="GROUP_num", param.tune=NULL, boot.type="bcv", cv=10,
               boot.number=500, effect="ATE", progress=TRUE , pro.time=10,
-              boot.tune = TRUE)
+              boot.tune=TRUE)
 summary(gc1)
 
 }

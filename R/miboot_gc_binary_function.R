@@ -1,7 +1,7 @@
-miboot_gc_logistic <- function(formula, data, group, ..., m = 5,
-                               effect = "ATE", gc.method, param.tune = NULL, cv = 10,
-                               boot.type = "bcv", boot.number = 500,
-                               boot.tune = FALSE, progress = TRUE, seed = NULL) {
+.miboot_gc_binary <- function(formula, data, group, effect="ATE",
+                               model, param.tune=NULL, cv=10,
+                               boot.type="bcv", boot.number=500, boot.tune=FALSE,
+                               progress=TRUE, seed=NULL, m=5, ...) {
   
   cl <- match.call()
   
@@ -48,8 +48,8 @@ miboot_gc_logistic <- function(formula, data, group, ..., m = 5,
     
     gc_seed <- if (!is.null(seed)) (seed + i) else NULL
     
-    gc_res <- gc_logistic(formula = formula, data = current_imputed_data, group = group,
-                          effect = effect, method = gc.method, param.tune = param.tune,
+    gc_res <- .gc_binary(formula = formula, data = current_imputed_data, group = group,
+                          effect = effect, model = model, param.tune = param.tune,
                           cv = cv, boot.type = boot.type, boot.number = boot.number,
                           boot.tune = boot.tune, progress = FALSE, seed = gc_seed)
     
@@ -67,11 +67,11 @@ miboot_gc_logistic <- function(formula, data, group, ..., m = 5,
     ratio.unadj <- c(ratio.unadj, gc_res$ratio.unadj)
     OR.unadj <- c(OR.unadj, gc_res$OR.unadj)
     
-    if (gc.method %in% c("lasso", "ridge")) {
+    if (model %in% c("lasso", "ridge")) {
       if (!is.null(gc_res$tuning.parameters$lambda)) {
         lambdas <- c(lambdas, gc_res$tuning.parameters$lambda)
       }
-    } else if (gc.method == "elasticnet") {
+    } else if (model == "elasticnet") {
       if (!is.null(gc_res$tuning.parameters$lambda)) {
         lambdas <- c(lambdas, gc_res$tuning.parameters$lambda)
       }
@@ -108,9 +108,9 @@ miboot_gc_logistic <- function(formula, data, group, ..., m = 5,
   final_res$m <- m
   final_res$initial.data <- data
     
-  if (gc.method %in% c("lasso", "ridge")) {
+  if (model %in% c("lasso", "ridge")) {
     final_res$tuning.parameters=list(lambda=lambdas)
-  } else if (gc.method == "elasticnet") {
+  } else if (model == "elasticnet") {
     final_res$tuning.parameters=list(alpha=alphas, lambda=lambdas)
   }
   

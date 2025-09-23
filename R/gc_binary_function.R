@@ -1,15 +1,15 @@
-gc_logistic <- function(formula, data, group, effect="ATE", method, param.tune=NULL, cv=10, boot.type="bcv",
-                        boot.number=500,  boot.tune=FALSE, progress=TRUE, seed=NULL) {
+.gc_binary <- function(formula, data, group, effect="ATE", model, param.tune=NULL, cv=10, boot.type="bcv",
+                      boot.number=500, boot.tune=FALSE, progress=TRUE, seed=NULL) {
   # Quality tests
   if(missing(formula)) {stop("The \"formula\" argument is missing (formula)")}
   if(missing(data)) {stop("The \"data\" argument is missing (data.frame)")}
   if(missing(group)) {stop("The \"group\" argument is missing (character string, name of the binary grouping variable in the formula)")}
-  if(missing(method)) {stop("Specify one method among : elasticnet, lasso, ridge, all, aic, bic")}
-  if(length(method)!=1)
-  { stop("Specify one method among : elasticnet, lasso, ridge, all, aic, bic")   }
+  if(missing(model)) {stop("Specify one model among : elasticnet, lasso, ridge, all, aic, bic")}
+  if(length(model)!=1)
+  { stop("Specify one model among : elasticnet, lasso, ridge, all, aic, bic")   }
   
-  if(!(method %in% c("elasticnet","lasso","ridge","all","aic", "bic"))) {
-    stop("Specify one method among : elasticnet, lasso, ridge, all, aic, bic")
+  if(!(model %in% c("elasticnet","lasso","ridge","all","aic", "bic"))) {
+    stop("Specify one model among : elasticnet, lasso, ridge, all, aic, bic")
   }
   if(!is.data.frame(data)){stop("The argument \"data\" needs to be a data.frame") }
   
@@ -68,7 +68,7 @@ functions, stratification and clustering are not implemented") }
     stop("Two modalities encoded 0 (for non-treated/non-exposed patients) and 1 (for treated/exposed patients) are required in the \"group\" variable")
   }
   
-
+  
   mod2 <- unique(data[,outcome])
   if(length(mod2) != 2 | ((mod2[1] != 0 & mod2[2] != 1) & (mod2[1] != 1 & mod2[2] != 0))){
     stop("Two modalities encoded 0 (for censored patients) and 1 (for events) are required in the \"failures\" variable")
@@ -83,7 +83,7 @@ functions, stratification and clustering are not implemented") }
   }
   
   
-
+  
   if (any(is.na(data))){
     nmiss <- nrow(data)
     data <- na.omit(data)
@@ -91,7 +91,7 @@ functions, stratification and clustering are not implemented") }
     warning("Rows containing NA values have been removed from the dataset!")
   } else {nmiss <- 0}
   
-
+  
   if (cv < 3 | !is.numeric(cv)) {
     stop("nfolds must be bigger than 3; nfolds=10 recommended")
   }
@@ -105,15 +105,15 @@ functions, stratification and clustering are not implemented") }
   }
   
   
-
+  
   # Initialisation of the tuning parameter
-
-
-  if(!(method %in% c("lasso","all","ridge","aic","bic","elasticnet"))){
-    stop("New \"method\" is not yet implemented, use one among the following : lasso, all, ridge, aic, bic or elasticnet") }
   
   
-
+  if(!(model %in% c("lasso","all","ridge","aic","bic","elasticnet"))){
+    stop("New \"model\" is not yet implemented, use one among the following : lasso, all, ridge, aic, bic or elasticnet") }
+  
+  
+  
   if(progress==TRUE){
     max.progess <- boot.number
     pb <- txtProgressBar(min = 0, max = max.progess, style = 3, width = 50, char = "=")
@@ -121,14 +121,14 @@ functions, stratification and clustering are not implemented") }
     setTxtProgressBar(pb, ip)
   }
   
-
   
   
-  if(method == "lasso"){
+  
+  if(model == "lasso"){
     if(!(is.numeric(param.tune) | is.null(param.tune))){
-      stop("Tune parameter lambda for Lasso method needs to be a scalar or a vector or NULL")
+      stop("Tune parameter lambda for Lasso model needs to be a scalar or a vector or NULL")
     }
-
+    
     if (is.null(param.tune)) {
       param.tune=list(lambda=NULL)
     } else {
@@ -140,9 +140,9 @@ functions, stratification and clustering are not implemented") }
     }
   }  
   
-  if(method == "ridge"){
+  if(model == "ridge"){
     if(!(is.numeric(param.tune) | is.null(param.tune))){
-      stop("Tune parameter lambda for Ridge method needs to be a scalar or a vector or NULL")
+      stop("Tune parameter lambda for Ridge model needs to be a scalar or a vector or NULL")
     }
     
     if (is.null(param.tune)) {
@@ -156,7 +156,7 @@ functions, stratification and clustering are not implemented") }
     }
   }
   
-  if (method == "elasticnet") {
+  if (model == "elasticnet") {
     if (!is.list(param.tune) & !is.vector(param.tune) & !is.null(param.tune)) {stop("Tune parameter needs to be a list or a vector (lambda then alpha) or NULL")}
     if (is.list(param.tune) & length(param.tune) != 2) {stop("List tune parameter needs to have a length of 2 (lambda then alpha)")}
     if (is.vector(param.tune) & length(param.tune) != 2) {stop("Vector tune parameter needs to have a length of 2 (lambda then alpha)")}
@@ -181,19 +181,19 @@ functions, stratification and clustering are not implemented") }
       warning("Only one lambda given, the \"boot.tune\" parameter was set to FALSE")
     }
   }
-
+  
   
   
   ### Effect  
-
+  
   if(effect=="ATE"){ ttt <- which(data[,group] %in% c(0,1))
   }else if(effect=="ATT"){ ttt <- which(data[,group] == 1)
   }else ttt <- which(data[,group] == 0 )
   data <- data[ttt,]
   N <- length(data[,outcome])
   
-  ### Method
-
+  ### model
+  
   .x <- model.matrix(formula,data)[,-1]
   .y <- data[,outcome]
   
@@ -201,17 +201,17 @@ functions, stratification and clustering are not implemented") }
   set.seed(seed)
   foldid <- sample(rep(seq(cv), length.out = nrow(.x)))
   
-if(method == "lasso"){
-  if(is.null(param.tune$lambda)==T | length(param.tune$lambda)>1){
-
-    .cv.lasso <- cv.glmnet(x=.x, y=.y, family = "binomial",  type.measure = "deviance",
-                           nfolds = cv, parallel = FALSE, alpha=1, penalty.factor = .penalty.factor,keep=F,
-                           lambda=param.tune$lambda, foldid = foldid)
-
-    .tune.optimal=list(lambda=.cv.lasso$lambda.min)
-    rm(.cv.lasso)  }   else{ .tune.optimal=list(lambda=param.tune$lambda) }
-}
-  if(method == "ridge"){
+  if(model == "lasso"){
+    if(is.null(param.tune$lambda)==T | length(param.tune$lambda)>1){
+      
+      .cv.lasso <- cv.glmnet(x=.x, y=.y, family = "binomial",  type.measure = "deviance",
+                             nfolds = cv, parallel = FALSE, alpha=1, penalty.factor = .penalty.factor,keep=F,
+                             lambda=param.tune$lambda, foldid = foldid)
+      
+      .tune.optimal=list(lambda=.cv.lasso$lambda.min)
+      rm(.cv.lasso)  }   else{ .tune.optimal=list(lambda=param.tune$lambda) }
+  }
+  if(model == "ridge"){
     if(is.null(param.tune$lambda)==T | length(param.tune$lambda)>1){
       .cv.ridge <- cv.glmnet(x=.x, y=.y, family = "binomial",  type.measure = "deviance",
                              parallel = FALSE, alpha=0, penalty.factor = .penalty.factor, nfolds = cv,
@@ -220,7 +220,7 @@ if(method == "lasso"){
       rm(.cv.ridge)  } else{ .tune.optimal=list(lambda=param.tune$lambda) }
   }
   .warnen = NULL
-  if(method == "elasticnet"){
+  if(model == "elasticnet"){
     if (is.null(param.tune$lambda)==T | length(param.tune$lambda)>1 | length(param.tune$alpha)>1){
       .results<-c()
       for( a in 1:length(param.tune$alpha)){
@@ -241,38 +241,38 @@ if(method == "lasso"){
     if (.tune.optimal$alpha == 1 & boot.tune == FALSE) {.warnen=1}
     if (.tune.optimal$alpha == 0 & boot.tune == FALSE) {.warnen=0}
   } 
-  if(method == "aic"){
+  if(model == "aic"){
     formula <- stepAIC( glm(formula=formula(paste0(outcome,"~",group)), data=data,family="binomial"),
-                     scope=list(lower = formula(paste0(outcome,"~",group)), upper = formula),
-                     direction="forward", k=2, trace=FALSE)$formula
+                        scope=list(lower = formula(paste0(outcome,"~",group)), upper = formula),
+                        direction="forward", k=2, trace=FALSE)$formula
   } 
-  if(method == "bic"){
+  if(model == "bic"){
     formula <- stepAIC( glm(formula=formula(paste0(outcome,"~",group)), data=data,family="binomial"),
                         scope=list(lower = formula(paste0(outcome,"~",group)), upper = formula),
                         direction="forward", k=log(nrow(data)), trace=FALSE)$formula
   } 
-
+  
   
   
   #### Calibration logistic function
-
   
-  if(method == "all" | method == "aic" | method == "bic") {
+  
+  if(model == "all" | model == "aic" | model == "bic") {
     .tune.optimal = formula
     fit <- glm(formula = formula, data=data, family="binomial")
     calibration.predict <- predict(fit, newdata = data, type = "response")
   }
-  if (method == "lasso") {
+  if (model == "lasso") {
     fit <- glmnet(x = .x, y = .y, lambda = .tune.optimal$lambda,  type.measure = "deviance",
-                                family = "binomial", alpha = 1, penalty.factor = .penalty.factor)
+                  family = "binomial", alpha = 1, penalty.factor = .penalty.factor)
     calibration.predict <- predict(fit, newx=.x, type="response")
   }
-  if (method == "ridge") {
+  if (model == "ridge") {
     fit <- glmnet(x = .x, y = .y, lambda = .tune.optimal$lambda,  type.measure = "deviance",
                   family = "binomial", alpha = 0, penalty.factor = .penalty.factor)
     calibration.predict <- predict(fit, newx=.x, type="response")
   }
-  if (method == "elasticnet") {
+  if (model == "elasticnet") {
     fit <- glmnet(x = .x, y = .y, lambda = .tune.optimal$lambda,  type.measure = "deviance",
                   family = "binomial", alpha = .tune.optimal$alpha, penalty.factor = .penalty.factor)
     calibration.predict <- predict(fit, newx=.x, type="response")
@@ -281,7 +281,7 @@ if(method == "lasso"){
   .tune.optimal.totalpop <- .tune.optimal
   calibration.fit <- fit
   
-
+  
   ###   Bootstrapping
   
   BCVerror <- 0
@@ -305,7 +305,7 @@ if(method == "lasso"){
     }
     
     id = sample(1:N, size = N, replace = TRUE)
-   
+    
     data.learn = data[id,]
     if (boot.type == "bcv") {data.valid = data[-sort(unique(id)),]} else{
       data.valid = data[id,]
@@ -326,16 +326,16 @@ if(method == "lasso"){
     data0=data1=data
     data0[,group] = 0
     data1[,group] = 1
-  
-
+    
+    
     ### Fixes the issue when there is modalities not present in valid or not in train
     
     .x.learn = model.matrix(formula.all,data)[,-1][id,]
     .x.valid0 = model.matrix(formula.all,data0)[,-1][-sort(unique(id)),]
     .x.valid1 = model.matrix(formula.all,data1)[,-1][-sort(unique(id)),]
-  
+    
     .y.learn <- data.learn[,outcome]
-
+    
     
     ### Unadjusted results
     fit <- glm(formula = as.formula(paste(outcome,"~",group)), data=data.learn, family="binomial")
@@ -349,7 +349,7 @@ if(method == "lasso"){
     
     
     ### GC
-    if (method == "aic") {
+    if (model == "aic") {
       formula <- stepAIC( glm(formula=formula(paste0(outcome,"~",group)), data=data.learn,family="binomial"),
                           scope=list(lower = formula(paste0(outcome,"~",group)), upper = formula.all),
                           direction="forward", k=2, trace=FALSE)$formula
@@ -364,7 +364,7 @@ if(method == "lasso"){
       .ratio = .p1 / .p0
     }
     
-    if (method == "bic") {
+    if (model == "bic") {
       formula <- stepAIC( glm(formula=formula(paste0(outcome,"~",group)), data=data.learn,family="binomial"),
                           scope=list(lower = formula(paste0(outcome,"~",group)), upper = formula.all),
                           direction="forward", k=log(nrow(data.learn)), trace=FALSE)$formula
@@ -379,7 +379,7 @@ if(method == "lasso"){
       .ratio = .p1 / .p0
     }
     
-    if(method == "all") {
+    if(model == "all") {
       fit <- glm(formula = formula, data=data.learn, family="binomial")
       
       .p0 = mean(predict(fit, newdata = data.valid0, type = "response"))
@@ -390,7 +390,7 @@ if(method == "lasso"){
       .ratio = .p1 / .p0
     }
     
-    if (method == "lasso") {
+    if (model == "lasso") {
       if (boot.tune) {
         .cv.lasso <- cv.glmnet(x=.x.learn, y=.y.learn, family = "binomial",  type.measure = "deviance",
                                nfolds = cv, parallel = FALSE, alpha=1, penalty.factor = .penalty.factor,keep=F,
@@ -408,7 +408,7 @@ if(method == "lasso"){
       .ratio = .p1 / .p0
     }
     
-    if (method == "ridge") {
+    if (model == "ridge") {
       if (boot.tune) {
         .cv.ridge <- cv.glmnet(x=.x.learn, y=.y.learn, family = "binomial",  type.measure = "deviance",
                                parallel = FALSE, alpha=0, penalty.factor = .penalty.factor, nfolds = cv,
@@ -425,7 +425,7 @@ if(method == "lasso"){
       .delta = .p1 - .p0
       .ratio = .p1 / .p0
     }
-    if (method == "elasticnet") {
+    if (model == "elasticnet") {
       if (boot.tune) {
         .results<-c()
         for( a in 1:length(param.tune$alpha)){
@@ -463,42 +463,42 @@ if(method == "lasso"){
     OR.unadj <- c(OR.unadj, .OR.unadj)
     delta.unadj <- c(delta.unadj, .delta.unadj)
     ratio.unadj <- c(ratio.unadj, .ratio.unadj)
-    }
-    
+  }
+  
   if(progress==TRUE){ close(pb) }
-
-if (BCVerror > 1) {warning(paste0("Skipped ",BCVerror," bootstrap iterations due to the validation dataset containing factors not in the train dataset. Either use type=\"boot\" instead of \"bcv\" or remove factors with rare modalities."))}  
-if (!is.null(.warnen)) {warning(paste0("The optimal tuning parameter alpha was equal to ",.warnen,", using ",ifelse(.warnen==0,"ridge","lasso")," instead"))}  
   
-
+  if (BCVerror > 1) {warning(paste0("Skipped ",BCVerror," bootstrap iterations due to the validation dataset containing factors not in the train dataset. Either use type=\"boot\" instead of \"bcv\" or remove factors with rare modalities."))}  
+  if (!is.null(.warnen)) {warning(paste0("The optimal tuning parameter alpha was equal to ",.warnen,", using ",ifelse(.warnen==0,"ridge","lasso")," instead"))}  
   
-res <- list(calibration=list(fit=calibration.fit,predict=calibration.predict),
-            tuning.parameters=.tune.optimal.totalpop,
-            data=datakeep,
-            formula=formula.all,
-            method=method,
-            cv=cv,
-            missing=nmiss,
-            boot.number = boot.number,
-            boot.type = boot.type,
-            outcome=outcome,
-            group=group,
-            n = nrow(datakeep),
-            nevent = sum(datakeep[,outcome]),
-            p0 = p0,  
-            p1 = p1,
-            delta = delta,
-            ratio = ratio,
-            OR = OR,
-            p0.unadj = p0.unadj,
-            p1.unadj = p1.unadj,
-            delta.unadj = delta.unadj,
-            ratio.unadj = ratio.unadj,
-            OR.unadj = OR.unadj,
-            call = match.call()
-            )
-
-class(res) <- "gclogi"
-
-return(res)
+  
+  
+  res <- list(calibration=list(fit=calibration.fit,predict=calibration.predict),
+              tuning.parameters=.tune.optimal.totalpop,
+              data=datakeep,
+              formula=formula.all,
+              model=model,
+              cv=cv,
+              missing=nmiss,
+              boot.number = boot.number,
+              boot.type = boot.type,
+              outcome=outcome,
+              group=group,
+              n = nrow(datakeep),
+              nevent = sum(datakeep[,outcome]),
+              p0 = p0,  
+              p1 = p1,
+              delta = delta,
+              ratio = ratio,
+              OR = OR,
+              p0.unadj = p0.unadj,
+              p1.unadj = p1.unadj,
+              delta.unadj = delta.unadj,
+              ratio.unadj = ratio.unadj,
+              OR.unadj = OR.unadj,
+              call = match.call()
+  )
+  
+  class(res) <- "gcbinary"
+  
+  return(res)
 }
