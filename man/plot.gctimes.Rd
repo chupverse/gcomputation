@@ -23,7 +23,8 @@ This S3 method offers two types of plots: a calibration plot and a survival curv
 
 \item{method}{A character string specifying the type of plot. Possible values are \code{calibration} (default) or \code{survival}.}
 
-\item{n.groups}{An integer for the number of groups to divide the predicted probabilities into when \code{method="calibration"} is used. The default is 5.}
+\item{n.groups}{An integer for the number of groups to divide the predicted probabilities into when \code{method="calibration"} is used. The default is 5.
+Note: If \code{n.groups} is set too high, some groups may have too few events to reliably estimate survival. An error can also occur if the Q-model is singular.}
 
 \item{pro.time}{The prognostic time at which the calibration plot of the survival probabilities is performed. If \code{NULL} (default), the median of the outcome time variable is used.}
 

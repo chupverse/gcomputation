@@ -2,6 +2,7 @@ plot.gcbinary <- function (x, method="calibration", n.groups=5, smooth=FALSE, ..
   if (!(method %in% c("calibration","proportion"))) {stop("Method needs to be calibration or proportion")}
   if (!is.null(x$newdata)) {stop("Plots do not work on a transposed object, use the original object")}
   if (method == "proportion") {
+    if (!is.null(x$m)) {stop("The \"method=proportion\" is not available when \"boot.mi=TRUE\"")}
     data = x$data
     outcome = x$outcome
     group = x$group
@@ -32,38 +33,22 @@ plot.gcbinary <- function (x, method="calibration", n.groups=5, smooth=FALSE, ..
   if (method == "calibration") {
     
     if (!is.null(x$m)) {
-      
-      if (smooth) {
-        all_pred <- unlist(lapply(1:x$m, function(i) x$calibration[[i]]$predict))
-        all_outcome <- unlist(lapply(1:x$m, function(i) x$data[[i]][, x$outcome]))
-        
-        col <- if(hasArg(col)) list(...)$col else 1
-        lwd <- if(hasArg(lwd)) list(...)$lwd else 2
-        xlim <- if(hasArg(xlim)) list(...)$xlim else c(0,1)
-        ylim <- if(hasArg(ylim)) list(...)$ylim else c(0,1)
-        xlab <- if(hasArg(xlab)) list(...)$xlab else "Predicted proportions"
-        ylab <- if(hasArg(ylab)) list(...)$ylab else "Observed proportions"
-        main <- if(hasArg(main)) list(...)$main else ""
-        
-        plot(0, 0, type="n", xlim=xlim, ylim=ylim, xlab=xlab, ylab=ylab, main=main)
-        
-        fit <- loess(all_outcome ~ all_pred)
-        ord <- order(all_pred)
-        lines(all_pred[ord], predict(fit)[ord], col=col, lwd=lwd)
-        abline(c(0,1), lty=2)
-        
-      } else {
-      
       cols <- if (hasArg(col)) rep(list(...)$col, length.out = x$m) else rainbow(x$m)
       ltys <- if (hasArg(lty)) rep(list(...)$lty, length.out = x$m) else rep(1, x$m)
+      n.grouperror <- 0
+      firstplot <- TRUE
+      all_est = c()
+      all_obs = c()
+      all_lower = c()
+      all_upper = c()
       for (i in 1:x$m) {
-        .event = x$data[[i]][,x$outcome]
         .pred = x$calibration[[i]]$predict
         data = x$data[[i]]
         outcome = x$data[[i]][,x$outcome]
         
         if (length(unique(c(-Inf, quantile(.pred, seq(1/n.groups, 1, 1/n.groups))))) != length(c(-Inf, quantile(.pred, seq(1/n.groups, 1, 1/n.groups))))) {
-          stop("n.groups too high")
+          n.grouperror <- n.grouperror + 1
+          next
         }
         
         .grps <- as.numeric(cut(.pred,
@@ -95,6 +80,11 @@ plot.gcbinary <- function (x, method="calibration", n.groups=5, smooth=FALSE, ..
           p + 1.96 * sqrt(p * (1 - p) / n)
         })
         
+        if (any(sapply(.lower, function(x) length(x) == 0))) {
+          n.grouperror <- n.grouperror + 1
+          next
+        }
+        
         if(hasArg(cex)==FALSE) {cex <-1} else {cex <- list(...)$cex}
         if(hasArg(cex.lab)==FALSE) {cex.lab <- 1} else {cex.lab <- list(...)$cex.lab}
         if(hasArg(cex.axis)==FALSE) {cex.axis <- 1} else {cex.axis <- list(...)$cex.axis}
@@ -112,28 +102,52 @@ plot.gcbinary <- function (x, method="calibration", n.groups=5, smooth=FALSE, ..
         if(hasArg(xlab)==FALSE) {xlab <- "Predicted proportions"} else {xlab <- list(...)$xlab}
         if(hasArg(main)==FALSE) {main <- ""} else {main <- list(...)$main}
         
-        if (i == 1) {
-          plot(.est, .obs, type = type, col = cols[i], lty = ltys[i],
-               cex = cex, cex.lab = cex.lab, cex.axis = cex.axis, cex.main = cex.main,
-               lwd = lwd, pch = pch, ylim = ylim, xlim = xlim,
-               ylab = ylab, xlab = xlab, main = main)
-          abline(c(0,1), lty = 2)
+        
+        if (smooth == TRUE) {
+          all_est = c(all_est, .est)
+          all_obs = c(all_obs, .obs)
+          all_lower = c(all_lower, .lower)
+          all_upper = c(all_upper, .upper)
         } else {
-          points(.est, .obs, type = type, col = cols[i], lty = ltys[i],
-                 cex = cex, lwd = lwd, pch = pch)
+          if (firstplot == TRUE) {
+            plot(.est, .obs, type = type, col = cols[i], lty = ltys[i],
+                 cex = cex, cex.lab = cex.lab, cex.axis = cex.axis, cex.main = cex.main,
+                 lwd = lwd, pch = pch, ylim = ylim, xlim = xlim,
+                 ylab = ylab, xlab = xlab, main = main)
+            firstplot = FALSE
+          } else {
+            points(.est, .obs, type = type, col = cols[i], lty = ltys[i],
+                   cex = cex, lwd = lwd, pch = pch)
+          }
+          abline(c(0,1), lty=2)
+          segments(x0 = .est, y0 = .lower, x1 = .est, y1 = .upper, col = col, lwd = lwd)
         }
+      }
+      if (n.grouperror > 0) {
+        if (n.grouperror == 1) {
+          warning(paste0("There was ",n.grouperror," model where \"n.groups\" was too high (See ?plot.gcbinary)"))
+        } else {
+          warning(paste0("There were ",n.grouperror," models where \"n.groups\" was too high (See ?plot.gcbinary)"))
+        }
+      }
+      if (smooth == TRUE) {
+        plot(0, 0, type="n", xlim=xlim, ylim=ylim, xlab=xlab, ylab=ylab, main=main)
+        
+        loesssmooth <- loess(all_obs ~ all_est)
+        loesslower <- loess(all_lower ~ all_est)
+        loessupper <- loess(all_upper ~ all_est)
+        
+        all_est_grid <- seq(min(all_est), max(all_est), length.out=200)
+        lines(all_est_grid, predict(loesssmooth, newdata=data.frame(all_est=all_est_grid)), col=col, lwd=lwd, lty=lty)
+        lines(all_est_grid, predict(loesslower, newdata=data.frame(all_est=all_est_grid)), col=col, lty=2)
+        lines(all_est_grid, predict(loessupper, newdata=data.frame(all_est=all_est_grid)), col=col, lty=2)
         
         abline(c(0,1), lty=2)
-        
-        segments(x0 = .est, y0 = .lower, x1 = .est, y1 = .upper, col = col, lwd = lwd)
-      }
       }
       
     } else {
       
       if (any(is.na(x$data))){x$data <- na.omit(x$data) }
-      
-      .event = x$data[,x$outcome]
       .pred = x$calibration$predict
       data = x$data
       outcome = x$data[,x$outcome]

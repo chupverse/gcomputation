@@ -22,7 +22,8 @@ This S3 method offers two types of plots: a calibration plot and a proportion pl
 
 \item{method}{A character string specifying the type of plot. Possible values are \code{calibration} (default) or \code{proportion}.}
 
-\item{n.groups}{An integer for the number of groups to divide the predicted probabilities into when \code{method="calibration"} is used. The default is 5.}
+\item{n.groups}{An integer for the number of groups to divide the predicted probabilities into when \code{method="calibration"} is used. The default is 5. 
+Note: If \code{n.groups} is set too high, some groups may have too few events to reliably estimate proportions. An error can also occur if the Q-model is singular.}
 
 \item{smooth}{A logical value by default equal to \code{FALSE}. If \code{boot.mi} is TRUE, enables plotting a single smooth calibration curve averaged over all \code{m} values instead of separate curves.}
 
