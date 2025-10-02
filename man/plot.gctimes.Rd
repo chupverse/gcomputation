@@ -65,7 +65,7 @@ formula <- formula(Surv(TIME_DEATH, DEATH_num) ~ GROUP_num * (AGE + SEX +
 
 gc1 <- gc_times(formula=formula, model="lasso", data=dataPROPHYVAP,
               group="GROUP_num", param.tune=NULL, boot.type="bcv", cv=10,
-              boot.number=500, effect="ATE", progress=TRUE , pro.time=10,
+              boot.number=10, effect="ATE", progress=TRUE , pro.time=10,
               boot.tune=TRUE)
 
 plot(gc1)

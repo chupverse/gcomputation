@@ -51,12 +51,14 @@ data("dataPROPHYVAP")
 dataPROPHYVAP$VAP_num <- ifelse(dataPROPHYVAP$VAP == "Yes",1,0)
 dataPROPHYVAP$GROUP_num <- ifelse(dataPROPHYVAP$GROUP == "Placebo",0,1)
 
-
 .f <- formula(VAP_num ~ GROUP_num * (AGE + SEX + BMI + DIABETES))
 
+### In practice use larger values of boot.number (e.g., 500).
+### Here we set boot.number = 10 for speed in CRAN checks.
 gc1 <- gc_binary(formula=.f, model="ridge", data=dataPROPHYVAP,
               group="GROUP_num", param.tune=NULL, boot.type="bcv", cv=10,
-              boot.number=500, effect="ATE", progress=TRUE, boot.tune=TRUE)
+              boot.number=10, effect="ATE", progress=TRUE, boot.tune=FALSE,
+              seed=7718)
 
 print(gc1)
 summary(gc1)
@@ -67,7 +69,7 @@ newdata_binary <- subset(dataPROPHYVAP, AGE <= 50)
 
 ### transport the gc_binary model to the new dataset
 gc1_tr <- transport(object=gc1, newdata=newdata_binary,
-                                effect="ATE",boot.number=500)
+                                effect="ATE",boot.number=10)
 
 print(gc1_tr)
 summary(gc1_tr, ci.type = "norm")
@@ -81,10 +83,12 @@ dataPROPHYVAP$GROUP_num <- ifelse(dataPROPHYVAP$GROUP == "Placebo", 0, 1)
 
 .f <- formula(Surv(TIME_DEATH, DEATH_num) ~ GROUP_num * (AGE + SEX + BMI + DIABETES))
 
+### boot.number is set to 10 here only for speed.
 gc2 <- gc_times(formula=.f, model="ridge",
                        data=dataPROPHYVAP, group="GROUP_num",
                        pro.time=60, param.tune=NULL, boot.type="bcv", cv=10,
-                       boot.number=500, effect="ATE", progress=TRUE, boot.tune=TRUE)
+                       boot.number=10, effect="ATE", progress=TRUE, boot.tune=FALSE,
+                       seed=9341)
 
 print(gc2)
 summary(gc2)
@@ -94,7 +98,7 @@ plot(gc2)
 newdata_times <- subset(dataPROPHYVAP, AGE <= 50)
 
 gc2_tr <- transport(object=gc2, newdata=newdata_times,
-                                effect="ATE", boot.number=500, seed=4132)
+                                effect="ATE", boot.number=10, seed=4132)
 
 print(gc2_tr)
 summary(gc2_tr, ci.type="perc")

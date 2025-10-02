@@ -122,10 +122,12 @@ dataPROPHYVAP$GROUP_num <- ifelse(dataPROPHYVAP$GROUP == "Placebo",0,1)
 formula <- formula(Surv(TIME_DEATH, DEATH_num) ~ GROUP_num * (AGE +
               SEX + BMI + DIABETES))
 
+### In practice use larger values of boot.number (e.g., 500).
+### Here we set boot.number = 10 for speed in CRAN checks.
 gc1 <- gc_times(formula=formula, model="lasso", data=dataPROPHYVAP,
               group="GROUP_num", param.tune=NULL, boot.type="bcv", cv=10,
-              boot.number=500,  effect="ATE", progress=TRUE , pro.time=10,
-              boot.tune=TRUE)
+              boot.number=10,  effect="ATE", progress=TRUE , pro.time=10,
+              boot.tune=TRUE, seed=1591)
 
 print(gc1)
 summary(gc1)
@@ -133,19 +135,23 @@ plot(gc1)
 
 
 ### To specify specific tuning parameters:
+### boot.number is set to 10 here only for speed.
 gc2 <- gc_times(formula=formula, model="elasticnet", data=dataPROPHYVAP,
               group="GROUP_num", param.tune=list(lambda=c(0.1,0.25,0.5),
-              alpha=0.5), boot.type="bcv", cv=10, boot.number=500, effect="ATE",
-              progress=TRUE , pro.time=10, boot.tune=FALSE)
+              alpha=0.5), boot.type="bcv", cv=10, boot.number=10, effect="ATE",
+              progress=TRUE , pro.time=10, boot.tune=FALSE, seed=9012)
 gc2$tuning.parameters
 
 
 ### To apply multiple imputation to handle missing data:
-formula <- formula(Surv(TIME_DEATH, DEATH_num) ~ GROUP_num * (AGE +
-              SEX + BMI + DIABETES + GLASGOW + INJURY))
-gc3 <- gc_times(formula=formula, model="ridge", data=dataPROPHYVAP,
-              group="GROUP_num", boot.type="bcv", cv=10, boot.number=500, effect="ATE",
-              progress=TRUE , pro.time=10, boot.tune=FALSE, boot.mi=TRUE, m=5)
+### boot.number is set to 10 here only for speed.
+formula <- formula(Surv(TIME_DEATH, DEATH_num) ~ GROUP_num + AGE +
+              SEX + BMI + DIABETES + GLASGOW + INJURY)
+              
+gc3 <- gc_times(formula=formula, model="all", data=dataPROPHYVAP,
+              group="GROUP_num", boot.type="boot", boot.number=10,
+              effect="ATE", progress=TRUE , pro.time=10, boot.tune=FALSE,
+              boot.mi=TRUE, m=5, seed=4819)
 plot(gc3,smooth=TRUE)
 }
 
