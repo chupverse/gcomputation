@@ -45,7 +45,7 @@ dataPROPHYVAP$GROUP_num <- ifelse(dataPROPHYVAP$GROUP == "Placebo",0,1)
 
 gc1 <- gc_binary(formula=.f, model="ridge", data=dataPROPHYVAP,
               group="GROUP_num", param.tune=NULL, boot.type="bcv", cv=10,
-              boot.number=500, effect="ATE", progress=TRUE, boot.tune=TRUE)
+              boot.number=10, effect="ATE", progress=TRUE, boot.tune=TRUE)
 summary(gc1)
 
 summary(gc1,ci.type="norm",ci.level=0.99)
