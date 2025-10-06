@@ -8,7 +8,7 @@ A simulated data set from the PROPHYVAP study: a randomized clinical trial in in
 Ventilator-associated pneumonia (VAP) is the first cause of healthcare-associated infections in intensive
 care units. The goal of this study is to determine whether a single dose of ceftriaxone within
 the 12 hours postintubation after severe brain injury can decrease the risk of early-onset VAP and mortality at 60 days.
-The PROPHYVAP is a French multicentre, randomised, double-blind, placebo-controlled,
+The PROPHYVAP is a French multicentre, randomized, double-blind, placebo-controlled,
 clinical trial.
 }
 \usage{data(dataPROPHYVAP)}
@@ -44,7 +44,7 @@ dataPROPHYVAP$DEATH_num <- ifelse(dataPROPHYVAP$DEATH == "Yes",1,0)
 
 ### Kaplan and Meier estimation of the survival at day 60
 plot(survfit(Surv(TIME_DEATH, DEATH_num) ~ GROUP, data = dataPROPHYVAP),
- xlab="Post-randomiszation time (in days)", ylab="Patient survival",
+ xlab="Post-randomization time (in days)", ylab="Patient survival",
  mark.time=FALSE, col=c(2,1), lty=c(2,1))
  
 legend("bottomleft", c("Placebo",

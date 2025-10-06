@@ -41,7 +41,7 @@ dataCOHORT$DEATH_num <- ifelse(dataCOHORT$DEATH == "Yes",1,0)
 
 ### Kaplan and Meier estimation of the survival at day 60
 plot(survfit(Surv(TIME_DEATH, DEATH_num) ~ GROUP, data = dataCOHORT),
- xlab="Post-randomiszation time (in days)", ylab="Patient survival",
+ xlab="Post-randomization time (in days)", ylab="Patient survival",
  mark.time=FALSE, col=c(2,1), lty=c(2,1))
  
 legend("bottomleft", c("Untreated",
