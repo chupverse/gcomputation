@@ -130,7 +130,7 @@ summary.gctimes <- function (object, digits=4, ci.type=NULL, ci.level=0.95, unad
       ), ncol=2, byrow=TRUE)
     }
     tmp_GC <- cbind(res_GC[,1], `Lower CI` = ci_vals_GC[,1], `Upper CI` = ci_vals_GC[,2])
-    colnames(tmp_GC)[2] <- "Estimate"
+    colnames(tmp_GC)[1] <- "Estimate"
     res_GC <- cbind(tmp_GC, res_GC[,2:4])
   }
   printCoefmat(res_GC, digits = digits, P.values = TRUE, has.Pvalue = TRUE, na.print = "", ...)
@@ -253,7 +253,7 @@ summary.gctimes <- function (object, digits=4, ci.type=NULL, ci.level=0.95, unad
         ), ncol=2, byrow=TRUE)
       }
       tmp_unadj <- cbind(res_unadj[,1], `Lower CI` = ci_vals_unadj[,1], `Upper CI` = ci_vals_unadj[,2])
-      colnames(tmp_unadj)[2] <- "Estimate"
+      colnames(tmp_unadj)[1] <- "Estimate"
       res_unadj <- cbind(tmp_unadj, res_unadj[,2:4])
     }
     printCoefmat(res_unadj, digits = digits, P.values = TRUE, has.Pvalue = TRUE, na.print = "", ...)

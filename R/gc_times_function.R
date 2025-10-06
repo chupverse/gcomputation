@@ -27,8 +27,8 @@
   all_terms <- attr(terms(formula), "term.labels")
   formula.all <- formula
   
-  datakeep <- data[,which(colnames(data) %in% c(times,failures,group,all_terms))]
-  data <- data[,which(colnames(data) %in% c(times,failures,group,all_terms))]
+  datakeep <- data[,which(colnames(data) %in% all.vars(formula))]
+  data <- data[,which(colnames(data) %in% all.vars(formula))]
   
   if(is.null(seed)) {seed <- sample(1:1000,1)}
   
@@ -346,7 +346,7 @@ if(model == "lasso"){
   results.surv.calibration <- list(fit=fit, time=T.multi, cumhaz=H.mean, surv=S.mean, H0.multi=H0.multi, lp=lp)
   
 
-
+  .tune.optimal.totalpop <- .tune.optimal
   BCVerror <- 0
   pro.time.extrapolate <- 0
   
@@ -398,9 +398,16 @@ if(model == "lasso"){
   
 
 
-    .x.learn = model.matrix(formula.all,data)[,-1][id,]
-    .x.valid0 = model.matrix(formula.all,data0)[,-1][-sort(unique(id)),]
-    .x.valid1 = model.matrix(formula.all,data1)[,-1][-sort(unique(id)),]
+    if (boot.type == "bcv") {
+      .x.learn  = model.matrix(formula.all, data)[,-1][id,]
+      .x.valid0 = model.matrix(formula.all, data0)[,-1][-sort(unique(id)),]
+      .x.valid1 = model.matrix(formula.all, data1)[,-1][-sort(unique(id)),]
+    } else {
+      .x.learn  = model.matrix(formula.all, data)[,-1][id,]
+      .x.valid0 = model.matrix(formula.all, data0)[,-1][id,]
+      .x.valid1 = model.matrix(formula.all, data1)[,-1][id,]
+    }
+    
   
   
     
@@ -653,7 +660,7 @@ if (!is.null(.warnen)) {warning(paste0("The optimal tuning parameter alpha was e
   
 
 res <- list(calibration=as.list(results.surv.calibration),
-            tuning.parameters=.tune.optimal,
+            tuning.parameters=.tune.optimal.totalpop,
             data=datakeep,
             formula=formula.all,
             model=model,

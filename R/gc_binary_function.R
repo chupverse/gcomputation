@@ -26,8 +26,8 @@
   all_terms <- attr(terms(formula), "term.labels")
   formula.all <- formula
   
-  datakeep <- data[,which(colnames(data) %in% c(outcome,group,all_terms))]
-  data <- data[,which(colnames(data) %in% c(outcome,group,all_terms))]
+  datakeep <- data[,which(colnames(data) %in% all.vars(formula))]
+  data <- data[,which(colnames(data) %in% all.vars(formula))]
   
   if(is.null(seed)) {seed <- sample(1:1000,1)}
   
@@ -330,9 +330,16 @@ functions, stratification and clustering are not implemented") }
     
     ### Fixes the issue when there is modalities not present in valid or not in train
     
-    .x.learn = model.matrix(formula.all,data)[,-1][id,]
-    .x.valid0 = model.matrix(formula.all,data0)[,-1][-sort(unique(id)),]
-    .x.valid1 = model.matrix(formula.all,data1)[,-1][-sort(unique(id)),]
+    if (boot.type == "bcv") {
+      .x.learn  = model.matrix(formula.all, data)[,-1][id,]
+      .x.valid0 = model.matrix(formula.all, data0)[,-1][-sort(unique(id)),]
+      .x.valid1 = model.matrix(formula.all, data1)[,-1][-sort(unique(id)),]
+    } else {
+      .x.learn  = model.matrix(formula.all, data)[,-1][id,]
+      .x.valid0 = model.matrix(formula.all, data0)[,-1][id,]
+      .x.valid1 = model.matrix(formula.all, data1)[,-1][id,]
+    }
+    
     
     .y.learn <- data.learn[,outcome]
     
@@ -354,6 +361,14 @@ functions, stratification and clustering are not implemented") }
                           scope=list(lower = formula(paste0(outcome,"~",group)), upper = formula.all),
                           direction="forward", k=2, trace=FALSE)$formula
       
+      for (f in names(data.learn)) {
+        if (is.factor(data.learn[[f]])) {
+          train_levels <- unique(data.learn[[f]])
+          data.valid0 <- data.valid0[data.valid0[[f]] %in% train_levels, , drop=FALSE]
+          data.valid1 <- data.valid1[data.valid1[[f]] %in% train_levels, , drop=FALSE]
+        }
+      }
+      
       fit <- glm(formula = formula, data=data.learn, family="binomial")
       
       .p0 = mean(predict(fit, newdata = data.valid0, type = "response"))
@@ -369,6 +384,14 @@ functions, stratification and clustering are not implemented") }
                           scope=list(lower = formula(paste0(outcome,"~",group)), upper = formula.all),
                           direction="forward", k=log(nrow(data.learn)), trace=FALSE)$formula
       
+      for (f in names(data.learn)) {
+        if (is.factor(data.learn[[f]])) {
+          train_levels <- unique(data.learn[[f]])
+          data.valid0 <- data.valid0[data.valid0[[f]] %in% train_levels, , drop=FALSE]
+          data.valid1 <- data.valid1[data.valid1[[f]] %in% train_levels, , drop=FALSE]
+        }
+      }
+      
       fit <- glm(formula = formula, data=data.learn, family="binomial")
       
       .p0 = mean(predict(fit, newdata = data.valid0, type = "response"))
@@ -380,6 +403,14 @@ functions, stratification and clustering are not implemented") }
     }
     
     if(model == "all") {
+      for (f in names(data.learn)) {
+        if (is.factor(data.learn[[f]])) {
+          train_levels <- unique(data.learn[[f]])
+          data.valid0 <- data.valid0[data.valid0[[f]] %in% train_levels, , drop=FALSE]
+          data.valid1 <- data.valid1[data.valid1[[f]] %in% train_levels, , drop=FALSE]
+        }
+      }
+      
       fit <- glm(formula = formula, data=data.learn, family="binomial")
       
       .p0 = mean(predict(fit, newdata = data.valid0, type = "response"))
