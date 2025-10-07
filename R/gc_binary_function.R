@@ -225,7 +225,7 @@ functions, stratification and clustering are not implemented") }
       .results<-c()
       for( a in 1:length(param.tune$alpha)){
         .cv.en<-glmnet::cv.glmnet(x=.x, y=.y, family = "binomial",  type.measure = "deviance",
-                                  foldsid="folds", parallel = FALSE, alpha=param.tune$alpha[a],
+                                  parallel = FALSE, alpha=param.tune$alpha[a],
                                   penalty.factor = .penalty.factor,
                                   lambda=param.tune$lambda, foldid = foldid)
         .results<-rbind(.results,
@@ -235,12 +235,13 @@ functions, stratification and clustering are not implemented") }
       .results=data.frame(.results)
       .tune.optimal=list(alpha=.results[which(.results$cvm==min(.results$cvm)),1][1] ,
                          lambda=.results[which(.results$cvm==min(.results$cvm)),2][1] )
-      rm(.cv.en) ; rm(.results) } else{.tune.optimal=list(alpha=param.tune$alpha, lambda=param.tune$lambda) }
+      rm(.cv.en) ; rm(.results) } else{.tune.optimal=list(alpha=param.tune$alpha, lambda=param.tune$lambda)}
     
     
     if (.tune.optimal$alpha == 1 & boot.tune == FALSE) {.warnen=1}
     if (.tune.optimal$alpha == 0 & boot.tune == FALSE) {.warnen=0}
   } 
+  
   if(model == "aic"){
     formula <- stepAIC( glm(formula=formula(paste0(outcome,"~",group)), data=data,family="binomial"),
                         scope=list(lower = formula(paste0(outcome,"~",group)), upper = formula),
