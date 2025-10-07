@@ -161,7 +161,7 @@ functions, stratification and clustering are not implemented") }
     if (is.list(param.tune) & length(param.tune) != 2) {stop("List tune parameter needs to have a length of 2 (lambda then alpha)")}
     if (is.vector(param.tune) & length(param.tune) != 2) {stop("Vector tune parameter needs to have a length of 2 (lambda then alpha)")}
     if (!is.null(names(param.tune[1]))) {
-      if (is.list(param.tune) & names(param.tune[1]) != "lambda" & names(param.tune[2]) != "alpha") {stop("List needs to start with lambda then alpha")}
+      if (is.list(param.tune) & (names(param.tune[1]) != "lambda" | names(param.tune[2]) != "alpha")) {stop("List needs to start with lambda then alpha")}
     }
     if (is.list(param.tune) & length(param.tune[[1]]) == 1 & length(param.tune[[2]]) > 1) {stop("Lambda needs more than 1 value if more than 1 alpha is provided")} 
     if (is.null(param.tune)) {
@@ -335,6 +335,8 @@ functions, stratification and clustering are not implemented") }
       .x.learn  = model.matrix(formula.all, data)[,-1][id,]
       .x.valid0 = model.matrix(formula.all, data0)[,-1][-sort(unique(id)),]
       .x.valid1 = model.matrix(formula.all, data1)[,-1][-sort(unique(id)),]
+      
+      if (ncol(model.matrix(formula.all, droplevels(data.learn))) < ncol(model.matrix(formula.all, data.valid))) {BCVerror <- BCVerror + 1 ; next} 
     } else {
       .x.learn  = model.matrix(formula.all, data)[,-1][id,]
       .x.valid0 = model.matrix(formula.all, data0)[,-1][id,]
@@ -343,6 +345,8 @@ functions, stratification and clustering are not implemented") }
     
     
     .y.learn <- data.learn[,outcome]
+    
+
     
     
     ### Unadjusted results
@@ -362,18 +366,10 @@ functions, stratification and clustering are not implemented") }
                           scope=list(lower = formula(paste0(outcome,"~",group)), upper = formula.all),
                           direction="forward", k=2, trace=FALSE)$formula
       
-      for (f in names(data.learn)) {
-        if (is.factor(data.learn[[f]])) {
-          train_levels <- unique(data.learn[[f]])
-          data.valid0 <- data.valid0[data.valid0[[f]] %in% train_levels, , drop=FALSE]
-          data.valid1 <- data.valid1[data.valid1[[f]] %in% train_levels, , drop=FALSE]
-        }
-      }
+      fit <- suppressWarnings(glm(formula = formula, data=data.learn, family="binomial"))
       
-      fit <- glm(formula = formula, data=data.learn, family="binomial")
-      
-      .p0 = mean(predict(fit, newdata = data.valid0, type = "response"))
-      .p1 = mean(predict(fit, newdata = data.valid1, type = "response"))
+      .p0 = suppressWarnings(mean(predict(fit, newdata = data.valid0, type = "response")))
+      .p1 = suppressWarnings(mean(predict(fit, newdata = data.valid1, type = "response")))
       
       .OR = (.p1*(1-.p0))/(.p0*(1-.p1))
       .delta = .p1 - .p0
@@ -385,18 +381,10 @@ functions, stratification and clustering are not implemented") }
                           scope=list(lower = formula(paste0(outcome,"~",group)), upper = formula.all),
                           direction="forward", k=log(nrow(data.learn)), trace=FALSE)$formula
       
-      for (f in names(data.learn)) {
-        if (is.factor(data.learn[[f]])) {
-          train_levels <- unique(data.learn[[f]])
-          data.valid0 <- data.valid0[data.valid0[[f]] %in% train_levels, , drop=FALSE]
-          data.valid1 <- data.valid1[data.valid1[[f]] %in% train_levels, , drop=FALSE]
-        }
-      }
+      fit <- suppressWarnings(glm(formula = formula, data=data.learn, family="binomial"))
       
-      fit <- glm(formula = formula, data=data.learn, family="binomial")
-      
-      .p0 = mean(predict(fit, newdata = data.valid0, type = "response"))
-      .p1 = mean(predict(fit, newdata = data.valid1, type = "response"))
+      .p0 = suppressWarnings(mean(predict(fit, newdata = data.valid0, type = "response")))
+      .p1 = suppressWarnings(mean(predict(fit, newdata = data.valid1, type = "response")))
       
       .OR = (.p1*(1-.p0))/(.p0*(1-.p1))
       .delta = .p1 - .p0
@@ -404,18 +392,10 @@ functions, stratification and clustering are not implemented") }
     }
     
     if(model == "all") {
-      for (f in names(data.learn)) {
-        if (is.factor(data.learn[[f]])) {
-          train_levels <- unique(data.learn[[f]])
-          data.valid0 <- data.valid0[data.valid0[[f]] %in% train_levels, , drop=FALSE]
-          data.valid1 <- data.valid1[data.valid1[[f]] %in% train_levels, , drop=FALSE]
-        }
-      }
+      fit <- suppressWarnings(glm(formula = formula, data=data.learn, family="binomial"))
       
-      fit <- glm(formula = formula, data=data.learn, family="binomial")
-      
-      .p0 = mean(predict(fit, newdata = data.valid0, type = "response"))
-      .p1 = mean(predict(fit, newdata = data.valid1, type = "response"))
+      .p0 = suppressWarnings(mean(predict(fit, newdata = data.valid0, type = "response")))
+      .p1 = suppressWarnings(mean(predict(fit, newdata = data.valid1, type = "response")))
       
       .OR = (.p1*(1-.p0))/(.p0*(1-.p1))
       .delta = .p1 - .p0
@@ -462,7 +442,7 @@ functions, stratification and clustering are not implemented") }
         .results<-c()
         for( a in 1:length(param.tune$alpha)){
           .cv.en<-glmnet::cv.glmnet(x=.x.learn, y=.y.learn, family = "binomial",  type.measure = "deviance",
-                                    foldsid="folds", parallel = FALSE, alpha=param.tune$alpha[a],
+                                    parallel = FALSE, alpha=param.tune$alpha[a],
                                     penalty.factor = .penalty.factor,
                                     lambda=param.tune$lambda)
           .results<-rbind(.results,
@@ -499,7 +479,7 @@ functions, stratification and clustering are not implemented") }
   
   if(progress==TRUE){ close(pb) }
   
-  if (BCVerror > 1) {warning(paste0("Skipped ",BCVerror," bootstrap iterations due to the validation dataset containing factors not in the train dataset. Either use type=\"boot\" instead of \"bcv\" or remove factors with rare modalities."))}  
+  if (BCVerror > 1) {warning(paste0("Skipped ",BCVerror," bootstrap iterations and only used ", boot.number-BCVerror," iterations due to the validation dataset containing factors not in the train dataset. Either use type=\"boot\" instead of \"bcv\" or remove factors with rare modalities."))}  
   if (!is.null(.warnen)) {warning(paste0("The optimal tuning parameter alpha was equal to ",.warnen,", using ",ifelse(.warnen==0,"ridge","lasso")," instead"))}  
   
   

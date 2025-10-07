@@ -179,7 +179,7 @@ functions, stratification and clustering are not implemented") }
     if (is.list(param.tune) & length(param.tune) != 2) {stop("List tune parameter needs to have a length of 2 (lambda then alpha)")}
     if (is.vector(param.tune) & length(param.tune) != 2) {stop("Vector tune parameter needs to have a length of 2 (lambda then alpha)")}
     if (!is.null(names(param.tune[1]))) {
-      if (is.list(param.tune) & names(param.tune[1]) != "lambda" & names(param.tune[2]) != "alpha") {stop("List needs to start with lambda then alpha")}
+      if (is.list(param.tune) & (names(param.tune[1]) != "lambda" | names(param.tune[2]) != "alpha")) {stop("List needs to start with lambda then alpha")}
     }
     if (is.list(param.tune) & length(param.tune[[1]]) == 1 & length(param.tune[[2]]) > 1) {stop("Lambda needs more than 1 value if more than 1 alpha is provided")} 
     if (is.null(param.tune)) {
@@ -244,7 +244,7 @@ if(model == "lasso"){
       .results<-c()
       for( a in 1:length(param.tune$alpha)){
         .cv.en<-glmnet::cv.glmnet(x=.x, y=.y, family = "cox",  type.measure = "deviance",
-                                  foldsid="folds", parallel = FALSE, alpha=param.tune$alpha[a],
+                                  parallel = FALSE, alpha=param.tune$alpha[a],
                                   penalty.factor = .penalty.factor,
                                   lambda=param.tune$lambda, foldid = foldid)
         .results<-rbind(.results,
@@ -276,7 +276,7 @@ if(model == "lasso"){
   ### Calibration survival function
   
   if(model == "all" | model == "aic" | model == "bic") {
-    fit <- coxph(formula = formula, data=data)
+    fit <- suppressWarnings(coxph(formula = formula, data=data))
     
     .lp.coxph <- predict(fit, newdata = data, type="lp")
     .b <- glmnet_basesurv(data[,times], data[,failures], .lp.coxph, centered = FALSE)
@@ -402,6 +402,8 @@ if(model == "lasso"){
       .x.learn  = model.matrix(formula.all, data)[,-1][id,]
       .x.valid0 = model.matrix(formula.all, data0)[,-1][-sort(unique(id)),]
       .x.valid1 = model.matrix(formula.all, data1)[,-1][-sort(unique(id)),]
+      
+      if (ncol(model.matrix(formula.all, droplevels(data.learn))) < ncol(model.matrix(formula.all, data.valid))) {BCVerror <- BCVerror + 1 ; next} 
     } else {
       .x.learn  = model.matrix(formula.all, data)[,-1][id,]
       .x.valid0 = model.matrix(formula.all, data0)[,-1][id,]
@@ -417,7 +419,7 @@ if(model == "lasso"){
     
     ### Unadjusted results
     formula.unadj <- as.formula(paste0("Surv(",times,",",failures,")~",group))
-    fit <- coxph(formula = formula.unadj, data=data.learn)
+    fit <- suppressWarnings(coxph(formula = formula.unadj, data=data.learn))
     
     .lp.0.unadj <- predict(fit, newdata = data.valid0, type="lp")
     .lp.1.unadj <- predict(fit, newdata = data.valid1, type="lp")
@@ -491,7 +493,7 @@ if(model == "lasso"){
                           scope=list(lower = formula(paste0("Surv(",times,",",failures,")~",group)), upper = formula.all),
                           direction="forward", k=2, trace=FALSE)$formula
       
-      fit <- coxph(formula = formula, data=data.learn)
+      fit <- suppressWarnings(coxph(formula = formula, data=data.learn))
       
       .lp.coxph <- predict(fit, newdata = data.learn, type="lp")
       .b <- glmnet_basesurv(data.learn[,times], data.learn[,failures], .lp.coxph, centered = FALSE)
@@ -504,7 +506,7 @@ if(model == "lasso"){
                           scope=list(lower = formula(paste0("Surv(",times,",",failures,")~",group)), upper = formula.all),
                           direction="forward", k=log(nrow(data.learn)), trace=FALSE)$formula
       
-      fit <- coxph(formula = formula, data=data.learn)
+      fit <- suppressWarnings(coxph(formula = formula, data=data.learn))
       
       .lp.coxph <- predict(fit, newdata = data.learn, type="lp")
       .b <- glmnet_basesurv(data.learn[,times], data.learn[,failures], .lp.coxph, centered = FALSE)
@@ -513,7 +515,7 @@ if(model == "lasso"){
     }
     
     if(model == "all") {
-      fit <- coxph(formula = formula, data=data.learn)
+      fit <- suppressWarnings(coxph(formula = formula, data=data.learn))
       
       .lp.coxph <- predict(fit, newdata = data.learn, type="lp")
       .b <- glmnet_basesurv(data.learn[,times], data.learn[,failures], .lp.coxph, centered = FALSE)
@@ -555,7 +557,7 @@ if(model == "lasso"){
         .results<-c()
         for( a in 1:length(param.tune$alpha)){
           .cv.en<-glmnet::cv.glmnet(x=.x.learn, y=.y.learn, family = "cox",  type.measure = "deviance",
-                                    foldsid="folds", parallel = FALSE, alpha=param.tune$alpha[a],
+                                    parallel = FALSE, alpha=param.tune$alpha[a],
                                     penalty.factor = .penalty.factor,
                                     lambda=param.tune$lambda)
           .results<-rbind(.results,
@@ -585,15 +587,16 @@ if(model == "lasso"){
     
   
     
-    
+    suppressWarnings({
     if (model == "all" | model == "aic" | model == "bic") {
       .lp.0 <- tryCatch({predict(fit, newdata = data.valid0, type="lp")}, error = function(e) {return(NULL) })
       if (is.null(.lp.0)) {BCVerror <- BCVerror + 1 ; next}
-      .lp.1 <- predict(fit, newdata = data.valid1, type="lp")
+      .lp.1 <- suppressWarnings(predict(fit, newdata = data.valid1, type="lp"))
     } else{ 
       .lp.0 <- predict(fit, newx = .x.valid0) 
       .lp.1 <- predict(fit, newx = .x.valid1)
     }
+    })
     
     lp.0 <- as.vector(.lp.0)
     lp.1 <- as.vector(.lp.1)
@@ -652,7 +655,7 @@ if(model == "lasso"){
   if(progress==TRUE){ close(pb) }
   
 if (pro.time.extrapolate > 1) {warning(paste0("In at least one boostrap sample the \"pro.time\" was higher than the maximum follow-up time (survival was extrapolated in ",pro.time.extrapolate," bootstrap samples). It is advised to pick a lower value for \"pro.time\""))}
-if (BCVerror > 1) {warning(paste0("Skipped ",BCVerror," bootstrap iterations due to the validation dataset containing factors not in the train dataset. Either use type=\"boot\" instead of \"bcv\" or remove factors with rare modalities."))}  
+if (BCVerror > 1) {warning(paste0("Skipped ",BCVerror," bootstrap iterations and only used ", boot.number-BCVerror," iterations due to the validation dataset containing factors not in the train dataset. Either use type=\"boot\" instead of \"bcv\" or remove factors with rare modalities."))}  
 if (!is.null(.warnen)) {warning(paste0("The optimal tuning parameter alpha was equal to ",.warnen,", using ",ifelse(.warnen==0,"ridge","lasso")," instead"))}  
   
   if (model == "aic" | model == "bic") {.tune.optimal = NULL}
