@@ -1,4 +1,4 @@
-print.linear<- function (x, digits=4, ...)
+print.gccontinuous<- function (x, digits=4, ...)
 {
   if (x$model %in% c("lasso","ridge","elasticnet")) {cat("model: ",x$model,", tuning parameters: ", sep = "")
     if (x$model == "elasticnet") {
