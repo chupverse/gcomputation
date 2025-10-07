@@ -15,10 +15,6 @@
   
   if (!is.logical(boot.tune)) {stop("The argument \"boot.tune\" needs to be a logical TRUE or FALSE")}
   
-  mod <- unique(data[,group])
-  if(length(mod) != 2 | ((mod[1] != 0 & mod[2] != 1) & (mod[1] != 1 & mod[2] != 0))){
-    stop("Two modalities encoded 0 (for non-treated/non-exposed patients) and 1 (for treated/exposed patients) are required in the \"data\" for argument \"group\"") }
-  
   
   if (as.character(class(formula)) != "formula") stop("The argument \"formula\" must be a formula")
   
