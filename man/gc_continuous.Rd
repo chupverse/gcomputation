@@ -112,6 +112,8 @@ beta_alcool <- 2
 beta_bmi <- 8
 beta_age <- 5
 
+set.seed(123)
+
 cont_outcome <- rnorm(n = nrow(dataPROPHYVAP), 
                       mean = beta_ttt*dataPROPHYVAP$GROUP_num +
                         beta_alcool*match(as.factor(dataPROPHYVAP$ALCOOL),levels(as.factor(dataPROPHYVAP$ALCOOL))) + 
@@ -129,7 +131,7 @@ dataPROPHYVAP$y_cont <- cont_outcome
 ### Here we set boot.number = 10 for speed in CRAN checks.
 gc1 <- gc_continuous(formula=.f, model="all", data=dataPROPHYVAP, group="GROUP_num",
                     cv=10, boot.type="boot", boot.number=10, boot.tune=TRUE,
-                    effect="ATE", progress=TRUE, seed=5192,boot.mi = F)
+                    effect="ATE", progress=TRUE, seed=5192)
 
 print(gc1)
 summary(gc1)
@@ -145,14 +147,14 @@ gc2 <- gc_continuous(formula=.f, model="elasticnet", data=dataPROPHYVAP,
               
              
 ### To apply multiple imputation to handle missing data:
-.f <- formula(VAP_num ~ GROUP_num + AGE + SEX + ALCOOL + BMI + DIABETES + GLASGOW + INJURY)
+#.f <- formula(VAP_num ~ GROUP_num + AGE + SEX + ALCOOL + BMI + DIABETES + GLASGOW + INJURY)
 
 ### boot.number is set to 10 here only for speed.
-gc3 <- gc_continuous(formula=.f, model="all", data=dataPROPHYVAP,
-                 group="GROUP_num", boot.type="boot", boot.number=10, effect="ATE",
-                 progress=TRUE, boot.tune=FALSE, boot.mi=TRUE, m=5, seed=8812)
-                 
-plot(gc3,smooth=TRUE)
+#gc3 <- gc_continuous(formula=.f, model="all", data=dataPROPHYVAP,
+#                 group="GROUP_num", boot.type="boot", boot.number=10, effect="ATE",
+#                 progress=TRUE, boot.tune=FALSE, boot.mi=TRUE, m=5, seed=8812)
+#                 
+#plot(gc3,smooth=TRUE)
 }
 
 \keyword{G-computation}

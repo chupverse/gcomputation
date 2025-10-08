@@ -1,3 +1,5 @@
+#' @export
+
 gc_continuous <- function(formula, data, group, effect="ATE", model, param.tune=NULL, cv=10, boot.type="bcv",
                       boot.number=500, boot.tune=FALSE, boot.mi = FALSE, progress=TRUE, seed=NULL, m=5, ...) {
   

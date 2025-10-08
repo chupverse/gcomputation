@@ -53,7 +53,7 @@ dataPROPHYVAP$y_cont <- cont_outcome
 ### Here we set boot.number = 10 for speed in CRAN checks.
 gc1 <- gc_continuous(formula=.f, model="all", data=dataPROPHYVAP, group="GROUP_num",
                     cv=10, boot.type="boot", boot.number=10, boot.tune=TRUE,
-                    effect="ATE", progress=TRUE, seed=5192,boot.mi = F)
+                    effect="ATE", progress=TRUE, seed=5192)
 
 print(gc1)
 

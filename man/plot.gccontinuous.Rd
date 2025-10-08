@@ -61,6 +61,8 @@ beta_alcool <- 2
 beta_bmi <- 8
 beta_age <- 5
 
+set.seed(123)
+
 cont_outcome <- rnorm(n = nrow(dataPROPHYVAP), 
                       mean = beta_ttt*dataPROPHYVAP$GROUP_num +
                         beta_alcool*match(as.factor(dataPROPHYVAP$ALCOOL),levels(as.factor(dataPROPHYVAP$ALCOOL))) + 
@@ -78,7 +80,7 @@ dataPROPHYVAP$y_cont <- cont_outcome
 ### Here we set boot.number = 10 for speed in CRAN checks.
 gc1 <- gc_continuous(formula=.f, model="all", data=dataPROPHYVAP, group="GROUP_num",
                     cv=10, boot.type="boot", boot.number=10, boot.tune=TRUE,
-                    effect="ATE", progress=TRUE, seed=5192,boot.mi = F)
+                    effect="ATE", progress=TRUE, seed=5192)
 
 #Plot the calibration curve (by default)
 plot(gc1, method="calibration", n.groups=5)
