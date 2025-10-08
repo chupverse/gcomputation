@@ -251,7 +251,7 @@ functions, stratification and clustering are not implemented") }
   
   
   
-  #### Calibration logistic function
+  #### Calibration linear function
   
   
   if(model == "all" | model == "aic" | model == "bic") {
