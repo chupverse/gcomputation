@@ -1,62 +1,61 @@
 \name{print.gccontinuous}
 \alias{print.gccontinuous}
-%- Also NEED an '\alias' for EACH other topic documented here.
 \title{
-A Capitalized Title (ideally limited to 65 characters)
+
+S3 Method for Printing an 'gccontinuous' Object
+
 }
 \description{
-%%  ~~ A concise (1-5 lines) description of what the function does. ~~
+
+Print a summary of the \code{gccontinuous} object returned from gc_binary function.
+
 }
 \usage{
-print.gccontinuous(x)
+
+\method{print}{gccontinuous}(x, digits=4, ...)
+
 }
-%- maybe also 'usage' for other objects documented here.
 \arguments{
-  \item{x}{
-%%     ~~Describe \code{x} here~~
-}
-}
-\details{
-%%  ~~ If necessary, more details than the description above ~~
-}
-\value{
-%%  ~Describe the value returned
-%%  If it is a LIST, use
-%%  \item{comp1 }{Description of 'comp1'}
-%%  \item{comp2 }{Description of 'comp2'}
-%% ...
-}
-\references{
-%% ~put references to the literature/web site here ~
-}
-\author{
-%%  ~~who you are~~
-}
-\note{
-%%  ~~further notes~~
-}
 
-%% ~Make other sections like Warning with \section{Warning }{....} ~
+\item{x}{An object returned by the function \code{gc_continuous}.}
 
-\seealso{
-%% ~~objects to See Also as \code{\link{help}}, ~~~
+\item{digits}{An optional integer for the number of digits to print when printing numeric values.}
+
+\item{...}{For future methods.}
+
 }
+\value{No return value for this S3 method.}
 \examples{
-##---- Should be DIRECTLY executable !! ----
-##-- ==>  Define data, use random,
-##--	or standard data sets, see data().
+data("dataPROPHYVAP")
 
-## The function is currently defined as
-function (x) 
-{
-  }
+dataPROPHYVAP$VAP_num <- ifelse(dataPROPHYVAP$VAP == "Yes",1,0)
+dataPROPHYVAP$GROUP_num <- ifelse(dataPROPHYVAP$GROUP == "Placebo",0,1)
+
+beta_ttt <- 10
+beta_alcool <- 2
+beta_bmi <- 8
+beta_age <- 5
+
+cont_outcome <- rnorm(n = nrow(dataPROPHYVAP), 
+                      mean = beta_ttt*dataPROPHYVAP$GROUP_num +
+                        beta_alcool*match(as.factor(dataPROPHYVAP$ALCOOL),levels(as.factor(dataPROPHYVAP$ALCOOL))) + 
+                        beta_bmi*dataPROPHYVAP$BMI + 
+                        beta_age*dataPROPHYVAP$AGE, 
+                      sd = 1)
+
+#mean(cont_outcome)
+
+dataPROPHYVAP$y_cont <- cont_outcome
+
+.f <- formula(y_cont ~ GROUP_num * (AGE + SEX + ALCOOL + BMI + DIABETES))
+
+### In practice use larger values of boot.number (e.g., 500).
+### Here we set boot.number = 10 for speed in CRAN checks.
+gc1 <- gc_continuous(formula=.f, model="all", data=dataPROPHYVAP, group="GROUP_num",
+                    cv=10, boot.type="boot", boot.number=10, boot.tune=TRUE,
+                    effect="ATE", progress=TRUE, seed=5192,boot.mi = F)
+
+print(gc1)
+
 }
-% Add one or more standard keywords, see file 'KEYWORDS' in the
-% R documentation directory (show via RShowDoc("KEYWORDS")):
-% \keyword{ ~kwd1 }
-% \keyword{ ~kwd2 }
-% Use only one keyword per line.
-% For non-standard keywords, use \concept instead of \keyword:
-% \concept{ ~cpt1 }
-% \concept{ ~cpt2 }
-% Use only one concept per line.
+\keyword{Printing}

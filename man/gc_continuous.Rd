@@ -128,7 +128,7 @@ dataPROPHYVAP$y_cont <- cont_outcome
 ### In practice use larger values of boot.number (e.g., 500).
 ### Here we set boot.number = 10 for speed in CRAN checks.
 gc1 <- gc_continuous(formula=.f, model="all", data=dataPROPHYVAP, group="GROUP_num",
-                    cv=10, boot.type="boot", boot.number=500, boot.tune=TRUE,
+                    cv=10, boot.type="boot", boot.number=10, boot.tune=TRUE,
                     effect="ATE", progress=TRUE, seed=5192,boot.mi = F)
 
 print(gc1)
@@ -151,6 +151,7 @@ gc2 <- gc_continuous(formula=.f, model="elasticnet", data=dataPROPHYVAP,
 gc3 <- gc_continuous(formula=.f, model="all", data=dataPROPHYVAP,
                  group="GROUP_num", boot.type="boot", boot.number=10, effect="ATE",
                  progress=TRUE, boot.tune=FALSE, boot.mi=TRUE, m=5, seed=8812)
+                 
 plot(gc3,smooth=TRUE)
 }
 
