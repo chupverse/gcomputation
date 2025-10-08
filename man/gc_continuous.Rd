@@ -147,14 +147,14 @@ gc2 <- gc_continuous(formula=.f, model="elasticnet", data=dataPROPHYVAP,
               
              
 ### To apply multiple imputation to handle missing data:
-#.f <- formula(VAP_num ~ GROUP_num + AGE + SEX + ALCOOL + BMI + DIABETES + GLASGOW + INJURY)
+.f <- formula(VAP_num ~ GROUP_num + AGE + SEX + ALCOOL + BMI + DIABETES + GLASGOW + INJURY)
 
 ### boot.number is set to 10 here only for speed.
-#gc3 <- gc_continuous(formula=.f, model="all", data=dataPROPHYVAP,
-#                 group="GROUP_num", boot.type="boot", boot.number=10, effect="ATE",
-#                 progress=TRUE, boot.tune=FALSE, boot.mi=TRUE, m=5, seed=8812)
-#                 
-#plot(gc3,smooth=TRUE)
+gc3 <- gc_continuous(formula=.f, model="all", data=dataPROPHYVAP,
+                 group="GROUP_num", boot.type="boot", boot.number=10, effect="ATE",
+                 progress=TRUE, boot.tune=FALSE, boot.mi=TRUE, m=5, seed=8812)
+                 
+plot(gc3,smooth=TRUE)
 }
 
 \keyword{G-computation}
