@@ -9,15 +9,13 @@ plot.gccontinuous <- function (x, method="calibration", n.groups=5, smooth=FALSE
     group = x$group
     
     datag0 = data[which(data[,group] == 0),]
-    print(datag0)
-    print(datag0$outcome)
     datag1 = data[which(data[,group] == 1),]
     
     #### This part unlike survival model calibration same as obs
     predict.m0 = mean(x$calibration$predict[which(data[,group] == 0)])
     predict.m1 = mean(x$calibration$predict[which(data[,group] == 1)])
-    obs.m0 = mean(datag0$outcome) 
-    obs.m1 = mean(datag1$outcome)
+    obs.m0 = mean(datag0[[outcome]]) 
+    obs.m1 = mean(datag1[[outcome]])
     
     
     if (hasArg(labels) == FALSE) {
