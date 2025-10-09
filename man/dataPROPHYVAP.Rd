@@ -2,7 +2,7 @@
 \alias{dataPROPHYVAP}
 \docType{data}
 \title{
-A simulated data set from the PROPHYVAP study: a randomized clinical trial in intensive care unit
+A Simulated Randomized Clinical Trial from the PROPHYVAP Study
 }
 \description{
 Ventilator-associated pneumonia (VAP) is the first cause of healthcare-associated infections in intensive

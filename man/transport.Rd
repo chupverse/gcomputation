@@ -1,7 +1,7 @@
 \name{transport}
 \alias{transport}
 \title{
-Transportability for G-computation binary and times Models
+Transportability to Another Population
 }
 \description{
 Applies an already fitted G-computation model (an object of class \code{gcbinary} or \code{gctimes}) to a new dataset (\code{newdata}) to estimate marginal effects for that new population.

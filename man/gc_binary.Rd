@@ -1,7 +1,7 @@
 \name{gc_binary}
 \alias{gc_binary}
 \title{
-G-Computation to Estimate a Marginal Effect
+G-Computation to Estimate a Marginal Effect for a Binary Outcome
 }
 \description{
 This function computes G-computation (GC) with different working models or algorithms (Q-models) to estimate the marginal functions for binary outcomes regarding two exposures.

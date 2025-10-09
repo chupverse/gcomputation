@@ -2,7 +2,7 @@
 \alias{dataCOHORT}
 \docType{data}
 \title{
-A simulated data set from the PROPHYVAP study context: an observational cohort study
+A Simulated Cohort from the PROPHYVAP Study
 }
 \description{
 This dataset \code{dataCOHORT} is a simulated observational cohort study, with a total of 2000 patients, designed to reflect a real-world scenario similar to the PROPHYVAP clinical trial.The goal of this study is to determine whether a single dose of ceftriaxone within

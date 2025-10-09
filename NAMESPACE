@@ -2,7 +2,7 @@ import(survival)
 import(glmnet)
 import(hdnom)
 import(MASS)
-import(stats)
+#import(stats)
 import(mice)
 
 importFrom("utils", "txtProgressBar", "setTxtProgressBar")
@@ -10,6 +10,9 @@ importFrom("graphics", "abline", "lines", "plot.default", "grid", "segments", "l
 importFrom("grDevices", "adjustcolor", "rainbow")
 importFrom("methods", "hasArg")
 importFrom("graphics", "axis")
+importFrom("stats", "as.formula", "formula", "glm", "loess", "median",
+             "model.matrix", "na.omit", "pnorm", "predict",
+             "printCoefmat", "qnorm", "quantile", "sd", "terms")
 
 export(gc_binary)
 export(gc_continuous)
