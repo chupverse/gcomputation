@@ -1,5 +1,5 @@
-.gc_binary <- function(formula, data, group, effect="ATE", model, param.tune=NULL, cv=10, boot.type="bcv",
-                      boot.number=500, boot.tune=FALSE, progress=TRUE, seed=NULL) {
+.gc_continuous <- function(formula, data, group, effect="ATE", model, param.tune=NULL, cv=10, boot.type="bcv",
+                       boot.number=500, boot.tune=FALSE, progress=TRUE, seed=NULL) {
   # Quality tests
   if(missing(formula)) {stop("The \"formula\" argument is missing (formula)")}
   if(missing(data)) {stop("The \"data\" argument is missing (data.frame)")}
@@ -64,10 +64,10 @@ functions, stratification and clustering are not implemented") }
     stop("Two modalities encoded 0 (for non-treated/non-exposed patients) and 1 (for treated/exposed patients) are required in the \"group\" variable")
   }
   
+  # verification that the outcome is numeric
   
-  mod2 <- unique(data[,outcome])
-  if(length(mod2) != 2 | ((mod2[1] != 0 & mod2[2] != 1) & (mod2[1] != 1 & mod2[2] != 0))){
-    stop("Two modalities encoded 0 (for censored patients) and 1 (for events) are required in the \"failures\" variable")
+  if(!is.numeric(data[,outcome])){
+    stop("The outcome variable needs to be numeric")
   }
   
   
@@ -200,7 +200,7 @@ functions, stratification and clustering are not implemented") }
   if(model == "lasso"){
     if(is.null(param.tune$lambda)==T | length(param.tune$lambda)>1){
       
-      .cv.lasso <- cv.glmnet(x=.x, y=.y, family = "binomial",  type.measure = "deviance",
+      .cv.lasso <- cv.glmnet(x=.x, y=.y, family = "gaussian",  type.measure = "deviance",
                              nfolds = cv, parallel = FALSE, alpha=1, penalty.factor = .penalty.factor,keep=F,
                              lambda=param.tune$lambda, foldid = foldid)
       
@@ -209,7 +209,7 @@ functions, stratification and clustering are not implemented") }
   }
   if(model == "ridge"){
     if(is.null(param.tune$lambda)==T | length(param.tune$lambda)>1){
-      .cv.ridge <- cv.glmnet(x=.x, y=.y, family = "binomial",  type.measure = "deviance",
+      .cv.ridge <- cv.glmnet(x=.x, y=.y, family = "gaussian",  type.measure = "deviance",
                              parallel = FALSE, alpha=0, penalty.factor = .penalty.factor, nfolds = cv,
                              lambda=param.tune$lambda, foldid = foldid)
       .tune.optimal=list(lambda=.cv.ridge$lambda.min)
@@ -220,7 +220,7 @@ functions, stratification and clustering are not implemented") }
     if (is.null(param.tune$lambda)==T | length(param.tune$lambda)>1 | length(param.tune$alpha)>1){
       .results<-c()
       for( a in 1:length(param.tune$alpha)){
-        .cv.en<-glmnet::cv.glmnet(x=.x, y=.y, family = "binomial",  type.measure = "deviance",
+        .cv.en<-glmnet::cv.glmnet(x=.x, y=.y, family = "gaussian",  type.measure = "deviance",
                                   parallel = FALSE, alpha=param.tune$alpha[a],
                                   penalty.factor = .penalty.factor,
                                   lambda=param.tune$lambda, foldid = foldid)
@@ -239,39 +239,39 @@ functions, stratification and clustering are not implemented") }
   } 
   
   if(model == "aic"){
-    formula <- stepAIC( glm(formula=formula(paste0(outcome,"~",group)), data=data,family="binomial"),
+    formula <- stepAIC( glm(formula=formula(paste0(outcome,"~",group)), data=data,family="gaussian"),
                         scope=list(lower = formula(paste0(outcome,"~",group)), upper = formula),
                         direction="forward", k=2, trace=FALSE)$formula
   } 
   if(model == "bic"){
-    formula <- stepAIC( glm(formula=formula(paste0(outcome,"~",group)), data=data,family="binomial"),
+    formula <- stepAIC( glm(formula=formula(paste0(outcome,"~",group)), data=data,family="gaussian"),
                         scope=list(lower = formula(paste0(outcome,"~",group)), upper = formula),
                         direction="forward", k=log(nrow(data)), trace=FALSE)$formula
   } 
   
   
   
-  #### Calibration logistic function
+  #### Calibration linear function
   
   
   if(model == "all" | model == "aic" | model == "bic") {
     .tune.optimal = formula
-    fit <- glm(formula = formula, data=data, family="binomial")
+    fit <- glm(formula = formula, data=data, family="gaussian")
     calibration.predict <- predict(fit, newdata = data, type = "response")
   }
   if (model == "lasso") {
     fit <- glmnet(x = .x, y = .y, lambda = .tune.optimal$lambda,  type.measure = "deviance",
-                  family = "binomial", alpha = 1, penalty.factor = .penalty.factor)
+                  family = "gaussian", alpha = 1, penalty.factor = .penalty.factor)
     calibration.predict <- predict(fit, newx=.x, type="response")
   }
   if (model == "ridge") {
     fit <- glmnet(x = .x, y = .y, lambda = .tune.optimal$lambda,  type.measure = "deviance",
-                  family = "binomial", alpha = 0, penalty.factor = .penalty.factor)
+                  family = "gaussian", alpha = 0, penalty.factor = .penalty.factor)
     calibration.predict <- predict(fit, newx=.x, type="response")
   }
   if (model == "elasticnet") {
     fit <- glmnet(x = .x, y = .y, lambda = .tune.optimal$lambda,  type.measure = "deviance",
-                  family = "binomial", alpha = .tune.optimal$alpha, penalty.factor = .penalty.factor)
+                  family = "gaussian", alpha = .tune.optimal$alpha, penalty.factor = .penalty.factor)
     calibration.predict <- predict(fit, newx=.x, type="response")
   }
   
@@ -282,15 +282,15 @@ functions, stratification and clustering are not implemented") }
   ###   Bootstrapping
   
   BCVerror <- 0
-  p0 <- c()
-  p1 <- c()
-  OR <- c() 
+  m0 <- c()
+  m1 <- c()
+
   delta <- c()
   ratio <- c()
   
-  p0.unadj <- c()
-  p1.unadj <- c()
-  OR.unadj <- c() 
+  m0.unadj <- c()
+  m1.unadj <- c()
+
   delta.unadj <- c()
   ratio.unadj <- c()
   
@@ -342,102 +342,96 @@ functions, stratification and clustering are not implemented") }
     
     .y.learn <- data.learn[,outcome]
     
-
+    
     
     
     ### Unadjusted results
-    fit <- glm(formula = as.formula(paste(outcome,"~",group)), data=data.learn, family="binomial")
+    fit <- glm(formula = as.formula(paste(outcome,"~",group)), data=data.learn, family="gaussian")
     
-    .p0.unadj = mean(predict(fit, newdata = data.valid0, type = "response"))
-    .p1.unadj = mean(predict(fit, newdata = data.valid1, type = "response"))
+    .m0.unadj = mean(predict(fit, newdata = data.valid0, type = "response"))
+    .m1.unadj = mean(predict(fit, newdata = data.valid1, type = "response"))
     
-    .OR.unadj = (.p1.unadj*(1-.p0.unadj))/(.p0.unadj*(1-.p1.unadj))
-    .delta.unadj = .p1.unadj - .p0.unadj
-    .ratio.unadj = .p1.unadj / .p0.unadj
+    .delta.unadj = .m1.unadj - .m0.unadj
+    .ratio.unadj = .m1.unadj / .m0.unadj
     
     
     ### GC
     if (model == "aic") {
-      formula <- stepAIC( glm(formula=formula(paste0(outcome,"~",group)), data=data.learn,family="binomial"),
+      formula <- stepAIC( glm(formula=formula(paste0(outcome,"~",group)), data=data.learn,family="gaussian"),
                           scope=list(lower = formula(paste0(outcome,"~",group)), upper = formula.all),
                           direction="forward", k=2, trace=FALSE)$formula
       
-      fit <- suppressWarnings(glm(formula = formula, data=data.learn, family="binomial"))
+      fit <- suppressWarnings(glm(formula = formula, data=data.learn, family="gaussian"))
       
-      .p0 = suppressWarnings(mean(predict(fit, newdata = data.valid0, type = "response")))
-      .p1 = suppressWarnings(mean(predict(fit, newdata = data.valid1, type = "response")))
+      .m0 = suppressWarnings(mean(predict(fit, newdata = data.valid0, type = "response")))
+      .m1 = suppressWarnings(mean(predict(fit, newdata = data.valid1, type = "response")))
       
-      .OR = (.p1*(1-.p0))/(.p0*(1-.p1))
-      .delta = .p1 - .p0
-      .ratio = .p1 / .p0
+      .delta = .m1 - .m0
+      .ratio = .m1 / .m0
     }
     
     if (model == "bic") {
-      formula <- stepAIC( glm(formula=formula(paste0(outcome,"~",group)), data=data.learn,family="binomial"),
+      formula <- stepAIC( glm(formula=formula(paste0(outcome,"~",group)), data=data.learn,family="gaussian"),
                           scope=list(lower = formula(paste0(outcome,"~",group)), upper = formula.all),
                           direction="forward", k=log(nrow(data.learn)), trace=FALSE)$formula
       
-      fit <- suppressWarnings(glm(formula = formula, data=data.learn, family="binomial"))
+      fit <- suppressWarnings(glm(formula = formula, data=data.learn, family="gaussian"))
       
-      .p0 = suppressWarnings(mean(predict(fit, newdata = data.valid0, type = "response")))
-      .p1 = suppressWarnings(mean(predict(fit, newdata = data.valid1, type = "response")))
+      .m0 = suppressWarnings(mean(predict(fit, newdata = data.valid0, type = "response")))
+      .m1 = suppressWarnings(mean(predict(fit, newdata = data.valid1, type = "response")))
       
-      .OR = (.p1*(1-.p0))/(.p0*(1-.p1))
-      .delta = .p1 - .p0
-      .ratio = .p1 / .p0
+      .delta = .m1 - .m0
+      .ratio = .m1 / .m0
     }
     
     if(model == "all") {
-      fit <- suppressWarnings(glm(formula = formula, data=data.learn, family="binomial"))
+      fit <- suppressWarnings(glm(formula = formula, data=data.learn, family="gaussian"))
       
-      .p0 = suppressWarnings(mean(predict(fit, newdata = data.valid0, type = "response")))
-      .p1 = suppressWarnings(mean(predict(fit, newdata = data.valid1, type = "response")))
+      .m0 = suppressWarnings(mean(predict(fit, newdata = data.valid0, type = "response")))
+      .m1 = suppressWarnings(mean(predict(fit, newdata = data.valid1, type = "response")))
       
-      .OR = (.p1*(1-.p0))/(.p0*(1-.p1))
-      .delta = .p1 - .p0
-      .ratio = .p1 / .p0
+      .delta = .m1 - .m0
+      .ratio = .m1 / .m0
     }
     
     if (model == "lasso") {
       if (boot.tune) {
-        .cv.lasso <- cv.glmnet(x=.x.learn, y=.y.learn, family = "binomial",  type.measure = "deviance",
+        .cv.lasso <- cv.glmnet(x=.x.learn, y=.y.learn, family = "gaussian",  type.measure = "deviance",
                                nfolds = cv, parallel = FALSE, alpha=1, penalty.factor = .penalty.factor,keep=F,
                                lambda=param.tune$lambda)
         .tune.optimal=list(lambda=.cv.lasso$lambda.min)
       }
       fit <- glmnet(x = .x.learn, y = .y.learn, lambda = .tune.optimal$lambda,  type.measure = "deviance",
-                    family = "binomial", alpha = 1, penalty.factor = .penalty.factor)
+                    family = "gaussian", alpha = 1, penalty.factor = .penalty.factor)
       
-      .p0 = mean(predict(fit, newx=.x.valid0, type="response"))
-      .p1 = mean(predict(fit, newx=.x.valid1, type="response"))
+      .m0 = mean(predict(fit, newx=.x.valid0, type="response"))
+      .m1 = mean(predict(fit, newx=.x.valid1, type="response"))
       
-      .OR = (.p1*(1-.p0))/(.p0*(1-.p1))
-      .delta = .p1 - .p0
-      .ratio = .p1 / .p0
+      .delta = .m1 - .m0
+      .ratio = .m1 / .m0
     }
     
     if (model == "ridge") {
       if (boot.tune) {
-        .cv.ridge <- cv.glmnet(x=.x.learn, y=.y.learn, family = "binomial",  type.measure = "deviance",
+        .cv.ridge <- cv.glmnet(x=.x.learn, y=.y.learn, family = "gaussian",  type.measure = "deviance",
                                parallel = FALSE, alpha=0, penalty.factor = .penalty.factor, nfolds = cv,
                                lambda=param.tune$lambda)
         .tune.optimal=list(lambda=.cv.ridge$lambda.min)
       }
       fit <- glmnet(x = .x.learn, y = .y.learn, lambda = .tune.optimal$lambda,  type.measure = "deviance",
-                    family = "binomial", alpha = 0, penalty.factor = .penalty.factor)
+                    family = "gaussian", alpha = 0, penalty.factor = .penalty.factor)
       
-      .p0 = mean(predict(fit, newx=.x.valid0, type="response"))
-      .p1 = mean(predict(fit, newx=.x.valid1, type="response"))
+      .m0 = mean(predict(fit, newx=.x.valid0, type="response"))
+      .m1 = mean(predict(fit, newx=.x.valid1, type="response"))
       
-      .OR = (.p1*(1-.p0))/(.p0*(1-.p1))
-      .delta = .p1 - .p0
-      .ratio = .p1 / .p0
+      .delta = .m1 - .m0
+      .ratio = .m1 / .m0
     }
     if (model == "elasticnet") {
       if (boot.tune) {
         .results<-c()
         for( a in 1:length(param.tune$alpha)){
-          .cv.en<-glmnet::cv.glmnet(x=.x.learn, y=.y.learn, family = "binomial",  type.measure = "deviance",
+          .cv.en<-glmnet::cv.glmnet(x=.x.learn, y=.y.learn, family = "gaussian",  type.measure = "deviance",
                                     parallel = FALSE, alpha=param.tune$alpha[a],
                                     penalty.factor = .penalty.factor,
                                     lambda=param.tune$lambda)
@@ -450,25 +444,24 @@ functions, stratification and clustering are not implemented") }
                            lambda=.results[which(.results$cvm==min(.results$cvm)),2][1] )
       }
       fit <- glmnet(x = .x.learn, y = .y.learn, lambda = .tune.optimal$lambda,  type.measure = "deviance",
-                    family = "binomial", alpha = .tune.optimal$alpha, penalty.factor = .penalty.factor)
+                    family = "gaussian", alpha = .tune.optimal$alpha, penalty.factor = .penalty.factor)
       
-      .p0 = mean(predict(fit, newx=.x.valid0, type="response"))
-      .p1 = mean(predict(fit, newx=.x.valid1, type="response"))
+      .m0 = mean(predict(fit, newx=.x.valid0, type="response"))
+      .m1 = mean(predict(fit, newx=.x.valid1, type="response"))
       
-      .OR = (.p1*(1-.p0))/(.p0*(1-.p1))
-      .delta = .p1 - .p0
-      .ratio = .p1 / .p0
+      .delta = .m1 - .m0
+      .ratio = .m1 / .m0
     }
     
-    p0 <- c(p0, .p0)
-    p1 <- c(p1, .p1)
-    OR <- c(OR, .OR)
+    m0 <- c(m0, .m0)
+    m1 <- c(m1, .m1)
+  
     delta <- c(delta, .delta)
     ratio <- c(ratio, .ratio)
     
-    p0.unadj <- c(p0.unadj, .p0.unadj)
-    p1.unadj <- c(p1.unadj, .p1.unadj)
-    OR.unadj <- c(OR.unadj, .OR.unadj)
+    m0.unadj <- c(m0.unadj, .m0.unadj)
+    m1.unadj <- c(m1.unadj, .m1.unadj)
+
     delta.unadj <- c(delta.unadj, .delta.unadj)
     ratio.unadj <- c(ratio.unadj, .ratio.unadj)
   }
@@ -492,21 +485,19 @@ functions, stratification and clustering are not implemented") }
               outcome=outcome,
               group=group,
               n = nrow(datakeep),
-              nevent = sum(datakeep[,outcome]),
-              p0 = p0,  
-              p1 = p1,
+              mean_outcome = mean(datakeep[,outcome]),
+              m0 = m0,  
+              m1 = m1,
               delta = delta,
               ratio = ratio,
-              OR = OR,
-              p0.unadj = p0.unadj,
-              p1.unadj = p1.unadj,
+              m0.unadj = m0.unadj,
+              m1.unadj = m1.unadj,
               delta.unadj = delta.unadj,
               ratio.unadj = ratio.unadj,
-              OR.unadj = OR.unadj,
               call = match.call()
   )
   
-  class(res) <- "gcbinary"
+  class(res) <- "gccontinuous"
   
   return(res)
 }
