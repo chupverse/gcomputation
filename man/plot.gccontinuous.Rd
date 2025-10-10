@@ -65,12 +65,11 @@ set.seed(123)
 
 cont_outcome <- rnorm(n = nrow(dataPROPHYVAP), 
                       mean = beta_ttt*dataPROPHYVAP$GROUP_num +
-                        beta_alcool*match(as.factor(dataPROPHYVAP$ALCOOL),levels(as.factor(dataPROPHYVAP$ALCOOL))) + 
+                        beta_alcool*match(as.factor(dataPROPHYVAP$ALCOOL),
+                              levels(as.factor(dataPROPHYVAP$ALCOOL))) + 
                         beta_bmi*dataPROPHYVAP$BMI + 
                         beta_age*dataPROPHYVAP$AGE, 
                       sd = 1)
-
-#mean(cont_outcome)
 
 dataPROPHYVAP$y_cont <- cont_outcome
 
@@ -87,9 +86,7 @@ plot(gc1, method="calibration", n.groups=5)
 	 
 #Plot the proportion comparison
 plot(gc1, method="proportion")
-
 }
 
 \keyword{Plotting}
-\keyword{G-computation}
-\keyword{continuous}
+\keyword{Continuous outcome}
