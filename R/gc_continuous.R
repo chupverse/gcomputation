@@ -1,7 +1,7 @@
 #' @export
 
-gc_continuous <- function(formula, data, group, effect="ATE", model, param.tune=NULL, cv=10, boot.type="bcv",
-                      boot.number=500, boot.tune=FALSE, boot.mi = FALSE, progress=TRUE, seed=NULL, m=5, ...) {
+gc_continuous <- function(formula, data, group, effect="ATE", model, param.tune=NULL, cv=30, boot.type="bcv",
+                      boot.number=500, boot.tune=FALSE, progress=TRUE, seed=NULL, boot.mi=FALSE, m=5, ...) {
   
   if (!is.logical(boot.mi)) {stop("The argument \"boot.mi\" needs to be a logical TRUE or FALSE")}
   if (boot.mi == FALSE) {

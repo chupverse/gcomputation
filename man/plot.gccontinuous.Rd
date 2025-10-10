@@ -89,5 +89,4 @@ plot(gc1, method="proportion")
 }
 
 \keyword{Plotting}
-\keyword{G-computation}
-\keyword{continuous}
+\keyword{Continuous outcome}
