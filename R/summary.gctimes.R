@@ -28,12 +28,12 @@ summary.gctimes <- function (object, digits=4, ci.type=NULL, ci.level=0.95, unad
   sd_RMST1 <- sd(x$RMST1, na.rm=TRUE)
   mean_deltaRMST <- mean(x$deltaRMST, na.rm=TRUE)
   sd_deltaRMST <- sd(x$deltaRMST, na.rm=TRUE)
-  mean_surv0 <- mean(x$surv0, na.rm=TRUE)
-  sd_surv0 <- sd(x$surv0, na.rm=TRUE)
-  mean_surv1 <- mean(x$surv1, na.rm=TRUE)
-  sd_surv1 <- sd(x$surv1, na.rm=TRUE)
-  mean_deltasurv <- mean(x$deltasurv, na.rm=TRUE)
-  sd_deltasurv <- sd(x$deltasurv, na.rm=TRUE)
+  mean_surv0 <- mean(x$s0, na.rm=TRUE)
+  sd_surv0 <- sd(x$s0, na.rm=TRUE)
+  mean_surv1 <- mean(x$s1, na.rm=TRUE)
+  sd_surv1 <- sd(x$s1, na.rm=TRUE)
+  mean_deltasurv <- mean(x$delta, na.rm=TRUE)
+  sd_deltasurv <- sd(x$delta, na.rm=TRUE)
   
 
   if (is.na(sd_AHR) || sd_AHR == 0) {
@@ -121,12 +121,12 @@ summary.gctimes <- function (object, digits=4, ci.type=NULL, ci.level=0.95, unad
         quantile(x$RMST1, probs = 1-(1-ci.level)/2, na.rm = TRUE),
         quantile(x$deltaRMST, probs = (1-ci.level)/2, na.rm = TRUE),
         quantile(x$deltaRMST, probs = 1-(1-ci.level)/2, na.rm = TRUE),
-        quantile(x$surv0, probs = (1-ci.level)/2, na.rm = TRUE),
-        quantile(x$surv0, probs = 1-(1-ci.level)/2, na.rm = TRUE),
-        quantile(x$surv1, probs = (1-ci.level)/2, na.rm = TRUE),
-        quantile(x$surv1, probs = 1-(1-ci.level)/2, na.rm = TRUE),
-        quantile(x$deltasurv, probs = (1-ci.level)/2, na.rm = TRUE),
-        quantile(x$deltasurv, probs = 1-(1-ci.level)/2, na.rm = TRUE)
+        quantile(x$s0, probs = (1-ci.level)/2, na.rm = TRUE),
+        quantile(x$s0, probs = 1-(1-ci.level)/2, na.rm = TRUE),
+        quantile(x$s1, probs = (1-ci.level)/2, na.rm = TRUE),
+        quantile(x$s1, probs = 1-(1-ci.level)/2, na.rm = TRUE),
+        quantile(x$delta, probs = (1-ci.level)/2, na.rm = TRUE),
+        quantile(x$delta, probs = 1-(1-ci.level)/2, na.rm = TRUE)
       ), ncol=2, byrow=TRUE)
     }
     tmp_GC <- cbind(res_GC[,1], `Lower CI` = ci_vals_GC[,1], `Upper CI` = ci_vals_GC[,2])
@@ -151,12 +151,12 @@ summary.gctimes <- function (object, digits=4, ci.type=NULL, ci.level=0.95, unad
     sd_RMST1_unadj <- sd(x$RMST1.unadj, na.rm=TRUE)
     mean_deltaRMST_unadj <- mean(x$deltaRMST.unadj, na.rm=TRUE)
     sd_deltaRMST_unadj <- sd(x$deltaRMST.unadj, na.rm=TRUE)
-    mean_surv0_unadj <- mean(x$surv0.unadj, na.rm=TRUE)
-    sd_surv0_unadj <- sd(x$surv0.unadj, na.rm=TRUE)
-    mean_surv1_unadj <- mean(x$surv1.unadj, na.rm=TRUE)
-    sd_surv1_unadj <- sd(x$surv1.unadj, na.rm=TRUE)
-    mean_deltasurv_unadj <- mean(x$deltasurv.unadj, na.rm=TRUE)
-    sd_deltasurv_unadj <- sd(x$deltasurv.unadj, na.rm=TRUE)
+    mean_surv0_unadj <- mean(x$s0.unadj, na.rm=TRUE)
+    sd_surv0_unadj <- sd(x$s0.unadj, na.rm=TRUE)
+    mean_surv1_unadj <- mean(x$s1.unadj, na.rm=TRUE)
+    sd_surv1_unadj <- sd(x$s1.unadj, na.rm=TRUE)
+    mean_deltasurv_unadj <- mean(x$delta.unadj, na.rm=TRUE)
+    sd_deltasurv_unadj <- sd(x$delta.unadj, na.rm=TRUE)
     
     
     if (is.na(sd_AHR_unadj) || sd_AHR_unadj == 0) {
@@ -244,12 +244,12 @@ summary.gctimes <- function (object, digits=4, ci.type=NULL, ci.level=0.95, unad
           quantile(x$RMST1.unadj, probs = 1-(1-ci.level)/2, na.rm = TRUE),
           quantile(x$deltaRMST.unadj, probs = (1-ci.level)/2, na.rm = TRUE),
           quantile(x$deltaRMST.unadj, probs = 1-(1-ci.level)/2, na.rm = TRUE),
-          quantile(x$surv0.unadj, probs = (1-ci.level)/2, na.rm = TRUE),
-          quantile(x$surv0.unadj, probs = 1-(1-ci.level)/2, na.rm = TRUE),
-          quantile(x$surv1.unadj, probs = (1-ci.level)/2, na.rm = TRUE),
-          quantile(x$surv1.unadj, probs = 1-(1-ci.level)/2, na.rm = TRUE),
-          quantile(x$deltasurv.unadj, probs = (1-ci.level)/2, na.rm = TRUE),
-          quantile(x$deltasurv.unadj, probs = 1-(1-ci.level)/2, na.rm = TRUE)
+          quantile(x$s0.unadj, probs = (1-ci.level)/2, na.rm = TRUE),
+          quantile(x$s0.unadj, probs = 1-(1-ci.level)/2, na.rm = TRUE),
+          quantile(x$s1.unadj, probs = (1-ci.level)/2, na.rm = TRUE),
+          quantile(x$s1.unadj, probs = 1-(1-ci.level)/2, na.rm = TRUE),
+          quantile(x$delta.unadj, probs = (1-ci.level)/2, na.rm = TRUE),
+          quantile(x$delta.unadj, probs = 1-(1-ci.level)/2, na.rm = TRUE)
         ), ncol=2, byrow=TRUE)
       }
       tmp_unadj <- cbind(res_unadj[,1], `Lower CI` = ci_vals_unadj[,1], `Upper CI` = ci_vals_unadj[,2])

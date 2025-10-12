@@ -28,8 +28,10 @@
   ratio.unadj <- c()
   lambdas <- c()
   alphas <- c()
+  
   datas <- list()
   calibrations <- list()
+  formulas <- list()
   
   final_res <- NULL
   
@@ -67,6 +69,9 @@
     ratio.unadj <- c(ratio.unadj, gc_res$ratio.unadj)
     OR.unadj <- c(OR.unadj, gc_res$OR.unadj)
     
+    if (model %in% c("all","aic","bic")) {
+      formulas[[i]] <- gc_res$tuning.parameters
+    }
     if (model %in% c("lasso", "ridge")) {
       if (!is.null(gc_res$tuning.parameters$lambda)) {
         lambdas <- c(lambdas, gc_res$tuning.parameters$lambda)
@@ -108,6 +113,9 @@
   final_res$m <- m
   final_res$initial.data <- data
     
+  if (model %in% c("all","aic","bic")) {
+    final_res$tuning.parameters <- formulas
+  }
   if (model %in% c("lasso", "ridge")) {
     final_res$tuning.parameters=list(lambda=lambdas)
   } else if (model == "elasticnet") {
