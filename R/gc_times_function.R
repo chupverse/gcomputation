@@ -336,6 +336,7 @@ if(model == "lasso"){
     T.multi = c(T.multi, max(fit_times))
     H.mean = c(H.mean, max(H.mean))
     S.mean = c(S.mean, min(S.mean))
+    H0.multi = c(H0.multi, max(H0.multi))
   }
   
   
