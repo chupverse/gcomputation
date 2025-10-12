@@ -20,9 +20,9 @@ print.gctimes <- function (x, digits=4, ...)
                   mean(x$RMST0, na.rm=TRUE),
                   mean(x$RMST1, na.rm=TRUE),
                   mean(x$deltaRMST, na.rm=TRUE),
-    mean(x$surv0, na.rm=TRUE),
-    mean(x$surv1, na.rm=TRUE),
-    mean(x$deltasurv, na.rm=TRUE)
+    mean(x$s0, na.rm=TRUE),
+    mean(x$s1, na.rm=TRUE),
+    mean(x$delta, na.rm=TRUE)
   ), nrow = 1)
   
   colnames(res) <- c("AHR",paste0("RMST0(to ", x$pro.time,")"),

@@ -1,4 +1,4 @@
-.gc_times <- function(formula, data, group, pro.time, effect="ATE", model, param.tune=NULL, cv=10, boot.type="bcv",
+.gc_times <- function(formula, data, group, pro.time=NULL, effect="ATE", model, param.tune=NULL, cv=10, boot.type="bcv",
                         boot.number=500, boot.tune=FALSE, progress=TRUE, seed=NULL) {
   # Quality tests
   if(missing(formula)) {stop("The \"formula\" argument is missing (formula)")}
@@ -30,8 +30,14 @@
   
   
   if (missing(pro.time) | is.null(pro.time)) {
-    warning("The argument \"pro.time\" is missing, the median value of the time variable will be used")
-    pro.time <- median(data[,times])
+    warning("The argument \"pro.time\" is missing, it will be set to the time where 10% of patients remain at risk")
+    km_fit <- survfit(Surv(data[,times], data[,failures]) ~ 1)
+    if (min(km_fit$surv) > 0.10) {
+      pro.time <- max(data[,times])
+      warning("Survival never dropped below 10% and \"pro.time\" is set to the max follow-up time")
+    } else {
+      pro.time <- min(km_fit$time[km_fit$surv <= 0.10])
+    }
   }
   if (pro.time > max(data[,times])) {stop("The argument \"pro.time\" is higher than the maximum value of the time variable")}
   
@@ -278,7 +284,7 @@ if(model == "lasso"){
     .b <- glmnet_basesurv(data[,times], data[,failures], .lp.coxph, centered = FALSE)
     hazard <- .b$cumulative_base_hazard
     fit_times <- .b$times
-    .tune.optimal = NULL
+    .tune.optimal = formula
   }
   if (model == "lasso") {
     fit <- glmnet(x = .x, y = .y, lambda = .tune.optimal$lambda,  type.measure = "deviance",
@@ -677,16 +683,16 @@ res <- list(calibration=as.list(results.surv.calibration),
             RMST0 = RMST0,
             RMST1 = RMST1,
             deltaRMST = deltaRMST,
-            surv0 = surv0,
-            surv1 = surv1,
-            deltasurv = deltasurv,
+            s0 = surv0,
+            s1 = surv1,
+            delta = deltasurv,
             AHR.unadj = AHR.unadj,
             RMST0.unadj = RMST0.unadj,
             RMST1.unadj = RMST1.unadj,
             deltaRMST.unadj = deltaRMST.unadj,
-            surv0.unadj = surv0.unadj,
-            surv1.unadj = surv1.unadj,
-            deltasurv.unadj = deltasurv.unadj,
+            s0.unadj = surv0.unadj,
+            s1.unadj = surv1.unadj,
+            delta.unadj = deltasurv.unadj,
             call = match.call()
 )
 

@@ -8,7 +8,7 @@ G-Computation to Estimate a Marginal Effect for Time-to-Event Outcome
 This function computes G-computation (GC) with different working models or algorithms (Q-models) for a time-to-event outcome and a 2-class exposure/treatment.
 }
 \usage{
-gc_times(formula, data, group, pro.time, effect="ATE", model,
+gc_times(formula, data, group, pro.time=NULL, effect="ATE", model,
             param.tune=NULL, cv=30, boot.type="bcv", boot.number=500,
             boot.tune=FALSE, progress=TRUE, seed=NULL, boot.mi=FALSE, m=5, ...)
 }
@@ -17,7 +17,7 @@ gc_times(formula, data, group, pro.time, effect="ATE", model,
   \item{formula}{A formula object, with the response on the left of a ~ operator, and the terms on the right. The response must be a survival object as returned by the \code{Surv} function.}
   \item{data}{A data frame in which to look for the variables related to the outcome, the studied (\code{group}) and the predictors included in the previous model.}
   \item{group}{The name of the variable related to the exposure/treatment. This variable shall have only two modalities encoded 0 for the untreated/unexposed patients and 1 for the treated/exposed ones.}
-   \item{pro.time}{An optional value for censoring the follow-up times and obtaining survival curves and related restricted mean survival times up to \code{pro.time}. The default value is median of the follow-up times.}
+   \item{pro.time}{An optional value for censoring the follow-up times and obtaining survival curves and related restricted mean survival times up to \code{pro.time}. If not specified, it is automatically set to the time point at which 10\% of patients remain at risk.}
    \item{effect}{The type of the marginal effect to be estimated. Three types are possible : "ATE" (by default), "ATT" and "ATU". See details.}   
    \item{model}{The modelling method used to create the Q-model. Current implemented methods are : "all", "lasso", "ridge", "elasticnet" and "aic". See details.} 
    \item{param.tune}{An optional argument to specify the tuning parameters for the Q-model. If \code{NULL} (the default), the tuning parameter(s) is(are) estimated by \code{cv}-fold cross-validation. Otherwise, the user can propose a tuning grid. See details.}
@@ -33,7 +33,7 @@ gc_times(formula, data, group, pro.time, effect="ATE", model,
  }
 
 \details{
-The option \code{methods="ATE"} corresponds to the Average Treatment effect on the Entire population, i.e. the marginal effect if the entire sample were treated versus untreated. The "ATT" modality allows the estimation of the Average Treatment effect on the Treated, i.e. the marginal effect if the treated patients (\code{group = 1}) would have been untreated. The "ATU" modality modality allows the estimation of the Average Treatment effect on the Untreated, i.e. the marginal effect if the untreated patients (\code{group = 0}) would have been treated.
+The option \code{effect="ATE"} corresponds to the Average Treatment effect on the Entire population, i.e. the marginal effect if the entire sample were treated versus untreated. The "ATT" modality allows the estimation of the Average Treatment effect on the Treated, i.e. the marginal effect if the treated patients (\code{group = 1}) would have been untreated. The "ATU" modality modality allows the estimation of the Average Treatment effect on the Untreated, i.e. the marginal effect if the untreated patients (\code{group = 0}) would have been treated.
 
 Several modelling methods can be used for the Q-model estimation:
 \tabular{lll}{
@@ -54,10 +54,10 @@ If \code{boot.mi = TRUE}, multiple imputation is considered by using the MI-BOOT
 
 \value{
 \item{calibration}{A list containing the fitted Q-model (\code{fit}); the time points (\code{time}) with the related cumulative hazards (\code{cumhaz}), survival probabilities (\code{surv}), and baseline cumulative hazard (\code{H0.multi}); and the linear predictors (\code{lp}) obtained on the complete dataset.}
-\item{tuning.parameters}{The estimated tuning parameters for the Q-model. \code{NULL} for "aic" and "bic" methods.}
+\item{tuning.parameters}{The estimated tuning parameters for the Q-model. For "aic" and "bic" methods, this represents the final model.}
 \item{data}{The data frame with individual with no missing data in the formula parameters.}
 \item{formula}{The formula provided to the user.}
-\item{method}{The method used for the Q-model (e.g., "lasso", "ridge", "aic").}
+\item{model}{The method used for the Q-model (e.g., "lasso", "ridge", "aic").}
 \item{cv}{The number of splits used for cross-validation.}
 \item{missing}{The number of observations that were removed from the original dataset due to missing values.}
 \item{pro.time}{The time point up to which RMST and survival probabilities are estimated.}
@@ -71,16 +71,16 @@ If \code{boot.mi = TRUE}, multiple imputation is considered by using the MI-BOOT
 \item{RMST0}{A numeric vector containing the adjusted restricted mean survival (RMST) times up to \code{pro.time} in the control group for each bootstrap sample.}
 \item{RMST1}{A numeric vector containing the adjusted RMST times up to \code{pro.time} in the experimental group for each bootstrap sample.}
 \item{deltaRMST}{A numeric vector with \code{RMST1} - \code{RMST0}.}
-\item{surv0}{A numeric vector containing the adjusted survival probability at \code{pro.time} in the control group for each bootstrap sample.}
-\item{surv1}{A numeric vector containing the adjusted survival probability at \code{pro.time} in the experimantal group for each bootstrap sample.}
-\item{deltasurv}{A numeric vector with \code{surv1} - \code{surv0}.}
+\item{s0}{A numeric vector containing the adjusted survival probability at \code{pro.time} in the control group for each bootstrap sample.}
+\item{s1}{A numeric vector containing the adjusted survival probability at \code{pro.time} in the experimantal group for each bootstrap sample.}
+\item{delta}{A numeric vector with \code{surv1} - \code{surv0}.}
 \item{AHR.unadj}{A numeric vector containing the unadjusted average hazard ratio for each bootstrap sample.}
 \item{RMST0.unadj}{A numeric vector containing the unadjusted RMST times up to \code{pro.time} in the control group for each bootstrap sample.}
 \item{RMST1.unadj}{A numeric vector containing the unadjusted RMST times up to \code{pro.time} in the experimental group for each bootstrap sample.}
 \item{deltaRMST.unadj}{A numeric vector with \code{RMST1.unadj} - \code{RMST0.unadj}.}
-\item{surv0.unadj}{A numeric vector containing the unadjusted survival probability at \code{pro.time} in the control group for each bootstrap sample.}
-\item{surv1.unadj}{A numeric vector containing the unadjusted survival probability at \code{pro.time} in the experimantal group for each bootstrap sample.}
-\item{deltasurv.unadj}{A numeric vector with \code{surv1.unadj} - \code{surv0.unadj}.}
+\item{s.unadj}{A numeric vector containing the unadjusted survival probability at \code{pro.time} in the control group for each bootstrap sample.}
+\item{s.unadj}{A numeric vector containing the unadjusted survival probability at \code{pro.time} in the experimantal group for each bootstrap sample.}
+\item{delta.unadj}{A numeric vector with \code{surv1.unadj} - \code{surv0.unadj}.}
 \item{call}{The complete function call that generated the \code{gctimes} object.}
 }
 

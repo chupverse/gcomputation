@@ -1,4 +1,4 @@
-gc_times <- function(formula, data, group, pro.time, effect="ATE", model, param.tune=NULL, cv=30, boot.type="bcv",
+gc_times <- function(formula, data, group, pro.time=NULL, effect="ATE", model, param.tune=NULL, cv=30, boot.type="bcv",
                      boot.number=500, boot.tune=FALSE, progress=TRUE, seed=NULL, boot.mi=FALSE, m=5, ...) {
   
   if (!is.logical(boot.mi)) {stop("The argument \"boot.mi\" needs to be a logical TRUE or FALSE")}
