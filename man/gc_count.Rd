@@ -1,13 +1,13 @@
-\name{gc_continuous}
-\alias{gc_continuous}
+\name{gc_count}
+\alias{gc_count}
 \title{
-G-Computation to Estimate a Marginal Effect with a Continuous Outcome
+G-Computation to Estimate a Marginal Effect with a Counting Outcome
 }
 \description{
-This function computes G-computation (GC) with different working models or algorithms (Q-models) for a continuous outcome and a 2-class exposure/treatment.
+This function computes G-computation (GC) with different working models or algorithms (Q-models) for a counting outcome and a 2-class exposure/treatment.
 }
 \usage{
-gc_continuous(formula, data, group, effect="ATE", model,
+gc_count(formula, data, group, effect="ATE", model,
             param.tune=NULL, cv=30, boot.type="bcv", boot.number=500,
             boot.tune=FALSE, progress=TRUE, seed=NULL, boot.mi=FALSE, m=5, ...)
 }
@@ -63,14 +63,14 @@ If \code{boot.mi = TRUE}, multiple imputation is considered by using the MI-BOOT
 \item{outcome}{A character string specifying the name of the outcome variable.}
 \item{group}{A character string specifying the name of the grouping variable.}
 \item{n}{The sample size of the dataset used in calculations, after missing data removal.}
-\item{m0}{A numeric vector containing the adjusted means of the outcomes in the control group for each bootstrap sample.}
-\item{m1}{A numeric vector containing the adjusted means of the outcomes in the experimental group for each bootstrap sample.}
-\item{delta}{A numeric vector with \code{m1} - \code{m0}.}
-\item{ratio}{A numeric vector with \code{m1} / \code{m0}.}
-\item{m0.unadj}{A numeric vector containing the unadjusted means of the outcomes in the control group for each bootstrap sample.}
-\item{m1.unadj}{A numeric vector containing the unadjusted means of the outcomes in the experimental group for each bootstrap sample.}
-\item{delta.unadj}{A numeric vector with \code{m1.unadj} - \code{m0.unadj}.}
-\item{ratio.unadj}{A numeric vector with \code{m1.unadj} / \code{m0.unadj}.}
+\item{c0}{A numeric vector containing the adjusted values of the outcomes in the control group for each bootstrap sample.}
+\item{c1}{A numeric vector containing the adjusted values of the outcomes in the experimental group for each bootstrap sample.}
+\item{delta}{A numeric vector with \code{c1} - \code{c0}.}
+\item{ratio}{A numeric vector with \code{c1} / \code{c0}.}
+\item{c0.unadj}{A numeric vector containing the unadjusted values of the outcomes in the control group for each bootstrap sample.}
+\item{c1.unadj}{A numeric vector containing the unadjusted values of the outcomes in the experimental group for each bootstrap sample.}
+\item{delta.unadj}{A numeric vector with \code{c1.unadj} - \code{c0.unadj}.}
+\item{ratio.unadj}{A numeric vector with \code{c1.unadj} / \code{c0.unadj}.}
 \item{call}{The function call that generated the \code{gccontinuous} object.}
 }
 
@@ -89,13 +89,13 @@ dataPROPHYVAP$GROUP_num <- ifelse(dataPROPHYVAP$GROUP == "Placebo",0,1)
 
 ### In practice use larger values for cv and boot.number
 ### We set boot.number and cv at 10 for speed in CRAN checks
-gc1 <- gc_continuous(formula=.f, model="all", data=dataPROPHYVAP, group="GROUP_num",
+gc1 <- gc_count(formula=.f, model="all", data=dataPROPHYVAP, group="GROUP_num",
                     cv=10, boot.type="boot", boot.number=10, boot.tune=TRUE, effect="ATE")
 
 summary(gc1)
 
 ### With multiple imputation to handle missing data
-gc2 <- gc_continuous(formula=.f, model="all", data=dataPROPHYVAP,
+gc2 <- gc_count(formula=.f, model="all", data=dataPROPHYVAP,
                  group="GROUP_num", boot.type="boot", boot.number=10, effect="ATE",
                  boot.tune=FALSE, boot.mi=TRUE, m=5)
 
@@ -103,4 +103,4 @@ summary(gc2)
 }
 
 \keyword{G-computation}
-\keyword{Continuous outcome}
+\keyword{Counting outcome}

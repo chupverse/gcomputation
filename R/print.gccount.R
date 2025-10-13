@@ -1,4 +1,4 @@
-print.gccontinuous<- function (x, digits=4, ...)
+print.gccount<- function (x, digits=4, ...)
 {
   if (x$model %in% c("lasso","ridge","elasticnet")) {cat("model: ",x$model,", tuning parameters: ", sep = "")
     if (x$model == "elasticnet") {
@@ -14,12 +14,12 @@ print.gccontinuous<- function (x, digits=4, ...)
   cat("\n")
   
   cat("Estimates : \n")
-  res <- matrix(c(mean(x$m0, na.rm=TRUE),
-                  mean(x$m1, na.rm=TRUE),
+  res <- matrix(c(mean(x$c0, na.rm=TRUE),
+                  mean(x$c1, na.rm=TRUE),
                   mean(x$delta, na.rm=TRUE),
                   mean(x$ratio, na.rm=TRUE)),
                 nrow = 1)
-  colnames(res) <- c("M0", "M1", "M1-M0", "M1/M0")
+  colnames(res) <- c("C0", "C1", "C1-C0", "C1/C0")
   rownames(res) <-  ""
   
   printCoefmat(res, digits = digits, ..., P.values = FALSE, has.Pvalue = FALSE, na.print = "")
@@ -27,7 +27,7 @@ print.gccontinuous<- function (x, digits=4, ...)
   
   cat("\n")
   cat(paste0("n= ",x$n))
-  
+
   cat("\n")
   if(x$missing==1) { cat(x$missing, " observation deleted due to missingness", sep=""); cat("\n") }
   if(x$missing >1) { cat(x$missing, " observations deleted due to missingness", sep=""); cat("\n") }

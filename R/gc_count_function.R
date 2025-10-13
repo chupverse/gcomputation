@@ -1,5 +1,5 @@
-.gc_continuous <- function(formula, data, group, effect="ATE", model, param.tune=NULL, cv=10, boot.type="bcv",
-                       boot.number=500, boot.tune=FALSE, progress=TRUE, seed=NULL) {
+.gc_count <- function(formula, data, group, effect="ATE", model, param.tune=NULL, cv=10, boot.type="bcv",
+                           boot.number=500, boot.tune=FALSE, progress=TRUE, seed=NULL) {
   # Quality tests
   if(missing(formula)) {stop("The \"formula\" argument is missing (formula)")}
   if(missing(data)) {stop("The \"data\" argument is missing (data.frame)")}
@@ -200,7 +200,7 @@ functions, stratification and clustering are not implemented") }
   if(model == "lasso"){
     if(is.null(param.tune$lambda)==T | length(param.tune$lambda)>1){
       
-      .cv.lasso <- cv.glmnet(x=.x, y=.y, family = "gaussian",  type.measure = "deviance",
+      .cv.lasso <- cv.glmnet(x=.x, y=.y, family = "poisson",  type.measure = "deviance",
                              nfolds = cv, parallel = FALSE, alpha=1, penalty.factor = .penalty.factor,keep=F,
                              lambda=param.tune$lambda, foldid = foldid)
       
@@ -209,7 +209,7 @@ functions, stratification and clustering are not implemented") }
   }
   if(model == "ridge"){
     if(is.null(param.tune$lambda)==T | length(param.tune$lambda)>1){
-      .cv.ridge <- cv.glmnet(x=.x, y=.y, family = "gaussian",  type.measure = "deviance",
+      .cv.ridge <- cv.glmnet(x=.x, y=.y, family = "poisson",  type.measure = "deviance",
                              parallel = FALSE, alpha=0, penalty.factor = .penalty.factor, nfolds = cv,
                              lambda=param.tune$lambda, foldid = foldid)
       .tune.optimal=list(lambda=.cv.ridge$lambda.min)
@@ -220,7 +220,7 @@ functions, stratification and clustering are not implemented") }
     if (is.null(param.tune$lambda)==T | length(param.tune$lambda)>1 | length(param.tune$alpha)>1){
       .results<-c()
       for( a in 1:length(param.tune$alpha)){
-        .cv.en<-glmnet::cv.glmnet(x=.x, y=.y, family = "gaussian",  type.measure = "deviance",
+        .cv.en<-glmnet::cv.glmnet(x=.x, y=.y, family = "poisson",  type.measure = "deviance",
                                   parallel = FALSE, alpha=param.tune$alpha[a],
                                   penalty.factor = .penalty.factor,
                                   lambda=param.tune$lambda, foldid = foldid)
@@ -239,12 +239,12 @@ functions, stratification and clustering are not implemented") }
   } 
   
   if(model == "aic"){
-    formula <- stepAIC( glm(formula=formula(paste0(outcome,"~",group)), data=data,family="gaussian"),
+    formula <- stepAIC( glm(formula=formula(paste0(outcome,"~",group)), data=data,family="poisson"),
                         scope=list(lower = formula(paste0(outcome,"~",group)), upper = formula),
                         direction="forward", k=2, trace=FALSE)$formula
   } 
   if(model == "bic"){
-    formula <- stepAIC( glm(formula=formula(paste0(outcome,"~",group)), data=data,family="gaussian"),
+    formula <- stepAIC( glm(formula=formula(paste0(outcome,"~",group)), data=data,family="poisson"),
                         scope=list(lower = formula(paste0(outcome,"~",group)), upper = formula),
                         direction="forward", k=log(nrow(data)), trace=FALSE)$formula
   } 
@@ -256,22 +256,22 @@ functions, stratification and clustering are not implemented") }
   
   if(model == "all" | model == "aic" | model == "bic") {
     .tune.optimal = formula
-    fit <- glm(formula = formula, data=data, family="gaussian")
+    fit <- glm(formula = formula, data=data, family="poisson")
     calibration.predict <- predict(fit, newdata = data, type = "response")
   }
   if (model == "lasso") {
     fit <- glmnet(x = .x, y = .y, lambda = .tune.optimal$lambda,  type.measure = "deviance",
-                  family = "gaussian", alpha = 1, penalty.factor = .penalty.factor)
+                  family = "poisson", alpha = 1, penalty.factor = .penalty.factor)
     calibration.predict <- predict(fit, newx=.x, type="response")
   }
   if (model == "ridge") {
     fit <- glmnet(x = .x, y = .y, lambda = .tune.optimal$lambda,  type.measure = "deviance",
-                  family = "gaussian", alpha = 0, penalty.factor = .penalty.factor)
+                  family = "poisson", alpha = 0, penalty.factor = .penalty.factor)
     calibration.predict <- predict(fit, newx=.x, type="response")
   }
   if (model == "elasticnet") {
     fit <- glmnet(x = .x, y = .y, lambda = .tune.optimal$lambda,  type.measure = "deviance",
-                  family = "gaussian", alpha = .tune.optimal$alpha, penalty.factor = .penalty.factor)
+                  family = "poisson", alpha = .tune.optimal$alpha, penalty.factor = .penalty.factor)
     calibration.predict <- predict(fit, newx=.x, type="response")
   }
   
@@ -282,15 +282,15 @@ functions, stratification and clustering are not implemented") }
   ###   Bootstrapping
   
   BCVerror <- 0
-  m0 <- c()
-  m1 <- c()
-
+  c0 <- c()
+  c1 <- c()
+  
   delta <- c()
   ratio <- c()
   
-  m0.unadj <- c()
-  m1.unadj <- c()
-
+  c0.unadj <- c()
+  c1.unadj <- c()
+  
   delta.unadj <- c()
   ratio.unadj <- c()
   
@@ -346,92 +346,92 @@ functions, stratification and clustering are not implemented") }
     
     
     ### Unadjusted results
-    fit <- glm(formula = as.formula(paste(outcome,"~",group)), data=data.learn, family="gaussian")
+    fit <- glm(formula = as.formula(paste(outcome,"~",group)), data=data.learn, family="poisson")
     
-    .m0.unadj = mean(predict(fit, newdata = data.valid0, type = "response"))
-    .m1.unadj = mean(predict(fit, newdata = data.valid1, type = "response"))
+    .c0.unadj = mean(predict(fit, newdata = data.valid0, type = "response"))
+    .c1.unadj = mean(predict(fit, newdata = data.valid1, type = "response"))
     
-    .delta.unadj = .m1.unadj - .m0.unadj
-    .ratio.unadj = .m1.unadj / .m0.unadj
+    .delta.unadj = .c1.unadj - .c0.unadj
+    .ratio.unadj = .c1.unadj / .c0.unadj
     
     
     ### GC
     if (model == "aic") {
-      formula <- stepAIC( glm(formula=formula(paste0(outcome,"~",group)), data=data.learn,family="gaussian"),
+      formula <- stepAIC( glm(formula=formula(paste0(outcome,"~",group)), data=data.learn,family="poisson"),
                           scope=list(lower = formula(paste0(outcome,"~",group)), upper = formula.all),
                           direction="forward", k=2, trace=FALSE)$formula
       
-      fit <- suppressWarnings(glm(formula = formula, data=data.learn, family="gaussian"))
+      fit <- suppressWarnings(glm(formula = formula, data=data.learn, family="poisson"))
       
-      .m0 = suppressWarnings(mean(predict(fit, newdata = data.valid0, type = "response")))
-      .m1 = suppressWarnings(mean(predict(fit, newdata = data.valid1, type = "response")))
+      .c0 = suppressWarnings(mean(predict(fit, newdata = data.valid0, type = "response")))
+      .c1 = suppressWarnings(mean(predict(fit, newdata = data.valid1, type = "response")))
       
-      .delta = .m1 - .m0
-      .ratio = .m1 / .m0
+      .delta = .c1 - .c0
+      .ratio = .c1 / .c0
     }
     
     if (model == "bic") {
-      formula <- stepAIC( glm(formula=formula(paste0(outcome,"~",group)), data=data.learn,family="gaussian"),
+      formula <- stepAIC( glm(formula=formula(paste0(outcome,"~",group)), data=data.learn,family="poisson"),
                           scope=list(lower = formula(paste0(outcome,"~",group)), upper = formula.all),
                           direction="forward", k=log(nrow(data.learn)), trace=FALSE)$formula
       
-      fit <- suppressWarnings(glm(formula = formula, data=data.learn, family="gaussian"))
+      fit <- suppressWarnings(glm(formula = formula, data=data.learn, family="poisson"))
       
-      .m0 = suppressWarnings(mean(predict(fit, newdata = data.valid0, type = "response")))
-      .m1 = suppressWarnings(mean(predict(fit, newdata = data.valid1, type = "response")))
+      .c0 = suppressWarnings(mean(predict(fit, newdata = data.valid0, type = "response")))
+      .c1 = suppressWarnings(mean(predict(fit, newdata = data.valid1, type = "response")))
       
-      .delta = .m1 - .m0
-      .ratio = .m1 / .m0
+      .delta = .c1 - .c0
+      .ratio = .c1 / .c0
     }
     
     if(model == "all") {
-      fit <- suppressWarnings(glm(formula = formula, data=data.learn, family="gaussian"))
+      fit <- suppressWarnings(glm(formula = formula, data=data.learn, family="poisson"))
       
-      .m0 = suppressWarnings(mean(predict(fit, newdata = data.valid0, type = "response")))
-      .m1 = suppressWarnings(mean(predict(fit, newdata = data.valid1, type = "response")))
+      .c0 = suppressWarnings(mean(predict(fit, newdata = data.valid0, type = "response")))
+      .c1 = suppressWarnings(mean(predict(fit, newdata = data.valid1, type = "response")))
       
-      .delta = .m1 - .m0
-      .ratio = .m1 / .m0
+      .delta = .c1 - .c0
+      .ratio = .c1 / .c0
     }
     
     if (model == "lasso") {
       if (boot.tune) {
-        .cv.lasso <- cv.glmnet(x=.x.learn, y=.y.learn, family = "gaussian",  type.measure = "deviance",
+        .cv.lasso <- cv.glmnet(x=.x.learn, y=.y.learn, family = "poisson",  type.measure = "deviance",
                                nfolds = cv, parallel = FALSE, alpha=1, penalty.factor = .penalty.factor,keep=F,
                                lambda=param.tune$lambda)
         .tune.optimal=list(lambda=.cv.lasso$lambda.min)
       }
       fit <- glmnet(x = .x.learn, y = .y.learn, lambda = .tune.optimal$lambda,  type.measure = "deviance",
-                    family = "gaussian", alpha = 1, penalty.factor = .penalty.factor)
+                    family = "poisson", alpha = 1, penalty.factor = .penalty.factor)
       
-      .m0 = mean(predict(fit, newx=.x.valid0, type="response"))
-      .m1 = mean(predict(fit, newx=.x.valid1, type="response"))
+      .c0 = mean(predict(fit, newx=.x.valid0, type="response"))
+      .c1 = mean(predict(fit, newx=.x.valid1, type="response"))
       
-      .delta = .m1 - .m0
-      .ratio = .m1 / .m0
+      .delta = .c1 - .c0
+      .ratio = .c1 / .c0
     }
     
     if (model == "ridge") {
       if (boot.tune) {
-        .cv.ridge <- cv.glmnet(x=.x.learn, y=.y.learn, family = "gaussian",  type.measure = "deviance",
+        .cv.ridge <- cv.glmnet(x=.x.learn, y=.y.learn, family = "poisson",  type.measure = "deviance",
                                parallel = FALSE, alpha=0, penalty.factor = .penalty.factor, nfolds = cv,
                                lambda=param.tune$lambda)
         .tune.optimal=list(lambda=.cv.ridge$lambda.min)
       }
       fit <- glmnet(x = .x.learn, y = .y.learn, lambda = .tune.optimal$lambda,  type.measure = "deviance",
-                    family = "gaussian", alpha = 0, penalty.factor = .penalty.factor)
+                    family = "poisson", alpha = 0, penalty.factor = .penalty.factor)
       
-      .m0 = mean(predict(fit, newx=.x.valid0, type="response"))
-      .m1 = mean(predict(fit, newx=.x.valid1, type="response"))
+      .c0 = mean(predict(fit, newx=.x.valid0, type="response"))
+      .c1 = mean(predict(fit, newx=.x.valid1, type="response"))
       
-      .delta = .m1 - .m0
-      .ratio = .m1 / .m0
+      .delta = .c1 - .c0
+      .ratio = .c1 / .c0
     }
     if (model == "elasticnet") {
       if (boot.tune) {
         .results<-c()
         for( a in 1:length(param.tune$alpha)){
-          .cv.en<-glmnet::cv.glmnet(x=.x.learn, y=.y.learn, family = "gaussian",  type.measure = "deviance",
+          .cv.en<-glmnet::cv.glmnet(x=.x.learn, y=.y.learn, family = "poisson",  type.measure = "deviance",
                                     parallel = FALSE, alpha=param.tune$alpha[a],
                                     penalty.factor = .penalty.factor,
                                     lambda=param.tune$lambda)
@@ -444,24 +444,24 @@ functions, stratification and clustering are not implemented") }
                            lambda=.results[which(.results$cvm==min(.results$cvm)),2][1] )
       }
       fit <- glmnet(x = .x.learn, y = .y.learn, lambda = .tune.optimal$lambda,  type.measure = "deviance",
-                    family = "gaussian", alpha = .tune.optimal$alpha, penalty.factor = .penalty.factor)
+                    family = "poisson", alpha = .tune.optimal$alpha, penalty.factor = .penalty.factor)
       
-      .m0 = mean(predict(fit, newx=.x.valid0, type="response"))
-      .m1 = mean(predict(fit, newx=.x.valid1, type="response"))
+      .c0 = mean(predict(fit, newx=.x.valid0, type="response"))
+      .c1 = mean(predict(fit, newx=.x.valid1, type="response"))
       
-      .delta = .m1 - .m0
-      .ratio = .m1 / .m0
+      .delta = .c1 - .c0
+      .ratio = .c1 / .c0
     }
     
-    m0 <- c(m0, .m0)
-    m1 <- c(m1, .m1)
-  
+    c0 <- c(c0, .c0)
+    c1 <- c(c1, .c1)
+    
     delta <- c(delta, .delta)
     ratio <- c(ratio, .ratio)
     
-    m0.unadj <- c(m0.unadj, .m0.unadj)
-    m1.unadj <- c(m1.unadj, .m1.unadj)
-
+    c0.unadj <- c(c0.unadj, .c0.unadj)
+    c1.unadj <- c(c1.unadj, .c1.unadj)
+    
     delta.unadj <- c(delta.unadj, .delta.unadj)
     ratio.unadj <- c(ratio.unadj, .ratio.unadj)
   }
@@ -485,18 +485,18 @@ functions, stratification and clustering are not implemented") }
               outcome=outcome,
               group=group,
               n = nrow(datakeep),
-              m0 = m0,  
-              m1 = m1,
+              c0 = c0,  
+              c1 = c1,
               delta = delta,
               ratio = ratio,
-              m0.unadj = m0.unadj,
-              m1.unadj = m1.unadj,
+              c0.unadj = c0.unadj,
+              c1.unadj = c1.unadj,
               delta.unadj = delta.unadj,
               ratio.unadj = ratio.unadj,
               call = match.call()
   )
   
-  class(res) <- "gccontinuous"
+  class(res) <- "gccount"
   
   return(res)
 }
