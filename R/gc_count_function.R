@@ -1,22 +1,3 @@
-#' Title
-#'
-#' @param formula 
-#' @param data 
-#' @param group 
-#' @param effect 
-#' @param model 
-#' @param param.tune 
-#' @param cv 
-#' @param boot.type 
-#' @param boot.number 
-#' @param boot.tune 
-#' @param progress 
-#' @param seed 
-#'
-#' @returns
-#' @export
-#'
-#' @examples
 .gc_count <- function(formula, data, group, effect="ATE", model, param.tune=NULL, cv=10, boot.type="bcv",
                            boot.number=500, boot.tune=FALSE, progress=TRUE, seed=NULL) {
   # Quality tests
@@ -504,7 +485,6 @@ functions, stratification and clustering are not implemented") }
               outcome=outcome,
               group=group,
               n = nrow(datakeep),
-              mean_outcome = mean(datakeep[,outcome]),
               c0 = c0,  
               c1 = c1,
               delta = delta,

@@ -1,7 +1,7 @@
 \name{gc_continuous}
 \alias{gc_continuous}
 \title{
-G-Computation to Estimate a Marginal Effect with a Continuous Outcomes
+G-Computation to Estimate a Marginal Effect with a Continuous Outcome
 }
 \description{
 This function computes G-computation (GC) with different working models or algorithms (Q-models) for a continuous outcome and a 2-class exposure/treatment.
@@ -63,13 +63,12 @@ If \code{boot.mi = TRUE}, multiple imputation is considered by using the MI-BOOT
 \item{outcome}{A character string specifying the name of the outcome variable.}
 \item{group}{A character string specifying the name of the grouping variable.}
 \item{n}{The sample size of the dataset used in calculations, after missing data removal.}
-\item{mean_outcome}{The mean of the outcome in the whole dataset used in calculations.}
 \item{m0}{A numeric vector containing the adjusted means of the outcomes in the control group for each bootstrap sample.}
-\item{m1}{A numeric vector containing the adjusted means of the outcomes in the experimentalgroup for each bootstrap sample.}
+\item{m1}{A numeric vector containing the adjusted means of the outcomes in the experimental group for each bootstrap sample.}
 \item{delta}{A numeric vector with \code{m1} - \code{m0}.}
 \item{ratio}{A numeric vector with \code{m1} / \code{m0}.}
 \item{m0.unadj}{A numeric vector containing the unadjusted means of the outcomes in the control group for each bootstrap sample.}
-\item{m1.unadj}{A numeric vector containing the unadjusted means of the outcomes in the experimentalgroup for each bootstrap sample.}
+\item{m1.unadj}{A numeric vector containing the unadjusted means of the outcomes in the experimental group for each bootstrap sample.}
 \item{delta.unadj}{A numeric vector with \code{m1.unadj} - \code{m0.unadj}.}
 \item{ratio.unadj}{A numeric vector with \code{m1.unadj} / \code{m0.unadj}.}
 \item{call}{The function call that generated the \code{gccontinuous} object.}
@@ -85,23 +84,6 @@ data("dataPROPHYVAP")
 
 dataPROPHYVAP$VAP_num <- ifelse(dataPROPHYVAP$VAP == "Yes",1,0)
 dataPROPHYVAP$GROUP_num <- ifelse(dataPROPHYVAP$GROUP == "Placebo",0,1)
-
-beta_ttt <- 10
-beta_alcool <- 2
-beta_bmi <- 8
-beta_age <- 5
-
-set.seed(123)
-
-cont_outcome <- rnorm(n = nrow(dataPROPHYVAP), 
-      mean = beta_ttt*dataPROPHYVAP$GROUP_num +
-      beta_alcool*match(as.factor(dataPROPHYVAP$ALCOOL),
-        levels(as.factor(dataPROPHYVAP$ALCOOL))) + 
-      beta_bmi*dataPROPHYVAP$BMI + 
-      beta_age*dataPROPHYVAP$AGE, 
-      sd = 1)
-
-dataPROPHYVAP$y_cont <- cont_outcome
 
 .f <- formula(VAP_num ~ GROUP_num + AGE + SEX + ALCOOL + BMI + DIABETES + GROUP_num:SEX)
 

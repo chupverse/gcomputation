@@ -56,24 +56,7 @@ data("dataPROPHYVAP")
 dataPROPHYVAP$VAP_num <- ifelse(dataPROPHYVAP$VAP == "Yes",1,0)
 dataPROPHYVAP$GROUP_num <- ifelse(dataPROPHYVAP$GROUP == "Placebo",0,1)
 
-beta_ttt <- 10
-beta_alcool <- 2
-beta_bmi <- 8
-beta_age <- 5
-
-set.seed(123)
-
-cont_outcome <- rnorm(n = nrow(dataPROPHYVAP), 
-                      mean = beta_ttt*dataPROPHYVAP$GROUP_num +
-                        beta_alcool*match(as.factor(dataPROPHYVAP$ALCOOL),
-                              levels(as.factor(dataPROPHYVAP$ALCOOL))) + 
-                        beta_bmi*dataPROPHYVAP$BMI + 
-                        beta_age*dataPROPHYVAP$AGE, 
-                      sd = 1)
-
-dataPROPHYVAP$y_cont <- cont_outcome
-
-.f <- formula(y_cont ~ GROUP_num * (AGE + SEX + ALCOOL + BMI + DIABETES))
+.f <- formula(VAP_num ~ GROUP_num * (AGE + SEX + ALCOOL + BMI + DIABETES))
 
 ### In practice use larger values of boot.number (e.g., 500).
 ### Here we set boot.number = 10 for speed in CRAN checks.

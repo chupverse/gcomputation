@@ -26,12 +26,8 @@ print.gccontinuous<- function (x, digits=4, ...)
   
   
   cat("\n")
+  cat(paste0("n= ",x$n))
   
-  if (!is.na(x$mean_outcome)) {
-    cat(paste0("Number of individuals is n=",x$n," with mean of the outcome= ",x$mean_outcome))
-  } else {
-    cat(paste0("n= ",x$n))
-  }
   cat("\n")
   if(x$missing==1) { cat(x$missing, " observation deleted due to missingness", sep=""); cat("\n") }
   if(x$missing >1) { cat(x$missing, " observations deleted due to missingness", sep=""); cat("\n") }

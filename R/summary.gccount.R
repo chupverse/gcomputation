@@ -137,11 +137,8 @@ summary.gccount <- function (object, digits=4, ci.type=NULL, ci.level=0.95, unad
   
   
   cat("\n")
-  if (!is.na(object$mean_outcome)) {
-    cat(paste0("n= ",x$n,", mean of the outcome= ",x$mean_outcome))
-  } else {
-    cat(paste0("n= ",x$n))
-  }
+  cat(paste0("n= ",x$n))
+
   cat("\n")
   if(x$missing==1) { cat(x$missing, " observation deleted due to missingness", sep=""); cat("\n") }
   if(x$missing >1) { cat(x$missing, " observations deleted due to missingness", sep=""); cat("\n") }

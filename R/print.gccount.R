@@ -14,8 +14,8 @@ print.gccount<- function (x, digits=4, ...)
   cat("\n")
   
   cat("Estimates : \n")
-  res <- matrix(c(mean(x$C0, na.rm=TRUE),
-                  mean(x$C1, na.rm=TRUE),
+  res <- matrix(c(mean(x$c0, na.rm=TRUE),
+                  mean(x$c1, na.rm=TRUE),
                   mean(x$delta, na.rm=TRUE),
                   mean(x$ratio, na.rm=TRUE)),
                 nrow = 1)
@@ -26,12 +26,8 @@ print.gccount<- function (x, digits=4, ...)
   
   
   cat("\n")
-  
-  if (!is.na(x$mean_outcome)) {
-    cat(paste0("Number of individuals is n=",x$n," with mean of the outcome= ",x$mean_outcome))
-  } else {
-    cat(paste0("n= ",x$n))
-  }
+  cat(paste0("n= ",x$n))
+
   cat("\n")
   if(x$missing==1) { cat(x$missing, " observation deleted due to missingness", sep=""); cat("\n") }
   if(x$missing >1) { cat(x$missing, " observations deleted due to missingness", sep=""); cat("\n") }

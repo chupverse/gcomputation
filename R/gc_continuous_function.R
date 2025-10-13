@@ -485,7 +485,6 @@ functions, stratification and clustering are not implemented") }
               outcome=outcome,
               group=group,
               n = nrow(datakeep),
-              mean_outcome = mean(datakeep[,outcome]),
               m0 = m0,  
               m1 = m1,
               delta = delta,

@@ -154,6 +154,10 @@ plot.gccount <- function (x, method="calibration", n.groups=5, smooth=FALSE, ...
       data = x$data
       outcome = x$data[,x$outcome]
       
+      print(.pred)
+      print(unique(c(-Inf, quantile(.pred, seq(1/n.groups, 1, 1/n.groups)))))
+      print(c(-Inf, quantile(.pred, seq(1/n.groups, 1, 1/n.groups))))
+      
       if (length(unique(c(-Inf, quantile(.pred, seq(1/n.groups, 1, 1/n.groups))))) != length(c(-Inf, quantile(.pred, seq(1/n.groups, 1, 1/n.groups))))) {
         stop("n.groups too high")
       }
