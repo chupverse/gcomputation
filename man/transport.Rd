@@ -1,9 +1,11 @@
 \name{transport}
 \alias{transport}
 \title{
+**This function is currently in development.** 
 Transport the Marginal for Another Populations
 }
 \description{
+**This function is currently in development.**
 Applies an already fitted G-computation model (an object of class to estimate marginal effects for that new population.
 }
 \usage{

@@ -1,7 +1,7 @@
 Package: gcomputation
 Type: Package
 Title: An R Package for Causal Inference by using G-Computation
-Version: 0.3
+Version: 0.31
 Depends: R (>= 4.0.0), survival, hdnom, glmnet, MASS, mice
 Imports: graphics, utils, methods, grDevices, stats
 Description: Several functions and S3 methods for G-computation and emulation of clinical trials.
