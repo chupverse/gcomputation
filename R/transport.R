@@ -2,6 +2,7 @@ transport <- function(object, newdata, effect="ATE", boot.number=500, seed=NULL)
   if (!inherits(object, c("gcbinary", "gctimes"))) {
     stop("object must be of class 'gcbinary' or 'gctimes'")
   }
+  stop("This function is currently in development.")
   if (!is.null(object$newdata)) {stop("Cannot transport an already transported object")}
   
   fit <- object$calibration$fit 
