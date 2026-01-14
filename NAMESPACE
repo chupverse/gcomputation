@@ -12,7 +12,8 @@ importFrom("methods", "hasArg")
 importFrom("graphics", "axis")
 importFrom("stats", "as.formula", "formula", "glm", "loess", "median",
              "model.matrix", "na.omit", "pnorm", "predict",
-             "printCoefmat", "qnorm", "quantile", "sd", "terms")
+             "printCoefmat", "qnorm", "quantile", "sd", "terms",
+			 "coef","plogis","vcov")
 
 export(gc_binary)
 export(gc_continuous)

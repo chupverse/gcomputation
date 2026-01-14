@@ -92,6 +92,18 @@ gc1 <- gc_times(formula=.f, model="lasso", data=dataPROPHYVAP,
               boot.tune=FALSE)
 
 summary(gc1)
+
+
+### Adjusted survival curves :
+plot(gc1$calibration$time, gc1$calibration$surv0, type="s",
+     xlab="Time (days)", ylab="Patient survival",
+     main="Adjusted Survival by Group", col="red", lty=2, lwd=2)
+     
+lines(gc1$calibration$time, gc1$calibration$surv1, type="s",
+      col="blue", lty=1, lwd=2)
+      
+legend("bottomleft", legend=c("Placebo","Ceftriaxone"),
+       col=c("red","blue"), lty=2:1, lwd=2, bty="n")
 }
 
 \keyword{G-computation}
