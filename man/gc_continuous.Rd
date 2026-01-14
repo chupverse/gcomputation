@@ -60,17 +60,10 @@ If \code{boot.mi = TRUE}, multiple imputation is considered by using the MI-BOOT
 \item{missing}{The number of observations that were removed from the original dataset due to missing values.}
 \item{boot.number}{The total number of bootstrap resamples performed.}
 \item{boot.type}{The type of bootstrap resamples performed.}
-\item{outcome}{A character string specifying the name of the outcome variable.}
 \item{group}{A character string specifying the name of the grouping variable.}
 \item{n}{The sample size of the dataset used in calculations, after missing data removal.}
-\item{m0}{A numeric vector containing the adjusted means of the outcomes in the control group for each bootstrap sample.}
-\item{m1}{A numeric vector containing the adjusted means of the outcomes in the experimental group for each bootstrap sample.}
-\item{delta}{A numeric vector with \code{m1} - \code{m0}.}
-\item{ratio}{A numeric vector with \code{m1} / \code{m0}.}
-\item{m0.unadj}{A numeric vector containing the unadjusted means of the outcomes in the control group for each bootstrap sample.}
-\item{m1.unadj}{A numeric vector containing the unadjusted means of the outcomes in the experimental group for each bootstrap sample.}
-\item{delta.unadj}{A numeric vector with \code{m1.unadj} - \code{m0.unadj}.}
-\item{ratio.unadj}{A numeric vector with \code{m1.unadj} / \code{m0.unadj}.}
+\item{adjusted.results}{A data frame containing the adjusted results for each bootstrap sample: \code{m1} (mean experimental), \code{m0} (mean control), \code{delta} (difference), and \code{ratio} (mean ratio).}
+\item{unadjusted.results}{A data frame containing the unadjusted results for each bootstrap sample: \code{m1} (mean experimental), \code{m0} (mean control), \code{delta} (difference), and \code{ratio} (mean ratio).}
 \item{call}{The function call that generated the \code{gccontinuous} object.}
 }
 
@@ -87,19 +80,12 @@ dataPROPHYVAP$GROUP_num <- ifelse(dataPROPHYVAP$GROUP == "Placebo",0,1)
 
 .f <- formula(VAP_num ~ GROUP_num + AGE + SEX + ALCOOL + BMI + DIABETES + GROUP_num:SEX)
 
-### In practice use larger values for cv and boot.number
-### We set boot.number and cv at 10 for speed in CRAN checks
-gc1 <- gc_continuous(formula=.f, model="all", data=dataPROPHYVAP, group="GROUP_num",
-                    cv=10, boot.type="boot", boot.number=10, boot.tune=TRUE, effect="ATE")
+### In practice use larger values for boot.number
+### We set boot.number at 10 for speed in CRAN checks
+gc1 <- gc_continuous(formula=.f, model="lasso", data=dataPROPHYVAP, group="GROUP_num",
+                    boot.type="boot", boot.number=10, boot.tune=FALSE, effect="ATE")
 
 summary(gc1)
-
-### With multiple imputation to handle missing data
-gc2 <- gc_continuous(formula=.f, model="all", data=dataPROPHYVAP,
-                 group="GROUP_num", boot.type="boot", boot.number=10, effect="ATE",
-                 boot.tune=FALSE, boot.mi=TRUE, m=5)
-
-summary(gc2)
 }
 
 \keyword{G-computation}

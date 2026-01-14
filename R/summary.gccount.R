@@ -8,11 +8,11 @@ summary.gccount <- function (object, digits=4, ci.type=NULL, ci.level=0.95, unad
   x <- object
   if (x$model %in% c("lasso","ridge","elasticnet")) {cat("model: ",x$model,", tuning parameters: ", sep = "")
     if (x$model == "elasticnet") {
-      cat("lambda= ",round(x$tuning.parameters$lambda,digits=digits), " alpha= ",round(x$tuning.parameters$alpha,digits=digits),sep="")}
+      cat("lambda= ",round(x$tuning.parameters$lambda,digits=digits), " alpha= ",round(x$tuning.parameters$alpha,digits=digits),sep=" ")}
     if (x$model == "lasso") {
-      cat("lambda= ",round(x$tuning.parameters$lambda,digits=digits),sep="")}
+      cat("lambda= ",round(x$tuning.parameters$lambda,digits=digits),sep=" ")}
     if (x$model == "ridge") {
-      cat("lambda= ",round(x$tuning.parameters$lambda,digits=digits),sep="")}
+      cat("lambda= ",round(x$tuning.parameters$lambda,digits=digits),sep=" ")}
     cat("\nCall:", "\n", sep = "")
     dput(x$formula)}
   if (x$model %in% c("all","aic","bic")) {cat(x$model," model \nCall:", "\n", sep = "")
@@ -21,51 +21,51 @@ summary.gccount <- function (object, digits=4, ci.type=NULL, ci.level=0.95, unad
   
   
   cat("G-computation : \n")
-  tmp <- matrix(c(mean(x$c0, na.rm=TRUE), sd(x$c0, na.rm=TRUE), mean(x$c0, na.rm=TRUE)/sd(x$c0, na.rm=TRUE), NA), nrow=1)
+  tmp <- matrix(c(mean(x$adjusted.results$c0, na.rm=TRUE), sd(x$adjusted.results$c0, na.rm=TRUE), mean(x$adjusted.results$c0, na.rm=TRUE)/sd(x$adjusted.results$c0, na.rm=TRUE), NA), nrow=1)
   colnames(tmp) <- c("Estimate", "Std. Error", "z value", "Pr(>|z|)")
   rownames(tmp) <- "c0"
   res <- tmp
   
-  tmp <- matrix(c(mean(x$c1, na.rm=TRUE), sd(x$c1, na.rm=TRUE), mean(x$c1, na.rm=TRUE)/sd(x$c1, na.rm=TRUE), NA), nrow=1)
+  tmp <- matrix(c(mean(x$adjusted.results$c1, na.rm=TRUE), sd(x$adjusted.results$c1, na.rm=TRUE), mean(x$adjusted.results$c1, na.rm=TRUE)/sd(x$adjusted.results$c1, na.rm=TRUE), NA), nrow=1)
   rownames(tmp) <- "c1"
   res <- rbind(res,tmp)
   
-  tmp <- matrix(c(mean(x$delta, na.rm=TRUE), sd(x$delta, na.rm=TRUE), mean(x$delta, na.rm=TRUE)/sd(x$delta, na.rm=TRUE),
-                  ifelse(mean(x$delta, na.rm=TRUE)/sd(x$delta, na.rm=TRUE)<0,
-                         2*pnorm(mean(x$delta, na.rm=TRUE)/sd(x$delta, na.rm=TRUE)),
-                         2*(1-pnorm(mean(x$delta, na.rm=TRUE)/sd(x$delta, na.rm=TRUE))))), nrow=1)
+  tmp <- matrix(c(mean(x$adjusted.results$delta, na.rm=TRUE), sd(x$adjusted.results$delta, na.rm=TRUE), mean(x$adjusted.results$delta, na.rm=TRUE)/sd(x$adjusted.results$delta, na.rm=TRUE),
+                  ifelse(mean(x$adjusted.results$delta, na.rm=TRUE)/sd(x$adjusted.results$delta, na.rm=TRUE)<0,
+                         2*pnorm(mean(x$adjusted.results$delta, na.rm=TRUE)/sd(x$adjusted.results$delta, na.rm=TRUE)),
+                         2*(1-pnorm(mean(x$adjusted.results$delta, na.rm=TRUE)/sd(x$adjusted.results$delta, na.rm=TRUE))))), nrow=1)
   rownames(tmp) <- "c1-c0"
   res <- rbind(res,tmp)
   
-  tmp <- matrix(c(mean(x$ratio, na.rm=TRUE), sd(x$ratio, na.rm=TRUE), mean(x$ratio, na.rm=TRUE)/sd(x$ratio, na.rm=TRUE),
-                  ifelse(mean(x$ratio, na.rm=TRUE)/sd(x$ratio, na.rm=TRUE)<0,
-                         2*pnorm(mean(x$ratio, na.rm=TRUE)/sd(x$ratio, na.rm=TRUE)),
-                         2*(1-pnorm(mean(x$ratio, na.rm=TRUE)/sd(x$ratio, na.rm=TRUE))))), nrow=1)
+  tmp <- matrix(c(mean(x$adjusted.results$ratio, na.rm=TRUE), sd(x$adjusted.results$ratio, na.rm=TRUE), mean(x$adjusted.results$ratio, na.rm=TRUE)/sd(x$adjusted.results$ratio, na.rm=TRUE),
+                  ifelse(mean(x$adjusted.results$ratio, na.rm=TRUE)/sd(x$adjusted.results$ratio, na.rm=TRUE)<0,
+                         2*pnorm(mean(x$adjusted.results$ratio, na.rm=TRUE)/sd(x$adjusted.results$ratio, na.rm=TRUE)),
+                         2*(1-pnorm(mean(x$adjusted.results$ratio, na.rm=TRUE)/sd(x$adjusted.results$ratio, na.rm=TRUE))))), nrow=1)
   rownames(tmp) <- "c1/c0"
   res <- rbind(res,tmp)
   
   
   if (!is.null(ci.type)) {
     if (ci.type == "norm") {
-      ci_vals <- matrix(c(mean(x$c0, na.rm=TRUE) - qnorm(1-(1-ci.level)/2, 0, 1)*sd(x$c0, na.rm=TRUE),
-                          mean(x$c0, na.rm=TRUE) + qnorm(1-(1-ci.level)/2, 0, 1)*sd(x$c0, na.rm=TRUE),
-                          mean(x$c1, na.rm=TRUE) - qnorm(1-(1-ci.level)/2, 0, 1)*sd(x$c1, na.rm=TRUE),
-                          mean(x$c1, na.rm=TRUE) + qnorm(1-(1-ci.level)/2, 0, 1)*sd(x$c1, na.rm=TRUE),
-                          mean(x$delta, na.rm=TRUE) - qnorm(1-(1-ci.level)/2, 0, 1)*sd(x$delta, na.rm=TRUE),
-                          mean(x$delta, na.rm=TRUE) + qnorm(1-(1-ci.level)/2, 0, 1)*sd(x$delta, na.rm=TRUE),
-                          mean(x$ratio, na.rm=TRUE) - qnorm(1-(1-ci.level)/2, 0, 1)*sd(x$ratio, na.rm=TRUE),
-                          mean(x$ratio, na.rm=TRUE) + qnorm(1-(1-ci.level)/2, 0, 1)*sd(x$ratio, na.rm=TRUE)
+      ci_vals <- matrix(c(mean(x$adjusted.results$c0, na.rm=TRUE) - qnorm(1-(1-ci.level)/2, 0, 1)*sd(x$adjusted.results$c0, na.rm=TRUE),
+                          mean(x$adjusted.results$c0, na.rm=TRUE) + qnorm(1-(1-ci.level)/2, 0, 1)*sd(x$adjusted.results$c0, na.rm=TRUE),
+                          mean(x$adjusted.results$c1, na.rm=TRUE) - qnorm(1-(1-ci.level)/2, 0, 1)*sd(x$adjusted.results$c1, na.rm=TRUE),
+                          mean(x$adjusted.results$c1, na.rm=TRUE) + qnorm(1-(1-ci.level)/2, 0, 1)*sd(x$adjusted.results$c1, na.rm=TRUE),
+                          mean(x$adjusted.results$delta, na.rm=TRUE) - qnorm(1-(1-ci.level)/2, 0, 1)*sd(x$adjusted.results$delta, na.rm=TRUE),
+                          mean(x$adjusted.results$delta, na.rm=TRUE) + qnorm(1-(1-ci.level)/2, 0, 1)*sd(x$adjusted.results$delta, na.rm=TRUE),
+                          mean(x$adjusted.results$ratio, na.rm=TRUE) - qnorm(1-(1-ci.level)/2, 0, 1)*sd(x$adjusted.results$ratio, na.rm=TRUE),
+                          mean(x$adjusted.results$ratio, na.rm=TRUE) + qnorm(1-(1-ci.level)/2, 0, 1)*sd(x$adjusted.results$ratio, na.rm=TRUE)
       ), ncol=2, byrow=TRUE)
     }
     if (ci.type == "perc") {
-      ci_vals <- matrix(c(quantile(x$c0, probs = (1-ci.level)/2, na.rm = TRUE),
-                          quantile(x$c0, probs = 1-(1-ci.level)/2, na.rm = TRUE),
-                          quantile(x$c1, probs = (1-ci.level)/2, na.rm = TRUE),
-                          quantile(x$c1, probs = 1-(1-ci.level)/2, na.rm = TRUE),
-                          quantile(x$delta, probs = (1-ci.level)/2, na.rm = TRUE),
-                          quantile(x$delta, probs = 1-(1-ci.level)/2, na.rm = TRUE),
-                          quantile(x$ratio, probs = (1-ci.level)/2, na.rm = TRUE),
-                          quantile(x$ratio, probs = 1-(1-ci.level)/2, na.rm = TRUE)
+      ci_vals <- matrix(c(quantile(x$adjusted.results$c0, probs = (1-ci.level)/2, na.rm = TRUE),
+                          quantile(x$adjusted.results$c0, probs = 1-(1-ci.level)/2, na.rm = TRUE),
+                          quantile(x$adjusted.results$c1, probs = (1-ci.level)/2, na.rm = TRUE),
+                          quantile(x$adjusted.results$c1, probs = 1-(1-ci.level)/2, na.rm = TRUE),
+                          quantile(x$adjusted.results$delta, probs = (1-ci.level)/2, na.rm = TRUE),
+                          quantile(x$adjusted.results$delta, probs = 1-(1-ci.level)/2, na.rm = TRUE),
+                          quantile(x$adjusted.results$ratio, probs = (1-ci.level)/2, na.rm = TRUE),
+                          quantile(x$adjusted.results$ratio, probs = 1-(1-ci.level)/2, na.rm = TRUE)
       ), ncol=2, byrow=TRUE)
     }
     tmp <- cbind(res[,1], `Lower CI` = ci_vals[,1], `Upper CI` = ci_vals[,2])
@@ -81,50 +81,50 @@ summary.gccount <- function (object, digits=4, ci.type=NULL, ci.level=0.95, unad
   if (!is.null(object$newdata)) {unadjusted = FALSE}
   if (unadjusted == TRUE) {
     cat("Unadjusted : \n")
-    tmp <- matrix(c(mean(x$c0.unadj, na.rm=TRUE), sd(x$c0.unadj, na.rm=TRUE), mean(x$c0.unadj, na.rm=TRUE)/sd(x$c0.unadj, na.rm=TRUE), NA), nrow=1)
+    tmp <- matrix(c(mean(x$unadjusted.results$c0, na.rm=TRUE), sd(x$unadjusted.results$c0, na.rm=TRUE), mean(x$unadjusted.results$c0, na.rm=TRUE)/sd(x$unadjusted.results$c0, na.rm=TRUE), NA), nrow=1)
     colnames(tmp) <- c("Estimate", "Std. Error", "z value", "Pr(>|z|)")
     rownames(tmp) <- "c0"
     res <- tmp
     
-    tmp <- matrix(c(mean(x$c1.unadj, na.rm=TRUE), sd(x$c1.unadj, na.rm=TRUE), mean(x$c1.unadj, na.rm=TRUE)/sd(x$c1.unadj, na.rm=TRUE), NA), nrow=1)
+    tmp <- matrix(c(mean(x$unadjusted.results$c1, na.rm=TRUE), sd(x$unadjusted.results$c1, na.rm=TRUE), mean(x$unadjusted.results$c1, na.rm=TRUE)/sd(x$unadjusted.results$c1, na.rm=TRUE), NA), nrow=1)
     rownames(tmp) <- "c1"
     res <- rbind(res,tmp)
     
-    tmp <- matrix(c(mean(x$delta.unadj, na.rm=TRUE), sd(x$delta.unadj, na.rm=TRUE), mean(x$delta.unadj, na.rm=TRUE)/sd(x$delta.unadj, na.rm=TRUE),
-                    ifelse(mean(x$delta.unadj, na.rm=TRUE)/sd(x$delta.unadj, na.rm=TRUE)<0,
-                           2*pnorm(mean(x$delta.unadj, na.rm=TRUE)/sd(x$delta.unadj, na.rm=TRUE)),
-                           2*(1-pnorm(mean(x$delta.unadj, na.rm=TRUE)/sd(x$delta.unadj, na.rm=TRUE))))), nrow=1)
+    tmp <- matrix(c(mean(x$unadjusted.results$delta, na.rm=TRUE), sd(x$unadjusted.results$delta, na.rm=TRUE), mean(x$unadjusted.results$delta, na.rm=TRUE)/sd(x$unadjusted.results$delta, na.rm=TRUE),
+                    ifelse(mean(x$unadjusted.results$delta, na.rm=TRUE)/sd(x$unadjusted.results$delta, na.rm=TRUE)<0,
+                           2*pnorm(mean(x$unadjusted.results$delta, na.rm=TRUE)/sd(x$unadjusted.results$delta, na.rm=TRUE)),
+                           2*(1-pnorm(mean(x$unadjusted.results$delta, na.rm=TRUE)/sd(x$unadjusted.results$delta, na.rm=TRUE))))), nrow=1)
     rownames(tmp) <- "c1-c0"
     res <- rbind(res,tmp)
     
-    tmp <- matrix(c(mean(x$ratio.unadj, na.rm=TRUE), sd(x$ratio.unadj, na.rm=TRUE), mean(x$ratio.unadj, na.rm=TRUE)/sd(x$ratio.unadj, na.rm=TRUE),
-                    ifelse(mean(x$ratio.unadj, na.rm=TRUE)/sd(x$ratio.unadj, na.rm=TRUE)<0,
-                           2*pnorm(mean(x$ratio.unadj, na.rm=TRUE)/sd(x$ratio.unadj, na.rm=TRUE)),
-                           2*(1-pnorm(mean(x$ratio.unadj, na.rm=TRUE)/sd(x$ratio.unadj, na.rm=TRUE))))), nrow=1)
+    tmp <- matrix(c(mean(x$unadjusted.results$ratio, na.rm=TRUE), sd(x$unadjusted.results$ratio, na.rm=TRUE), mean(x$unadjusted.results$ratio, na.rm=TRUE)/sd(x$unadjusted.results$ratio, na.rm=TRUE),
+                    ifelse(mean(x$unadjusted.results$ratio, na.rm=TRUE)/sd(x$unadjusted.results$ratio, na.rm=TRUE)<0,
+                           2*pnorm(mean(x$unadjusted.results$ratio, na.rm=TRUE)/sd(x$unadjusted.results$ratio, na.rm=TRUE)),
+                           2*(1-pnorm(mean(x$unadjusted.results$ratio, na.rm=TRUE)/sd(x$unadjusted.results$ratio, na.rm=TRUE))))), nrow=1)
     rownames(tmp) <- "c1/c0"
     res <- rbind(res,tmp)
     
     if (!is.null(ci.type)) {
       if (ci.type == "norm") {
-        ci_vals <- matrix(c(mean(x$c0.unadj, na.rm=TRUE) - qnorm(1-(1-ci.level)/2, 0, 1)*sd(x$c0.unadj, na.rm=TRUE),
-                            mean(x$c0.unadj, na.rm=TRUE) + qnorm(1-(1-ci.level)/2, 0, 1)*sd(x$c0.unadj, na.rm=TRUE),
-                            mean(x$c1.unadj, na.rm=TRUE) - qnorm(1-(1-ci.level)/2, 0, 1)*sd(x$c1.unadj, na.rm=TRUE),
-                            mean(x$c1.unadj, na.rm=TRUE) + qnorm(1-(1-ci.level)/2, 0, 1)*sd(x$c1.unadj, na.rm=TRUE),
-                            mean(x$delta.unadj, na.rm=TRUE) - qnorm(1-(1-ci.level)/2, 0, 1)*sd(x$delta.unadj, na.rm=TRUE),
-                            mean(x$delta.unadj, na.rm=TRUE) + qnorm(1-(1-ci.level)/2, 0, 1)*sd(x$delta.unadj, na.rm=TRUE),
-                            mean(x$ratio.unadj, na.rm=TRUE) - qnorm(1-(1-ci.level)/2, 0, 1)*sd(x$ratio.unadj, na.rm=TRUE),
-                            mean(x$ratio.unadj, na.rm=TRUE) + qnorm(1-(1-ci.level)/2, 0, 1)*sd(x$ratio.unadj, na.rm=TRUE)
+        ci_vals <- matrix(c(mean(x$unadjusted.results$c0, na.rm=TRUE) - qnorm(1-(1-ci.level)/2, 0, 1)*sd(x$unadjusted.results$c0, na.rm=TRUE),
+                            mean(x$unadjusted.results$c0, na.rm=TRUE) + qnorm(1-(1-ci.level)/2, 0, 1)*sd(x$unadjusted.results$c0, na.rm=TRUE),
+                            mean(x$unadjusted.results$c1, na.rm=TRUE) - qnorm(1-(1-ci.level)/2, 0, 1)*sd(x$unadjusted.results$c1, na.rm=TRUE),
+                            mean(x$unadjusted.results$c1, na.rm=TRUE) + qnorm(1-(1-ci.level)/2, 0, 1)*sd(x$unadjusted.results$c1, na.rm=TRUE),
+                            mean(x$unadjusted.results$delta, na.rm=TRUE) - qnorm(1-(1-ci.level)/2, 0, 1)*sd(x$unadjusted.results$delta, na.rm=TRUE),
+                            mean(x$unadjusted.results$delta, na.rm=TRUE) + qnorm(1-(1-ci.level)/2, 0, 1)*sd(x$unadjusted.results$delta, na.rm=TRUE),
+                            mean(x$unadjusted.results$ratio, na.rm=TRUE) - qnorm(1-(1-ci.level)/2, 0, 1)*sd(x$unadjusted.results$ratio, na.rm=TRUE),
+                            mean(x$unadjusted.results$ratio, na.rm=TRUE) + qnorm(1-(1-ci.level)/2, 0, 1)*sd(x$unadjusted.results$ratio, na.rm=TRUE)
         ), ncol=2, byrow=TRUE)
       }
       if (ci.type == "perc") {
-        ci_vals <- matrix(c(quantile(x$c0.unadj, probs = (1-ci.level)/2, na.rm = TRUE),
-                            quantile(x$c0.unadj, probs = 1-(1-ci.level)/2, na.rm = TRUE),
-                            quantile(x$c1.unadj, probs = (1-ci.level)/2, na.rm = TRUE),
-                            quantile(x$c1.unadj, probs = 1-(1-ci.level)/2, na.rm = TRUE),
-                            quantile(x$delta.unadj, probs = (1-ci.level)/2, na.rm = TRUE),
-                            quantile(x$delta.unadj, probs = 1-(1-ci.level)/2, na.rm = TRUE),
-                            quantile(x$ratio.unadj, probs = (1-ci.level)/2, na.rm = TRUE),
-                            quantile(x$ratio.unadj, probs = 1-(1-ci.level)/2, na.rm = TRUE)
+        ci_vals <- matrix(c(quantile(x$unadjusted.results$c0, probs = (1-ci.level)/2, na.rm = TRUE),
+                            quantile(x$unadjusted.results$c0, probs = 1-(1-ci.level)/2, na.rm = TRUE),
+                            quantile(x$unadjusted.results$c1, probs = (1-ci.level)/2, na.rm = TRUE),
+                            quantile(x$unadjusted.results$c1, probs = 1-(1-ci.level)/2, na.rm = TRUE),
+                            quantile(x$unadjusted.results$delta, probs = (1-ci.level)/2, na.rm = TRUE),
+                            quantile(x$unadjusted.results$delta, probs = 1-(1-ci.level)/2, na.rm = TRUE),
+                            quantile(x$unadjusted.results$ratio, probs = (1-ci.level)/2, na.rm = TRUE),
+                            quantile(x$unadjusted.results$ratio, probs = 1-(1-ci.level)/2, na.rm = TRUE)
         ), ncol=2, byrow=TRUE)
       }
       tmp <- cbind(res[,1], `Lower CI` = ci_vals[,1], `Upper CI` = ci_vals[,2])

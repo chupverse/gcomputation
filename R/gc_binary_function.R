@@ -489,20 +489,11 @@ functions, stratification and clustering are not implemented") }
               missing=nmiss,
               boot.number = boot.number,
               boot.type = boot.type,
-              outcome=outcome,
               group=group,
               n = nrow(datakeep),
               nevent = sum(datakeep[,outcome]),
-              p0 = p0,  
-              p1 = p1,
-              delta = delta,
-              ratio = ratio,
-              OR = OR,
-              p0.unadj = p0.unadj,
-              p1.unadj = p1.unadj,
-              delta.unadj = delta.unadj,
-              ratio.unadj = ratio.unadj,
-              OR.unadj = OR.unadj,
+              adjusted.results = data.frame(p1 = p1, p0 = p0, delta = delta, ratio = ratio, OR = OR),
+              unadjusted.results = data.frame(p1 = p1.unadj, p0 = p0.unadj, delta = delta.unadj, ratio = ratio.unadj, OR = OR.unadj),
               call = match.call()
   )
   

@@ -58,16 +58,16 @@
     datas[[i]] <- current_imputed_data
     calibrations[[i]] <- gc_res$calibration
     
-    p0 <- c(p0, gc_res$p0)
-    p1 <- c(p1, gc_res$p1)
-    delta <- c(delta, gc_res$delta)
-    ratio <- c(ratio, gc_res$ratio)
-    OR <- c(OR, gc_res$OR)
-    p0.unadj <- c(p0.unadj, gc_res$p0.unadj)
-    p1.unadj <- c(p1.unadj, gc_res$p1.unadj)
-    delta.unadj <- c(delta.unadj, gc_res$delta.unadj)
-    ratio.unadj <- c(ratio.unadj, gc_res$ratio.unadj)
-    OR.unadj <- c(OR.unadj, gc_res$OR.unadj)
+    p0 <- c(p0, gc_res$adjusted.results$p0)
+    p1 <- c(p1, gc_res$adjusted.results$p1)
+    delta <- c(delta, gc_res$adjusted.results$delta)
+    ratio <- c(ratio, gc_res$adjusted.results$ratio)
+    OR <- c(OR, gc_res$adjusted.results$OR)
+    p0.unadj <- c(p0.unadj, gc_res$unadjusted.results$p0)
+    p1.unadj <- c(p1.unadj, gc_res$unadjusted.results$p1)
+    delta.unadj <- c(delta.unadj, gc_res$unadjusted.results$delta)
+    ratio.unadj <- c(ratio.unadj, gc_res$unadjusted.results$ratio)
+    OR.unadj <- c(OR.unadj, gc_res$unadjusted.results$OR)
     
     if (model %in% c("all","aic","bic")) {
       formulas[[i]] <- gc_res$tuning.parameters
@@ -97,16 +97,8 @@
   
   final_res$data <- datas
   final_res$calibration <- calibrations
-  final_res$p0 <- p0
-  final_res$p1 <- p1
-  final_res$delta <- delta
-  final_res$ratio <- ratio
-  final_res$OR <- OR
-  final_res$p0.unadj <- p0.unadj
-  final_res$p1.unadj <- p1.unadj
-  final_res$delta.unadj <- delta.unadj
-  final_res$ratio.unadj <- ratio.unadj
-  final_res$OR.unadj <- OR.unadj
+  final_res$adjusted.results <- list(p1 = p1, p0 = p0, delta = delta, ratio = ratio, OR = OR)
+  final_res$unadjusted.results <- list(p1 = p1.unadj, p0 = p0.unadj, delta = delta.unadj, ratio = ratio.unadj, OR = OR.unadj)
   final_res$boot.number <- m * boot.number
   final_res$seed <- seed
   final_res$call <- cl

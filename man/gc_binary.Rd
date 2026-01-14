@@ -60,20 +60,11 @@ If \code{boot.mi = TRUE}, multiple imputation is considered by using the MI-BOOT
 \item{missing}{The number of observations that were removed from the original dataset due to missing values.}
 \item{boot.number}{The total number of bootstrap resamples performed.}
 \item{boot.type}{The type of bootstrap resamples performed.}
-\item{outcome}{A character string specifying the name of the outcome variable.}
 \item{group}{A character string specifying the name of the grouping variable.}
 \item{n}{The sample size of the dataset used in calculations, after missing data removal.}
 \item{nevent}{The total number of events in the dataset used in calculations.}
-\item{p0}{A numeric vector containing the adjusted proportions of events in the control group for each bootstrap sample.}
-\item{p1}{A numeric vector containing the adjusted proportions of events in the experimental group for each bootstrap sample.}
-\item{delta}{A numeric vector with \code{p1} - \code{p0}.}
-\item{ratio}{A numeric vector with \code{p1} / \code{p0}.}
-\item{OR}{A numeric vector with (\code{p1}/(1-\code{p1})) / (\code{p0}/(1-\code{p0})).}
-\item{p0.unadj}{A numeric vector containing the unadjusted proportions of events in the control group for each bootstrap sample.}
-\item{p1.unadj}{A numeric vector containing the unadjusted proportions of events in the experimental group for each bootstrap sample.}
-\item{delta.unadj}{A numeric vector with \code{p1.unadj} - \code{p0.unadj}.}
-\item{ratio.unadj}{A numeric vector with \code{p1.unadj} / \code{p0.unadj}.}
-\item{OR.unadj}{A numeric vector with (\code{p1.unadj}/(1-\code{p1.unadj})) / (\code{p0.unadj}/(1-\code{p0.unadj})).}
+\item{adjusted.results}{A data frame containing the adjusted results for each bootstrap sample, including: \code{p1} (proportion in experimental group), \code{p0} (proportion in control group), \code{delta} (risk difference), \code{ratio} (risk ratio), and \code{OR} (odds ratio).}
+\item{unadjusted.results}{A data frame containing the unadjusted results for each bootstrap sample, including: \code{p1} (proportion in experimental group), \code{p0} (proportion in control group), \code{delta} (risk difference), \code{ratio} (risk ratio), and \code{OR} (odds ratio).}
 \item{call}{The function call that generated the \code{gcbinary} object.}
 }
 

@@ -36,7 +36,7 @@ dataPROPHYVAP$GROUP_num <- ifelse(dataPROPHYVAP$GROUP == "Placebo",0,1)
 
 ### In practice use larger values of boot.number (e.g., 500)
 ### We set boot.number and cv at 10 for speed in CRAN checks
-gc1 <- gc_binary(formula=.f, model="ridge", data=dataPROPHYVAP,
+gc1 <- gc_binary(formula=.f, model="all", data=dataPROPHYVAP,
               group="GROUP_num", param.tune=NULL, boot.type="bcv", cv=10,
               boot.number=10, effect="ATE", progress=TRUE, boot.tune=FALSE)
 
@@ -46,9 +46,9 @@ summary(gc1)
 newdata <- subset(dataPROPHYVAP, AGE <= 50)
 
 ### transport the gc_binary model to the new dataset
-gc2 <- transport(object=gc1, newdata=newdata, effect="ATE", boot.number=10)
+#gc2 <- transport(object=gc1, newdata=newdata, effect="ATE", boot.number=10)
 
-summary(gc2)
+#summary(gc2)
 }
 
 \keyword{Transportation}

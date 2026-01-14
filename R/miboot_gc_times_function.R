@@ -67,20 +67,20 @@
     datas[[i]] <- current_imputed_data
     calibrations[[i]] <- gc_res$calibration
     
-    AHR <- c(AHR, gc_res$AHR)
-    RMST0 <- c(RMST0, gc_res$RMST0)
-    RMST1 <- c(RMST1, gc_res$RMST1)
-    deltaRMST <- c(deltaRMST, gc_res$deltaRMST)
-    s0 <- c(s0, gc_res$s0)
-    s1 <- c(s1, gc_res$s1)
-    delta <- c(delta, gc_res$delta)
-    AHR.unadj <- c(AHR.unadj, gc_res$AHR.unadj)
-    RMST0.unadj <- c(RMST0.unadj, gc_res$RMST0.unadj)
-    RMST1.unadj <- c(RMST1.unadj, gc_res$RMST1.unadj)
-    deltaRMST.unadj <- c(deltaRMST.unadj, gc_res$deltaRMST.unadj)
-    s0.unadj <- c(s0.unadj, gc_res$s0.unadj)
-    s1.unadj <- c(s1.unadj, gc_res$s1.unadj)
-    delta.unadj <- c(delta.unadj, gc_res$delta.unadj)
+    AHR <- c(AHR, gc_res$adjusted.results$AHR)
+    RMST0 <- c(RMST0, gc_res$adjusted.results$RMST0)
+    RMST1 <- c(RMST1, gc_res$adjusted.results$RMST1)
+    deltaRMST <- c(deltaRMST, gc_res$adjusted.results$deltaRMST)
+    s0 <- c(s0, gc_res$adjusted.results$s0)
+    s1 <- c(s1, gc_res$adjusted.results$s1)
+    delta <- c(delta, gc_res$adjusted.results$delta)
+    AHR.unadj <- c(AHR.unadj, gc_res$unadjusted.results$AHR)
+    RMST0.unadj <- c(RMST0.unadj, gc_res$unadjusted.results$RMST0)
+    RMST1.unadj <- c(RMST1.unadj, gc_res$unadjusted.results$RMST1.unadj)
+    deltaRMST.unadj <- c(deltaRMST.unadj, gc_res$unadjusted.results$deltaRMST)
+    s0.unadj <- c(s0.unadj, gc_res$unadjusted.results$s0)
+    s1.unadj <- c(s1.unadj, gc_res$unadjusted.results$s1)
+    delta.unadj <- c(delta.unadj, gc_res$unadjusted.results$delta)
     
     if (model %in% c("all","aic","bic")) {
       formulas[[i]] <- gc_res$tuning.parameters
@@ -110,20 +110,9 @@
   final_res$data <- datas
   final_res$calibration <- calibrations
   
-  final_res$AHR <- AHR
-  final_res$RMST0 <- RMST0
-  final_res$RMST1 <- RMST1
-  final_res$deltaRMST <- deltaRMST
-  final_res$s0 <- s0
-  final_res$s1 <- s1
-  final_res$delta <- delta
-  final_res$AHR.unadj <- AHR.unadj
-  final_res$RMST0.unadj <- RMST0.unadj
-  final_res$RMST1.unadj <- RMST1.unadj
-  final_res$deltaRMST.unadj <- deltaRMST.unadj
-  final_res$s0.unadj <- s0.unadj
-  final_res$s1.unadj <- s1.unadj
-  final_res$delta.unadj <- delta.unadj
+  final_res$adjusted.results <- data.frame(AHR = AHR, RMST0 = RMST0, RMST1 = RMST1, deltaRMST = deltaRMST, s0 = s0, s1 = s1, delta = delta)
+  final_res$unadjusted.results <- data.frame(AHR = AHR.unadj, RMST0 = RMST0.unadj, RMST1 = RMST1.unadj, deltaRMST = deltaRMST.unadj, s0 = s0.unadj, s1 = s1.unadj, delta = delta.unadj)
+  
   
   final_res$boot.number <- m * boot.number
   final_res$seed <- seed

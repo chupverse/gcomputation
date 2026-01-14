@@ -1,3 +1,19 @@
+data(dataPROPHYVAP)
+
+dataPROPHYVAP$DEATH_num <- ifelse(dataPROPHYVAP$DEATH == "Yes",1,0)
+dataPROPHYVAP$GROUP_num <- ifelse(dataPROPHYVAP$GROUP == "Placebo",0,1)
+
+.f <- formula(Surv(TIME_DEATH, DEATH_num) ~ GROUP_num + AGE +
+                SEX + BMI + DIABETES)
+
+### In practice use larger values of boot.number (e.g., 500)
+### We set boot.number at 10 for speed in CRAN checks
+formula=.f; model="lasso"; data=dataPROPHYVAP;
+group="GROUP_num"; boot.type="bcv";
+boot.number=10;  effect="ATE"; progress=TRUE ; pro.time=10;
+boot.tune=FALSE
+
+
 .gc_times <- function(formula, data, group, pro.time=NULL, effect="ATE", model, param.tune=NULL, cv=10, boot.type="bcv",
                         boot.number=500, boot.tune=FALSE, progress=TRUE, seed=NULL) {
   # Quality tests
@@ -333,6 +349,45 @@ if(model == "lasso"){
   
   hi <- cbind(rep(0,length(lp)),hi)
   
+  
+  
+  
+  
+  data0=data1=data
+  data0[,group] = 0
+  data1[,group] = 1
+  
+    if (model == "all" | model == "aic" | model == "bic") {
+    .lp.0 <- predict(fit, newdata = data0, type="lp")
+    .lp.1 <- predict(fit, newdata = data1, type="lp")
+  } else {
+    .x0 = model.matrix(formula.all, data0)[,-1]
+    .x1 = model.matrix(formula.all, data1)[,-1]
+    .lp.0 <- predict(fit, newx = .x0)
+    .lp.1 <- predict(fit, newx = .x1)
+  }
+  lp.0 <- as.vector(.lp.0)
+  lp.1 <- as.vector(.lp.1)
+  
+  hi.0 <- exp(lp.0) * matrix(rep(h0,length(lp.0)), nrow=length(lp.0), byrow=TRUE)
+  Si.0 <- exp(-exp(lp.0) * matrix(rep(H0.multi,length(lp.0)), nrow=length(lp.0), byrow=TRUE))
+  hi.0 <- cbind(rep(0,length(lp.0)), hi.0)
+  h.mean.0 <- apply(Si.0 * hi.0, FUN="sum", MARGIN=2) / apply(Si.0, FUN="sum", MARGIN=2)
+  S.mean.0 <- exp(-cumsum(h.mean.0))
+  
+  hi.1 <- exp(lp.1) * matrix(rep(h0,length(lp.1)), nrow=length(lp.1), byrow=TRUE)
+  Si.1 <- exp(-exp(lp.1) * matrix(rep(H0.multi,length(lp.1)), nrow=length(lp.1), byrow=TRUE))
+  hi.1 <- cbind(rep(0,length(lp.1)), hi.1)
+  h.mean.1 <- apply(Si.1 * hi.1, FUN="sum", MARGIN=2) / apply(Si.1, FUN="sum", MARGIN=2)
+  S.mean.1 <- exp(-cumsum(h.mean.1))
+  
+  if (max(T.multi) != max(fit_times)) {
+    S.mean.0 = c(S.mean.0, min(S.mean.0))
+    S.mean.1 = c(S.mean.1, min(S.mean.1))
+  }
+  
+  
+  
   h.mean <- apply(Si * hi, FUN="sum", MARGIN=2) / apply(Si, FUN="sum", MARGIN=2)
   H.mean <- cumsum(h.mean)
   S.mean <- exp(-H.mean)
@@ -346,7 +401,8 @@ if(model == "lasso"){
   }
   
   
-  results.surv.calibration <- list(fit=fit, time=T.multi, cumhaz=H.mean, surv=S.mean, H0.multi=H0.multi, lp=lp)
+  results.surv.calibration <- list(fit=fit, time=T.multi, cumhaz=H.mean, surv=S.mean, H0.multi=H0.multi, lp=lp,
+                                   surv0 = S.mean.0, surv1 = S.mean.1)
   
 
   .tune.optimal.totalpop <- .tune.optimal
@@ -665,36 +721,23 @@ if (!is.null(.warnen)) {warning(paste0("The optimal tuning parameter alpha was e
   
   
 
-res <- list(calibration=as.list(results.surv.calibration),
-            tuning.parameters=.tune.optimal.totalpop,
-            data=datakeep,
-            formula=formula.all,
-            model=model,
-            cv=cv,
-            missing=nmiss,
-            pro.time=pro.time,
-            boot.number = boot.number,
-            boot.type = boot.type,
-            outcome=list(times=times, failures=failures),
-            group=group,
-            n = nrow(datakeep),
-            nevent = sum(datakeep[,failures]),
-            AHR = AHR,
-            RMST0 = RMST0,
-            RMST1 = RMST1,
-            deltaRMST = deltaRMST,
-            s0 = surv0,
-            s1 = surv1,
-            delta = deltasurv,
-            AHR.unadj = AHR.unadj,
-            RMST0.unadj = RMST0.unadj,
-            RMST1.unadj = RMST1.unadj,
-            deltaRMST.unadj = deltaRMST.unadj,
-            s0.unadj = surv0.unadj,
-            s1.unadj = surv1.unadj,
-            delta.unadj = deltasurv.unadj,
-            call = match.call()
-)
+  res <- list(calibration=as.list(results.surv.calibration),
+              tuning.parameters=.tune.optimal.totalpop,
+              data=datakeep,
+              formula=formula.all,
+              model=model,
+              cv=cv,
+              missing=nmiss,
+              pro.time=pro.time,
+              boot.number = boot.number,
+              boot.type = boot.type,
+              group=group,
+              n = nrow(datakeep),
+              nevent = sum(datakeep[,failures]),
+              adjusted.results = data.frame(AHR = AHR, RMST0 = RMST0, RMST1 = RMST1, deltaRMST = deltaRMST, s0 = surv0, s1 = surv1, delta = deltasurv),
+              unadjusted.results = data.frame(AHR = AHR.unadj, RMST0 = RMST0.unadj, RMST1 = RMST1.unadj, deltaRMST = deltaRMST.unadj, s0 = surv0.unadj, s1 = surv1.unadj, delta = deltasurv.unadj),
+              call = match.call()
+  )
 
 
 class(res) <- "gctimes"

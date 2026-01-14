@@ -2,11 +2,11 @@ print.gcbinary <- function (x, digits=4, ...)
 {
   if (x$model %in% c("lasso","ridge","elasticnet")) {cat("model: ",x$model,", tuning parameters: ", sep = "")
     if (x$model == "elasticnet") {
-      cat("lambda= ",round(x$tuning.parameters$lambda,digits=digits), " alpha= ",round(x$tuning.parameters$alpha,digits=digits),sep="")}
+      cat("lambda= ",round(x$tuning.parameters$lambda,digits=digits), " alpha= ",round(x$tuning.parameters$alpha,digits=digits),sep=" ")}
     if (x$model == "lasso") {
-      cat("lambda= ",round(x$tuning.parameters$lambda,digits=digits),sep="")}
+      cat("lambda= ",round(x$tuning.parameters$lambda,digits=digits),sep=" ")}
     if (x$model == "ridge") {
-      cat("lambda= ",round(x$tuning.parameters$lambda,digits=digits),sep="")}
+      cat("lambda= ",round(x$tuning.parameters$lambda,digits=digits),sep=" ")}
     cat("\nCall:", "\n", sep = "")
     dput(x$formula)}
   if (x$model %in% c("all","aic","bic")) {cat(x$model," model \nCall:", "\n", sep = "")
@@ -14,12 +14,12 @@ print.gcbinary <- function (x, digits=4, ...)
   cat("\n")
   
   cat("Estimates : \n")
-  res <- matrix(c(mean(x$p0, na.rm=TRUE),
-      mean(x$p1, na.rm=TRUE),
-      mean(x$delta, na.rm=TRUE),
-      mean(x$ratio, na.rm=TRUE),
-      mean(x$OR, na.rm=TRUE)),
-    nrow = 1)
+  res <- matrix(c(mean(x$adjusted.results$p0, na.rm=TRUE),
+                  mean(x$adjusted.results$p1, na.rm=TRUE),
+                  mean(x$adjusted.results$delta, na.rm=TRUE),
+                  mean(x$adjusted.results$ratio, na.rm=TRUE),
+                  mean(x$adjusted.results$OR, na.rm=TRUE)),
+                nrow = 1)
   colnames(res) <- c("P0", "P1", "P1-P0", "P1/P0", "OR")
   rownames(res) <-  ""
   

@@ -5,7 +5,7 @@ plot.gccount <- function (x, method="calibration", n.groups=5, smooth=FALSE, ...
     if (!is.null(x$m)) {stop("The \"method=proportion\" is not available when \"boot.mi=TRUE\"")}
     
     data = x$data
-    outcome = x$outcome
+    outcome = as.character(x$formula[[2]])
     group = x$group
     
     datag0 = data[which(data[,group] == 0),]
@@ -45,7 +45,7 @@ plot.gccount <- function (x, method="calibration", n.groups=5, smooth=FALSE, ...
       for (i in 1:x$m) {
         .pred = x$calibration[[i]]$predict
         data = x$data[[i]]
-        outcome = x$data[[i]][,x$outcome]
+        outcome = x$data[[i]][,as.character(x$formula[[2]])]
         
         if (length(unique(c(-Inf, quantile(.pred, seq(1/n.groups, 1, 1/n.groups))))) != length(c(-Inf, quantile(.pred, seq(1/n.groups, 1, 1/n.groups))))) {
           n.grouperror <- n.grouperror + 1
@@ -152,7 +152,7 @@ plot.gccount <- function (x, method="calibration", n.groups=5, smooth=FALSE, ...
       if (any(is.na(x$data))){x$data <- na.omit(x$data) }
       .pred = x$calibration$predict
       data = x$data
-      outcome = x$data[,x$outcome]
+      outcome = x$data[,as.character(x$formula[[2]])]
       
       print(.pred)
       print(unique(c(-Inf, quantile(.pred, seq(1/n.groups, 1, 1/n.groups)))))

@@ -473,7 +473,7 @@ functions, stratification and clustering are not implemented") }
   
   
   
-  res <- list(calibration=list(fit=calibration.fit,predict=calibration.predict),
+  res <- list(calibration=list(fit=calibration.fit, predict=calibration.predict),
               tuning.parameters=.tune.optimal.totalpop,
               data=datakeep,
               formula=formula.all,
@@ -482,17 +482,10 @@ functions, stratification and clustering are not implemented") }
               missing=nmiss,
               boot.number = boot.number,
               boot.type = boot.type,
-              outcome=outcome,
               group=group,
               n = nrow(datakeep),
-              c0 = c0,  
-              c1 = c1,
-              delta = delta,
-              ratio = ratio,
-              c0.unadj = c0.unadj,
-              c1.unadj = c1.unadj,
-              delta.unadj = delta.unadj,
-              ratio.unadj = ratio.unadj,
+              adjusted.results = data.frame(c1 = c1, c0 = c0, delta = delta, ratio = ratio),
+              unadjusted.results = data.frame(c1 = c1.unadj, c0 = c0.unadj, delta = delta.unadj, ratio = ratio.unadj),
               call = match.call()
   )
   

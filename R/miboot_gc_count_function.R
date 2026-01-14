@@ -56,14 +56,14 @@
     datas[[i]] <- current_imputed_data
     calibrations[[i]] <- gc_res$calibration
     
-    c0 <- c(c0, gc_res$c0)
-    c1 <- c(c1, gc_res$c1)
-    delta <- c(delta, gc_res$delta)
-    ratio <- c(ratio, gc_res$ratio)
-    c0.unadj <- c(c0.unadj, gc_res$c0.unadj)
-    c1.unadj <- c(c1.unadj, gc_res$c1.unadj)
-    delta.unadj <- c(delta.unadj, gc_res$delta.unadj)
-    ratio.unadj <- c(ratio.unadj, gc_res$ratio.unadj)
+    c0 <- c(c0, gc_res$adjusted.results$c0)
+    c1 <- c(c1, gc_res$adjusted.results$c1)
+    delta <- c(delta, gc_res$adjusted.results$delta)
+    ratio <- c(ratio, gc_res$adjusted.results$ratio)
+    c0.unadj <- c(c0.unadj, gc_res$unadjusted.results$c0)
+    c1.unadj <- c(c1.unadj, gc_res$unadjusted.results$c1)
+    delta.unadj <- c(delta.unadj, gc_res$unadjusted.results$delta)
+    ratio.unadj <- c(ratio.unadj, gc_res$unadjusted.results$ratio)
     
     if (model %in% c("lasso", "ridge")) {
       if (!is.null(gc_res$tuning.parameters$lambda)) {
@@ -90,14 +90,10 @@
   
   final_res$data <- datas
   final_res$calibration <- calibrations
-  final_res$c0 <- c0
-  final_res$c1 <- c1
-  final_res$delta <- delta
-  final_res$ratio <- ratio
-  final_res$c0.unadj <- c0.unadj
-  final_res$c1.unadj <- c1.unadj
-  final_res$delta.unadj <- delta.unadj
-  final_res$ratio.unadj <- ratio.unadj
+  
+  final_res$adjusted.results <- data.frame(c1 = c1, c0 = c0, delta = delta, ratio = ratio)
+  final_res$unadjusted.results <- data.frame(c1 = c1.unadj, c0 = c0.unadj, delta = delta.unadj, ratio = ratio.unadj)
+  
   final_res$boot.number <- m * boot.number
   final_res$seed <- seed
   final_res$call <- cl
