@@ -89,13 +89,6 @@ gc1 <- gc_binary(formula=.f, model="lasso", data=dataPROPHYVAP,
               boot.number=10, effect="ATE", boot.tune=TRUE)
 
 summary(gc1)
-
-### To specify specific tuning parameters
-gc2 <- gc_binary(formula=.f, model="elasticnet", data=dataPROPHYVAP,
-              group="GROUP_num", param.tune=list(lambda=0.1, alpha=0.2),
-              boot.type="bcv", boot.number=10, effect="ATE")
-
-summary(gc2)
 }
 
 \keyword{G-computation}
