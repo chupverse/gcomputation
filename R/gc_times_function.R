@@ -1,19 +1,3 @@
-data(dataPROPHYVAP)
-
-dataPROPHYVAP$DEATH_num <- ifelse(dataPROPHYVAP$DEATH == "Yes",1,0)
-dataPROPHYVAP$GROUP_num <- ifelse(dataPROPHYVAP$GROUP == "Placebo",0,1)
-
-.f <- formula(Surv(TIME_DEATH, DEATH_num) ~ GROUP_num + AGE +
-                SEX + BMI + DIABETES)
-
-### In practice use larger values of boot.number (e.g., 500)
-### We set boot.number at 10 for speed in CRAN checks
-formula=.f; model="lasso"; data=dataPROPHYVAP;
-group="GROUP_num"; boot.type="bcv";
-boot.number=10;  effect="ATE"; progress=TRUE ; pro.time=10;
-boot.tune=FALSE
-
-
 .gc_times <- function(formula, data, group, pro.time=NULL, effect="ATE", model, param.tune=NULL, cv=10, boot.type="bcv",
                         boot.number=500, boot.tune=FALSE, progress=TRUE, seed=NULL) {
   # Quality tests
