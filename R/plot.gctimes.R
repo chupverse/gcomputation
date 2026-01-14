@@ -3,8 +3,8 @@ plot.gctimes <- function (x, method="calibration", n.groups=5, pro.time=NULL, sm
   if (method == "survival") {
     if (!is.null(x$m)) {stop("The \"method=survival\" is not available when \"boot.mi=TRUE\"")}
     data = x$data
-    times = x$outcome$times
-    failures = x$outcome$failures
+    times <- as.character(x$formula[[2]][2]) 
+    failures <- as.character(x$formula[[2]][3])
     results.surv.calibration = x$calibration
     
     km <- survfit(formula(paste0("Surv(",times,",", failures,")~1")), data=data) 
@@ -39,9 +39,9 @@ plot.gctimes <- function (x, method="calibration", n.groups=5, pro.time=NULL, sm
       all_lower = c()
       all_upper = c()
       for (i in 1:x$m) {
-        if(is.null(pro.time)){ pro.time <- median(x$data[[i]][,x$outcome[[1]]]) }
-        time <- x$data[[i]][,x$outcome[[1]]]
-        event <- x$data[[i]][,x$outcome[[2]]]
+        if(is.null(pro.time)){ pro.time <- x$pro.time }
+        time <- x$data[[i]][,as.character(x$formula[[2]][2]) ]
+        event <- x$data[[i]][,as.character(x$formula[[2]][3]) ]
         .lp = x$calibration[[i]]$lp
         hazard = x$calibration[[i]]$H0.multi
         T.multi = x$calibration[[i]]$time
@@ -141,12 +141,12 @@ plot.gctimes <- function (x, method="calibration", n.groups=5, pro.time=NULL, sm
         abline(c(0,1), lty=2)
       }
     } else {
-      if(is.null(pro.time)){ pro.time <- median(x$data[,x$outcome[[1]]]) }
+      if(is.null(pro.time)){ pro.time <- x$pro.time }
       
       if (any(is.na(x$data))){x$data <- na.omit(x$data) }
       
-      time <- x$data[,x$outcome[[1]]]
-      event <- x$data[,x$outcome[[2]]]
+      time <- x$data[,as.character(x$formula[[2]][2]) ]
+      event <- x$data[,as.character(x$formula[[2]][3]) ]
       .lp = x$calibration$lp
       hazard = x$calibration$H0.multi
       T.multi = x$calibration$time

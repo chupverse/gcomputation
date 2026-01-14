@@ -53,7 +53,7 @@ If \code{boot.mi = TRUE}, multiple imputation is considered by using the MI-BOOT
 }
 
 \value{
-\item{calibration}{A list containing the fitted Q-model (\code{fit}); the time points (\code{time}) with the related cumulative hazards (\code{cumhaz}), survival probabilities (\code{surv}), and baseline cumulative hazard (\code{H0.multi}); and the linear predictors (\code{lp}) obtained on the complete dataset.}
+\item{calibration}{A list containing the fitted Q-model (\code{fit}); the time points (\code{time}) with the related cumulative hazards (\code{cumhaz}), survival probabilities (\code{surv}), and baseline cumulative hazard (\code{H0.multi}); the linear predictors (\code{lp}) obtained on the complete dataset; survival probabilities for group 0 (\code{surv0}); and survival probabilities for group 1 (\code{surv1})}
 \item{tuning.parameters}{The estimated tuning parameters for the Q-model. For "aic" and "bic" methods, this represents the final model.}
 \item{data}{The data frame with individual with no missing data in the formula parameters.}
 \item{formula}{The formula provided to the user.}
@@ -63,24 +63,11 @@ If \code{boot.mi = TRUE}, multiple imputation is considered by using the MI-BOOT
 \item{pro.time}{The time point up to which RMST and survival probabilities are estimated.}
 \item{boot.number}{The total number of bootstrap resamples performed.}
 \item{boot.type}{The type of bootstrap resamples performed.}
-\item{outcome}{A list of character strings, specifying the names of the time (\code{times}) and outcome variable.}
 \item{group}{A character string specifying the name of the grouping variable.}
 \item{n}{The sample size of the dataset used in calculations, after missing data removal.}
 \item{nevent}{The total number of events in the dataset used in calculations.}
-\item{AHR}{A numeric vector containing the adjusted average hazard ratio for each bootstrap sample.}
-\item{RMST0}{A numeric vector containing the adjusted restricted mean survival (RMST) times up to \code{pro.time} in the control group for each bootstrap sample.}
-\item{RMST1}{A numeric vector containing the adjusted RMST times up to \code{pro.time} in the experimental group for each bootstrap sample.}
-\item{deltaRMST}{A numeric vector with \code{RMST1} - \code{RMST0}.}
-\item{s0}{A numeric vector containing the adjusted survival probability at \code{pro.time} in the control group for each bootstrap sample.}
-\item{s1}{A numeric vector containing the adjusted survival probability at \code{pro.time} in the experimantal group for each bootstrap sample.}
-\item{delta}{A numeric vector with \code{surv1} - \code{surv0}.}
-\item{AHR.unadj}{A numeric vector containing the unadjusted average hazard ratio for each bootstrap sample.}
-\item{RMST0.unadj}{A numeric vector containing the unadjusted RMST times up to \code{pro.time} in the control group for each bootstrap sample.}
-\item{RMST1.unadj}{A numeric vector containing the unadjusted RMST times up to \code{pro.time} in the experimental group for each bootstrap sample.}
-\item{deltaRMST.unadj}{A numeric vector with \code{RMST1.unadj} - \code{RMST0.unadj}.}
-\item{s.unadj}{A numeric vector containing the unadjusted survival probability at \code{pro.time} in the control group for each bootstrap sample.}
-\item{s.unadj}{A numeric vector containing the unadjusted survival probability at \code{pro.time} in the experimantal group for each bootstrap sample.}
-\item{delta.unadj}{A numeric vector with \code{surv1.unadj} - \code{surv0.unadj}.}
+\item{adjusted.results}{A data frame containing the adjusted results for each bootstrap sample, including: \code{AHR} (average hazard ratio), \code{RMST0} and \code{RMST1} (restricted mean survival times), \code{deltaRMST} (difference in RMST), \code{s0} and \code{s1} (survival probabilities at pro.time), and \code{delta} (difference in survival probabilities).}
+\item{unadjusted.results}{A data frame containing the unadjusted results for each bootstrap sample, including: \code{AHR} (average hazard ratio), \code{RMST0} and \code{RMST1} (restricted mean survival times), \code{deltaRMST} (difference in RMST), \code{s0} and \code{s1} (survival probabilities at pro.time), and \code{delta} (difference in survival probabilities).}
 \item{call}{The complete function call that generated the \code{gctimes} object.}
 }
 
@@ -98,11 +85,11 @@ dataPROPHYVAP$GROUP_num <- ifelse(dataPROPHYVAP$GROUP == "Placebo",0,1)
               SEX + BMI + DIABETES)
 
 ### In practice use larger values of boot.number (e.g., 500)
-### We set boot.number=10 and cv=10 for speed in CRAN checks
+### We set boot.number at 10 for speed in CRAN checks
 gc1 <- gc_times(formula=.f, model="lasso", data=dataPROPHYVAP,
-              group="GROUP_num", param.tune=NULL, boot.type="bcv", cv=10,
+              group="GROUP_num", boot.type="bcv",
               boot.number=10,  effect="ATE", progress=TRUE , pro.time=10,
-              boot.tune=TRUE)
+              boot.tune=FALSE)
 
 summary(gc1)
 }
