@@ -78,6 +78,9 @@ summary.gcbinary <- function (object, digits=4, ci.type=NULL, ci.level=0.95, una
                           quantile(x$adjusted.results$OR, probs = (1-ci.level)/2, na.rm = TRUE),
                           quantile(x$adjusted.results$OR, probs = 1-(1-ci.level)/2, na.rm = TRUE)
       ), ncol=2, byrow=TRUE)
+      if (length(x$adjusted.results$p0) == 1) {
+        ci_vals <- matrix(rep(NA,10), ncol=2, byrow=TRUE)
+      }
     }
     tmp <- cbind(res[,1], `Lower CI` = ci_vals[,1], `Upper CI` = ci_vals[,2])
     colnames(tmp)[1] <- "Estimate"

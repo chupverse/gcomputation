@@ -483,7 +483,7 @@ functions, stratification and clustering are not implemented") }
               boot.number = boot.number,
               boot.type = boot.type,
               group=group,
-              n = nrow(datakeep),
+              n = nrow(datakeep) - nmiss,
               adjusted.results = data.frame(c1 = c1, c0 = c0, delta = delta, ratio = ratio),
               unadjusted.results = data.frame(c1 = c1.unadj, c0 = c0.unadj, delta = delta.unadj, ratio = ratio.unadj),
               call = match.call()

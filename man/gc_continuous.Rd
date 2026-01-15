@@ -73,19 +73,20 @@ Joe de Keizer et al. G-computation for increasing performances of clinical trial
 Schomaker M, Heumann C. Bootstrap inference when using multiple imputation. Statistics in medicine. 2018;37(14):2252-2266. <doi:10.1002/sim.7654>.}
 
 \examples{
-### Generate a dataset with 1000 individuals and a treatment effect of 2
-sim_data <- data_gen_gcomp(n_indiv = 1000, beta_ttt = 2)
+data("dataPROPHYVAP")
 
-### Create formulas
-.f <- formula(y_continuous ~ ttt + x1 + x2 + x3 + x4)
+dataPROPHYVAP$VAP_num <- ifelse(dataPROPHYVAP$VAP == "Yes",1,0)
+dataPROPHYVAP$GROUP_num <- ifelse(dataPROPHYVAP$GROUP == "Placebo",0,1)
 
-### Apply G-computation
-gc1 <- gc_continuous(formula=.f, model="all", data=sim_data, group="ttt", 
-                boot.type="boot", boot.number=100, seed=8512)
+.f <- formula(HYPOTENSION ~ GROUP_num * AGE + SEX + ALCOOL + BMI + DIABETES + GLASGOW + INJURY)
 
-print(gc1)
+### In practice use larger values for cv and boot.number
+### We set boot.number and cv at 10 for speed in CRAN checks
+gc1 <- gc_continuous(formula=.f, model="lasso", data=dataPROPHYVAP,
+              group="GROUP_num", param.tune=NULL, boot.type="bcv",
+              boot.number=10, effect="ATE", boot.tune=TRUE)
 
-#For continuous the M1-M0 difference corresponds to beta_ttt)
+summary(gc1)
 }
 
 \keyword{G-computation}

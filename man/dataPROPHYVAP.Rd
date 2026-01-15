@@ -5,7 +5,7 @@
 A Simulated Randomized Clinical Trial from the PROPHYVAP Study
 }
 \description{
-Ventilator-associated pneumonia (VAP) is the first cause of healthcare-associated infections in intensive care units. The PROPHYVAP is a French multicentre, randomized, double-blind, placebo-controlled, clinical trial. The main objective of this study was to determine whether a single dose of ceftriaxone within the 12 hours post-intubation after severe brain injury can decrease the risk of early-onset VAP and mortality at 60 days.
+Ventilator-associated pneumonia (VAP) is the first cause of healthcare-associated infections in intensive care units. The PROPHYVAP is a French multicentre, randomized, double-blind, placebo-controlled, clinical trial. The main objective of this study was to determine whether a single dose of ceftriaxone within the 12 hours post-intubation after severe brain injury can decrease the risk of early-onset VAP and mortality at 60 days. All variables in this dataset were simulated according to the real parameters and correlations observed in the original trial. The only exception is \code{HYPOTENSION}, which is a fictional count variable added solely for running exemples in the package.
 }
 \usage{data(dataPROPHYVAP)}
 \format{
@@ -27,6 +27,7 @@ Ventilator-associated pneumonia (VAP) is the first cause of healthcare-associate
      \item{\code{VAP}}{This character vector represents ventilatory associated pneumonia (Yes/No)}  
      \item{\code{TIME_DEATH}}{This numeric vector represents time-to-death in days (for a follow-up at 60 days)}  
      \item{\code{DEATH}}{This character vector represents death status at the end of the follow-up (Yes/No)}
+     \item{\code{HYPOTENSION}}{This numeric vector represents the number of episodes of severe hypotension. This is a fictional variable generated via a Poisson distribution specifically for demonstration purposes in this package.}
   }
 }
 

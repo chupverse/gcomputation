@@ -1,23 +1,29 @@
 \name{transport}
 \alias{transport}
 \title{
-**This function is currently in development.** 
 Transport the Marginal for Another Populations
 }
 \description{
-**This function is currently in development.**
 Applies an already fitted G-computation model (an object of class to estimate marginal effects for that new population.
 }
 \usage{
-transport(object, newdata, effect="ATE", boot.number=500, seed=NULL)
+transport(object, newdata, boot.number=500, seed=NULL)
 }
 \arguments{
   \item{object}{An object returned by the function \code{\link{gc_binary}},  \code{\link{gc_continuous}}, or \code{\link{gc_times}}.}
   \item{newdata}{The new data frame with all the covariates in the \code{formula} of the \code{object}.}
-  \item{effect}{The type of the marginal effect to be estimated on the \code{newdata}. Three types are possible: "ATE" (by default), "ATT", and "ATU". These correspond to Average Treatment Effect on the Entire population, on the Treated, and on the Untreated, respectively.}
   \item{boot.number}{The number of bootstrap resamples to perform for estimating standard errors and confidence intervals of the marginal effects on the \code{newdata}. The default value is 500.}
   \item{seed}{A random seed to ensure reproducibility during the bootstrap process. If \code{NULL} (the default), a seed is randomly assigned.}
 }
+
+\details{
+The function employs two distinct estimation strategies:
+\itemize{
+  \item \bold{Monte Carlo Simulation:} For unpenalized models (likelihood-based models like "all", "aic", or "bic"), the function uses the variance-covariance matrix of the coefficients to draw \code{boot.number} resamples from a multivariate normal distribution. This provides a distribution of adjusted results.
+  \item \bold{Single Point Estimate:} For penalized models ("lasso"", "ridge"", "elasticnet"") and survival models (\code{gctimes}), the function calculates exactly one estimate based on \code{newdata}.
+}
+}
+
 \value{
 The function returns an object of the same class with the same arguments as the input \code{object}, but with updated results for the \code{newdata}.
 }
@@ -46,9 +52,9 @@ summary(gc1)
 newdata <- subset(dataPROPHYVAP, AGE <= 50)
 
 ### transport the gc_binary model to the new dataset
-#gc2 <- transport(object=gc1, newdata=newdata, effect="ATE", boot.number=10)
+gc2 <- transport(object=gc1, newdata=newdata, boot.number=10)
 
-#summary(gc2)
+summary(gc2)
 }
 
 \keyword{Transportation}
