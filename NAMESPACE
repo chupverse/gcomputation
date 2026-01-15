@@ -13,14 +13,13 @@ importFrom("graphics", "axis")
 importFrom("stats", "as.formula", "formula", "glm", "loess", "median",
              "model.matrix", "na.omit", "pnorm", "predict",
              "printCoefmat", "qnorm", "quantile", "sd", "terms",
-			 "coef","plogis","vcov","rnorm","rbinom","rpois")
+			 "coef","plogis","vcov", "update")
 
 export(gc_binary)
 export(gc_continuous)
 export(gc_times)
 export(gc_count)
 export(transport)
-export(data_gen_gcomp)
 
 S3method(print, gctimes)
 S3method(plot, gctimes)

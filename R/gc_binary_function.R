@@ -84,8 +84,9 @@ functions, stratification and clustering are not implemented") }
     nmiss <- nrow(data)
     data <- na.omit(data)
     nmiss <- nmiss - nrow(data)
+    nevent <- sum(data[,outcome])
     warning("Rows containing NA values have been removed from the dataset!")
-  } else {nmiss <- 0}
+  } else {nmiss <- 0 ; nevent <- sum(data[,outcome])}
   
   
   if (cv < 3 | !is.numeric(cv)) {
@@ -490,8 +491,8 @@ functions, stratification and clustering are not implemented") }
               boot.number = boot.number,
               boot.type = boot.type,
               group=group,
-              n = nrow(datakeep),
-              nevent = sum(datakeep[,outcome]),
+              n = nrow(datakeep) - nmiss,
+              nevent = nevent,
               adjusted.results = data.frame(p1 = p1, p0 = p0, delta = delta, ratio = ratio, OR = OR),
               unadjusted.results = data.frame(p1 = p1.unadj, p0 = p0.unadj, delta = delta.unadj, ratio = ratio.unadj, OR = OR.unadj),
               call = match.call()

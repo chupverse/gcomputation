@@ -128,6 +128,9 @@ summary.gctimes <- function (object, digits=4, ci.type=NULL, ci.level=0.95, unad
         quantile(x$adjusted.results$delta, probs = (1-ci.level)/2, na.rm = TRUE),
         quantile(x$adjusted.results$delta, probs = 1-(1-ci.level)/2, na.rm = TRUE)
       ), ncol=2, byrow=TRUE)
+      if (length(x$adjusted.results$AHR) == 1) {
+        ci_vals <- matrix(rep(NA,14), ncol=2, byrow=TRUE)
+      }
     }
     tmp_GC <- cbind(res_GC[,1], `Lower CI` = ci_vals_GC[,1], `Upper CI` = ci_vals_GC[,2])
     colnames(tmp_GC)[1] <- "Estimate"

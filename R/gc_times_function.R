@@ -109,8 +109,9 @@ functions, stratification and clustering are not implemented") }
     nmiss <- nrow(data)
     data <- na.omit(data)
     nmiss <- nmiss - nrow(data)
+    nevent <- sum(data[,failures])
     warning("Rows containing NA values have been removed from the dataset!")
-  } else {nmiss <- 0}
+  } else {nmiss <- 0 ; nevent <- sum(data[,failures])}
   
 
   if (cv < 3 | !is.numeric(cv)) {
@@ -716,8 +717,8 @@ if (!is.null(.warnen)) {warning(paste0("The optimal tuning parameter alpha was e
               boot.number = boot.number,
               boot.type = boot.type,
               group=group,
-              n = nrow(datakeep),
-              nevent = sum(datakeep[,failures]),
+              n = nrow(datakeep) - nmiss,
+              nevent = nevent,
               adjusted.results = data.frame(AHR = AHR, RMST0 = RMST0, RMST1 = RMST1, deltaRMST = deltaRMST, s0 = surv0, s1 = surv1, delta = deltasurv),
               unadjusted.results = data.frame(AHR = AHR.unadj, RMST0 = RMST0.unadj, RMST1 = RMST1.unadj, deltaRMST = deltaRMST.unadj, s0 = surv0.unadj, s1 = surv1.unadj, delta = deltasurv.unadj),
               call = match.call()

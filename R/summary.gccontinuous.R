@@ -67,6 +67,9 @@ summary.gccontinuous <- function (object, digits=4, ci.type=NULL, ci.level=0.95,
                           quantile(x$adjusted.results$ratio, probs = (1-ci.level)/2, na.rm = TRUE),
                           quantile(x$adjusted.results$ratio, probs = 1-(1-ci.level)/2, na.rm = TRUE)
       ), ncol=2, byrow=TRUE)
+      if (length(x$adjusted.results$m0) == 1) {
+        ci_vals <- matrix(rep(NA,8), ncol=2, byrow=TRUE)
+      }
     }
     tmp <- cbind(res[,1], `Lower CI` = ci_vals[,1], `Upper CI` = ci_vals[,2])
     colnames(tmp)[1] <- "Estimate"
