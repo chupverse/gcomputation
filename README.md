@@ -79,7 +79,7 @@ newdata_binary <- subset(dataPROPHYVAP, AGE<=50)
 
 # Transport the fitted gc_bin model to the new dataset
 gc_transport <- transport(object=gc_bin, newdata=newdata_binary,
-                              effect="ATE", boot.number=500)
+                              boot.number=500)
 
 summary(gc_transport, ci.type="norm")
 ```
