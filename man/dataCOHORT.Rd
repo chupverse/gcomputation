@@ -11,21 +11,21 @@ This dataset \code{dataCOHORT} is a simulated observational cohort study designe
 \format{
 A data frame with 2000 observations for the following variables:
 \describe{
-\item{\code{GROUP}}{This character vector represents the treatment group (Ceftriaxone/Untreated)}
+\item{\code{GROUP}}{This character vector represents the treatment group (1 for Ceftriaxone and 0 for Placebo)}
 \item{\code{AGE}}{This numeric vector represents the age in years}
 \item{\code{SEX}}{This character vector represents the sex (F=female/M=male)}
 \item{\code{BMI}}{This numeric vector represents the body mass index in kg/m2}
 \item{\code{DIABETES}}{This character vector represents the diabetes status (Yes/No)}
-\item{\code{ALCOOL}}{This character vector represents the alcohol consumption (Yes/No) }
+\item{\code{ALCOHOL}}{This character vector represents the alcohol consumption (Yes/No) }
 \item{\code{SMOKING}}{This character vector represents the tabac status (Yes/No)}
 \item{\code{INJURY}}{This character vector represents the cause of the injury in 4 classes}
 \item{\code{GLASGOW}}{This character vector represents the Glasgow scale in 3 classes }
 \item{\code{PAO2FIO2}}{This character vector represents the PAO2-FIO2 ratio in 2 classes}
 \item{\code{LEUKO}}{This character vector represents leukocytosis at ICU admission per mm3 in 2 classes}
 \item{\code{TIME_INTUBATION}}{This numeric vector represents time-to-intubation in hours}
-\item{\code{VAP}}{This character vector represents ventilatory associated pneumonia (Yes/No)}
+\item{\code{VAP}}{This character vector represents ventilatory associated pneumonia (1 for event and 0 otherwise)} 
 \item{\code{TIME_DEATH}}{This numeric vector represents time-to-death in days (maximum follow-up at 60 days)}
-\item{\code{DEATH}}{This character vector represents death status at the end of the follow-up (Yes/No)}
+\item{\code{DEATH}}{This character vector represents death status at the end of the follow-up (1 for event and 0 otherwise)} 
 }
 }
 

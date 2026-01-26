@@ -75,15 +75,12 @@ Schomaker M, Heumann C. Bootstrap inference when using multiple imputation. Stat
 \examples{
 data("dataPROPHYVAP")
 
-dataPROPHYVAP$VAP_num <- ifelse(dataPROPHYVAP$VAP == "Yes",1,0)
-dataPROPHYVAP$GROUP_num <- ifelse(dataPROPHYVAP$GROUP == "Placebo",0,1)
-
-.f <- formula(HYPOTENSION ~ GROUP_num * AGE + SEX + ALCOOL + BMI + DIABETES + GLASGOW + INJURY)
+.f <- formula(HYPOTENSION ~ GROUP * AGE + SEX + ALCOHOL + BMI + DIABETES + GLASGOW + INJURY)
 
 ### In practice use larger values for cv and boot.number
 ### We set boot.number and cv at 10 for speed in CRAN checks
 gc1 <- gc_continuous(formula=.f, model="lasso", data=dataPROPHYVAP,
-              group="GROUP_num", param.tune=NULL, boot.type="bcv",
+              group="GROUP", param.tune=NULL, boot.type="bcv",
               boot.number=10, effect="ATE", boot.tune=TRUE)
 
 summary(gc1)

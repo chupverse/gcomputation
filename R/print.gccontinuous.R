@@ -13,13 +13,13 @@ print.gccontinuous<- function (x, digits=4, ...)
     dput(x$tuning.parameters)}
   cat("\n")
   
-  cat("Estimates : \n")
+  cat("Estimates: \n")
   res <- matrix(c(mean(x$adjusted.results$m0, na.rm=TRUE),
                   mean(x$adjusted.results$m1, na.rm=TRUE),
                   mean(x$adjusted.results$delta, na.rm=TRUE),
                   mean(x$adjusted.results$ratio, na.rm=TRUE)),
                 nrow = 1)
-  colnames(res) <- c("M0", "M1", "M1-M0", "M1/M0")
+  colnames(res) <- c("m0", "m1", "m1-m0", "m1/m0")
   rownames(res) <- ""
   
   printCoefmat(res, digits = digits, ..., P.values = FALSE, has.Pvalue = FALSE, na.print = "")
@@ -29,6 +29,10 @@ print.gccontinuous<- function (x, digits=4, ...)
   cat(paste0("n= ",x$n))
   
   cat("\n")
+  if (!is.null(x$nimput)) {
+    if (x$nimput == 1) { cat(x$nimput, " observation imputed", sep=""); cat("\n") }
+    if (x$nimput > 1) { cat(x$nimput, " observations imputed", sep=""); cat("\n") }
+  }
   if(x$missing==1) { cat(x$missing, " observation deleted due to missingness", sep=""); cat("\n") }
   if(x$missing >1) { cat(x$missing, " observations deleted due to missingness", sep=""); cat("\n") }
 }

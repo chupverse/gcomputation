@@ -20,7 +20,7 @@ summary.gccount <- function (object, digits=4, ci.type=NULL, ci.level=0.95, unad
   cat("\n")
   
   
-  cat("G-computation : \n")
+  cat("G-computation: \n")
   tmp <- matrix(c(mean(x$adjusted.results$c0, na.rm=TRUE), sd(x$adjusted.results$c0, na.rm=TRUE), mean(x$adjusted.results$c0, na.rm=TRUE)/sd(x$adjusted.results$c0, na.rm=TRUE), NA), nrow=1)
   colnames(tmp) <- c("Estimate", "Std. Error", "z value", "Pr(>|z|)")
   rownames(tmp) <- "c0"
@@ -83,7 +83,7 @@ summary.gccount <- function (object, digits=4, ci.type=NULL, ci.level=0.95, unad
   
   if (!is.null(object$newdata)) {unadjusted = FALSE}
   if (unadjusted == TRUE) {
-    cat("Unadjusted : \n")
+    cat("Unadjusted: \n")
     tmp <- matrix(c(mean(x$unadjusted.results$c0, na.rm=TRUE), sd(x$unadjusted.results$c0, na.rm=TRUE), mean(x$unadjusted.results$c0, na.rm=TRUE)/sd(x$unadjusted.results$c0, na.rm=TRUE), NA), nrow=1)
     colnames(tmp) <- c("Estimate", "Std. Error", "z value", "Pr(>|z|)")
     rownames(tmp) <- "c0"
@@ -143,6 +143,10 @@ summary.gccount <- function (object, digits=4, ci.type=NULL, ci.level=0.95, unad
   cat(paste0("n= ",x$n))
 
   cat("\n")
+  if (!is.null(x$nimput)) {
+    if (x$nimput == 1) { cat(x$nimput, " observation imputed", sep=""); cat("\n") }
+    if (x$nimput > 1) { cat(x$nimput, " observations imputed", sep=""); cat("\n") }
+  }
   if(x$missing==1) { cat(x$missing, " observation deleted due to missingness", sep=""); cat("\n") }
   if(x$missing >1) { cat(x$missing, " observations deleted due to missingness", sep=""); cat("\n") }
   
