@@ -18,15 +18,12 @@ Print a summary of an object returned from \code{gc_binary} function.
 \examples{
 data(dataPROPHYVAP)
 
-dataPROPHYVAP$VAP_num <- ifelse(dataPROPHYVAP$VAP == "Yes",1,0)
-dataPROPHYVAP$GROUP_num <- ifelse(dataPROPHYVAP$GROUP == "Placebo",0,1)
-
-.f <- formula(VAP_num ~ GROUP_num * AGE + SEX + BMI + DIABETES)
+.f <- formula(VAP ~ GROUP * AGE + SEX + BMI + DIABETES)
 
 ### In practice use larger values for cv and boot.number
 ### We set boot.number and cv at 10 for speed in CRAN checks
 gc1 <- gc_binary(formula=.f, model="ridge", data=dataPROPHYVAP,
-              group="GROUP_num", param.tune=NULL, boot.type="bcv", cv=10,
+              group="GROUP", param.tune=NULL, boot.type="bcv", cv=10,
               boot.number=10, effect="ATE", progress=TRUE, boot.tune=TRUE)
 
 print(gc1)

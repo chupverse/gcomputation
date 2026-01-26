@@ -17,7 +17,7 @@ summary.gctimes <- function (object, digits=4, ci.type=NULL, ci.level=0.95, unad
   if (x$model %in% c("all","aic","bic")) {cat(x$model," model \nCall:", "\n", sep = "")
     dput(x$tuning.parameters)}
   cat("\n")
-  cat("G-computation : \n")
+  cat("G-computation: \n")
   res_GC <- NULL
   
   mean_AHR <- mean(x$adjusted.results$AHR, na.rm=TRUE)
@@ -72,12 +72,12 @@ summary.gctimes <- function (object, digits=4, ci.type=NULL, ci.level=0.95, unad
   
   tmp_surv0 <- matrix(c(mean_surv0, sd_surv0, NA, NA), nrow=1)
   colnames(tmp_surv0) <- c("Estimate", "Std. Error", "z value", "Pr(>|z|)")
-  rownames(tmp_surv0) <- paste0("S0 (at ", x$pro.time,")")
+  rownames(tmp_surv0) <- paste0("s0 (at ", x$pro.time,")")
   res_GC <- rbind(res_GC, tmp_surv0)
   
   tmp_surv1 <- matrix(c(mean_surv1, sd_surv1, NA, NA), nrow=1)
   colnames(tmp_surv1) <- c("Estimate", "Std. Error", "z value", "Pr(>|z|)")
-  rownames(tmp_surv1) <- paste0("S1 (at ", x$pro.time,")")
+  rownames(tmp_surv1) <- paste0("s1 (at ", x$pro.time,")")
   res_GC <- rbind(res_GC, tmp_surv1)
   
   if (is.na(sd_deltasurv) || sd_deltasurv == 0) {
@@ -89,7 +89,7 @@ summary.gctimes <- function (object, digits=4, ci.type=NULL, ci.level=0.95, unad
   }
   tmp_deltasurv <- matrix(c(mean_deltasurv, sd_deltasurv, z_deltasurv, p_deltasurv), nrow=1)
   colnames(tmp_deltasurv) <- c("Estimate", "Std. Error", "z value", "Pr(>|z|)")
-  rownames(tmp_deltasurv) <- paste0("S1 - S0 (at ", x$pro.time,")")
+  rownames(tmp_deltasurv) <- paste0("s1 - s0 (at ", x$pro.time,")")
   res_GC <- rbind(res_GC, tmp_deltasurv)
   
   if (!is.null(ci.type)) {
@@ -143,7 +143,7 @@ summary.gctimes <- function (object, digits=4, ci.type=NULL, ci.level=0.95, unad
   
   if (!is.null(object$newdata)) {unadjusted = FALSE}
   if (unadjusted == TRUE) {
-    cat("Unadjusted : \n")
+    cat("Unadjusted: \n")
     res_unadj <- NULL
     
     mean_AHR_unadj <- mean(x$unadjusted.results$AHR, na.rm=TRUE)
@@ -198,12 +198,12 @@ summary.gctimes <- function (object, digits=4, ci.type=NULL, ci.level=0.95, unad
     
     tmp_surv0_unadj <- matrix(c(mean_surv0_unadj, sd_surv0_unadj, NA, NA), nrow=1)
     colnames(tmp_surv0_unadj) <- c("Estimate", "Std. Error", "z value", "Pr(>|z|)")
-    rownames(tmp_surv0_unadj) <- paste0("S0 (at ", x$pro.time,")")
+    rownames(tmp_surv0_unadj) <- paste0("s0 (at ", x$pro.time,")")
     res_unadj <- rbind(res_unadj, tmp_surv0_unadj)
     
     tmp_surv1_unadj <- matrix(c(mean_surv1_unadj, sd_surv1_unadj, NA, NA), nrow=1)
     colnames(tmp_surv1_unadj) <- c("Estimate", "Std. Error", "z value", "Pr(>|z|)")
-    rownames(tmp_surv1_unadj) <- paste0("S1 (at ", x$pro.time,")")
+    rownames(tmp_surv1_unadj) <- paste0("s1 (at ", x$pro.time,")")
     res_unadj <- rbind(res_unadj, tmp_surv1_unadj)
     
     if (is.na(sd_deltasurv_unadj) || sd_deltasurv_unadj == 0) {
@@ -215,7 +215,7 @@ summary.gctimes <- function (object, digits=4, ci.type=NULL, ci.level=0.95, unad
     }
     tmp_deltasurv_unadj <- matrix(c(mean_deltasurv_unadj, sd_deltasurv_unadj, z_deltasurv_unadj, p_deltasurv_unadj), nrow=1)
     colnames(tmp_deltasurv_unadj) <- c("Estimate", "Std. Error", "z value", "Pr(>|z|)")
-    rownames(tmp_deltasurv_unadj) <- paste0("S1 - S0 (at ", x$pro.time,")")
+    rownames(tmp_deltasurv_unadj) <- paste0("s1 - s0 (at ", x$pro.time,")")
     res_unadj <- rbind(res_unadj, tmp_deltasurv_unadj)
     
     if (!is.null(ci.type)) {
@@ -269,6 +269,10 @@ summary.gctimes <- function (object, digits=4, ci.type=NULL, ci.level=0.95, unad
     cat(paste0("n= ",x$n))
   }
   cat("\n")
+  if (!is.null(x$nimput)) {
+    if (x$nimput == 1) { cat(x$nimput, " observation imputed", sep=""); cat("\n") }
+    if (x$nimput > 1) { cat(x$nimput, " observations imputed", sep=""); cat("\n") }
+  }
   if(x$missing==1) { cat(x$missing, " observation deleted due to missingness", sep=""); cat("\n") }
   if(x$missing >1) { cat(x$missing, " observations deleted due to missingness", sep=""); cat("\n") }
   

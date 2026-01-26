@@ -1,7 +1,7 @@
 plot.gctimes <- function (x, method="calibration", n.groups=5, pro.time=NULL, smooth=FALSE, ...) {
-  if (!(method %in% c("calibration","survival"))) {stop("Method needs to be calibration or survival")}
-  if (method == "survival") {
-    if (!is.null(x$m)) {stop("The \"method=survival\" is not available when \"boot.mi=TRUE\"")}
+  if (!(method %in% c("calibration","calibration1", "calibration2","survival"))) {stop("Method needs to be calibration1 or calibration2 or survival")}
+  if (method == "calibration2") {
+    if (!is.null(x$m)) {stop("The \"method=calibration2\" is not available when \"boot.mi=TRUE\"")}
     data = x$data
     times <- as.character(x$formula[[2]][2]) 
     failures <- as.character(x$formula[[2]][3])
@@ -25,8 +25,39 @@ plot.gctimes <- function (x, method="calibration", n.groups=5, pro.time=NULL, sm
     legend("topright", legend=c("Kaplan-Meier Estimate", "Mean of survival predictions"), col=c("blue", "red"), lty=c(1, 1), lwd=2, bty="n")
   }
   
+  if (method == "survival") {
+    
+    .time <- x$calibration$time
+    .s0 <- x$calibration$surv0
+    .s1 <- x$calibration$surv1
+    
+    if(hasArg(cex)==FALSE) {cex <-1} else {cex <- list(...)$cex}
+    if(hasArg(cex.lab)==FALSE) {cex.lab <- 1} else {cex.lab <- list(...)$cex.lab}
+    if(hasArg(cex.axis)==FALSE) {cex.axis <- 1} else {cex.axis <- list(...)$cex.axis}
+    if(hasArg(cex.main)==FALSE) {cex.main <- 1} else {cex.main <- list(...)$cex.main}
+    
+    if(hasArg(col)==FALSE) {col <- c(1,1)} else {col <- list(...)$col}
+    if(hasArg(lty)==FALSE) {lty <- c(1,1)} else {lty <- list(...)$lty}
+    if(hasArg(lwd)==FALSE) {lwd <- 1} else {lwd <- list(...)$lwd}
+    
+    if(hasArg(ylim)==FALSE) {ylim <- range(c(.s0,.s1))} else {ylim <- list(...)$ylim}
+    if(hasArg(xlim)==FALSE) {xlim <- range(.time)} else {xlim <- list(...)$xlim}
+    
+    if(hasArg(ylab)==FALSE) {ylab <- ""} else {ylab <- list(...)$ylab}
+    if(hasArg(xlab)==FALSE) {xlab <- ""} else {xlab <- list(...)$xlab}
+    if(hasArg(main)==FALSE) {main <- ""} else {main <- list(...)$main}
+    
+    plot(.time, .s0, type="l",
+         col = col[1], lty = lty[1], lwd = lwd,
+         ylim = ylim, xlim = xlim,
+         xlab = xlab, ylab = ylab, main = main,
+         cex = cex, cex.lab = cex.lab, cex.axis = cex.axis, cex.main = cex.main)
+    
+    lines(.time, .s1, col = col[2], lty = lty[2], lwd = lwd)
+  }
   
-  if (method == "calibration") {
+  
+  if (method == "calibration1" | method == "calibration") {
     
     
     if (!is.null(x$m)) {

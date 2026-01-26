@@ -13,14 +13,14 @@ print.gcbinary <- function (x, digits=4, ...)
     dput(x$tuning.parameters)}
   cat("\n")
   
-  cat("Estimates : \n")
+  cat("Estimates: \n")
   res <- matrix(c(mean(x$adjusted.results$p0, na.rm=TRUE),
                   mean(x$adjusted.results$p1, na.rm=TRUE),
                   mean(x$adjusted.results$delta, na.rm=TRUE),
                   mean(x$adjusted.results$ratio, na.rm=TRUE),
                   mean(x$adjusted.results$OR, na.rm=TRUE)),
                 nrow = 1)
-  colnames(res) <- c("P0", "P1", "P1-P0", "P1/P0", "OR")
+  colnames(res) <- c("p0", "p1", "p1-p0", "p1/p0", "OR")
   rownames(res) <-  ""
   
   printCoefmat(res, digits = digits, ..., P.values = FALSE, has.Pvalue = FALSE, na.print = "")
@@ -34,6 +34,10 @@ print.gcbinary <- function (x, digits=4, ...)
     cat(paste0("n= ",x$n))
   }
   cat("\n")
+  if (!is.null(x$nimput)) {
+    if (x$nimput == 1) { cat(x$nimput, " observation imputed", sep=""); cat("\n") }
+    if (x$nimput > 1) { cat(x$nimput, " observations imputed", sep=""); cat("\n") }
+  }
   if(x$missing==1) { cat(x$missing, " observation deleted due to missingness", sep=""); cat("\n") }
   if(x$missing >1) { cat(x$missing, " observations deleted due to missingness", sep=""); cat("\n") }
 }

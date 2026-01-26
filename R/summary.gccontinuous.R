@@ -20,28 +20,28 @@ summary.gccontinuous <- function (object, digits=4, ci.type=NULL, ci.level=0.95,
   cat("\n")
 
   
-  cat("G-computation : \n")
+  cat("G-computation: \n")
   tmp <- matrix(c(mean(x$adjusted.results$m0, na.rm=TRUE), sd(x$adjusted.results$m0, na.rm=TRUE), mean(x$adjusted.results$m0, na.rm=TRUE)/sd(x$adjusted.results$m0, na.rm=TRUE), NA), nrow=1)
   colnames(tmp) <- c("Estimate", "Std. Error", "z value", "Pr(>|z|)")
-  rownames(tmp) <- "M0"
+  rownames(tmp) <- "m0"
   res <- tmp
   
   tmp <- matrix(c(mean(x$adjusted.results$m1, na.rm=TRUE), sd(x$adjusted.results$m1, na.rm=TRUE), mean(x$adjusted.results$m1, na.rm=TRUE)/sd(x$adjusted.results$m1, na.rm=TRUE), NA), nrow=1)
-  rownames(tmp) <- "M1"
+  rownames(tmp) <- "m1"
   res <- rbind(res,tmp)
   
   tmp <- matrix(c(mean(x$adjusted.results$delta, na.rm=TRUE), sd(x$adjusted.results$delta, na.rm=TRUE), mean(x$adjusted.results$delta, na.rm=TRUE)/sd(x$adjusted.results$delta, na.rm=TRUE),
                   ifelse(mean(x$adjusted.results$delta, na.rm=TRUE)/sd(x$adjusted.results$delta, na.rm=TRUE)<0,
                          2*pnorm(mean(x$adjusted.results$delta, na.rm=TRUE)/sd(x$adjusted.results$delta, na.rm=TRUE)),
                          2*(1-pnorm(mean(x$adjusted.results$delta, na.rm=TRUE)/sd(x$adjusted.results$delta, na.rm=TRUE))))), nrow=1)
-  rownames(tmp) <- "M1-M0"
+  rownames(tmp) <- "m1-m0"
   res <- rbind(res,tmp)
   
   tmp <- matrix(c(mean(x$adjusted.results$ratio, na.rm=TRUE), sd(x$adjusted.results$ratio, na.rm=TRUE), mean(x$adjusted.results$ratio, na.rm=TRUE)/sd(x$adjusted.results$ratio, na.rm=TRUE),
                   ifelse(mean(x$adjusted.results$ratio, na.rm=TRUE)/sd(x$adjusted.results$ratio, na.rm=TRUE)<0,
                          2*pnorm(mean(x$adjusted.results$ratio, na.rm=TRUE)/sd(x$adjusted.results$ratio, na.rm=TRUE)),
                          2*(1-pnorm(mean(x$adjusted.results$ratio, na.rm=TRUE)/sd(x$adjusted.results$ratio, na.rm=TRUE))))), nrow=1)
-  rownames(tmp) <- "M1/M0"
+  rownames(tmp) <- "m1/m0"
   res <- rbind(res,tmp)
   
   
@@ -83,28 +83,28 @@ summary.gccontinuous <- function (object, digits=4, ci.type=NULL, ci.level=0.95,
   
   if (!is.null(object$newdata)) {unadjusted = FALSE}
   if (unadjusted == TRUE) {
-    cat("Unadjusted : \n")
+    cat("Unadjusted: \n")
     tmp <- matrix(c(mean(x$unadjusted.results$m0, na.rm=TRUE), sd(x$unadjusted.results$m0, na.rm=TRUE), mean(x$unadjusted.results$m0, na.rm=TRUE)/sd(x$unadjusted.results$m0, na.rm=TRUE), NA), nrow=1)
     colnames(tmp) <- c("Estimate", "Std. Error", "z value", "Pr(>|z|)")
-    rownames(tmp) <- "M0"
+    rownames(tmp) <- "m0"
     res <- tmp
     
     tmp <- matrix(c(mean(x$unadjusted.results$m1, na.rm=TRUE), sd(x$unadjusted.results$m1, na.rm=TRUE), mean(x$unadjusted.results$m1, na.rm=TRUE)/sd(x$unadjusted.results$m1, na.rm=TRUE), NA), nrow=1)
-    rownames(tmp) <- "M1"
+    rownames(tmp) <- "m1"
     res <- rbind(res,tmp)
     
     tmp <- matrix(c(mean(x$unadjusted.results$delta, na.rm=TRUE), sd(x$unadjusted.results$delta, na.rm=TRUE), mean(x$unadjusted.results$delta, na.rm=TRUE)/sd(x$unadjusted.results$delta, na.rm=TRUE),
                     ifelse(mean(x$unadjusted.results$delta, na.rm=TRUE)/sd(x$unadjusted.results$delta, na.rm=TRUE)<0,
                            2*pnorm(mean(x$unadjusted.results$delta, na.rm=TRUE)/sd(x$unadjusted.results$delta, na.rm=TRUE)),
                            2*(1-pnorm(mean(x$unadjusted.results$delta, na.rm=TRUE)/sd(x$unadjusted.results$delta, na.rm=TRUE))))), nrow=1)
-    rownames(tmp) <- "M1-M0"
+    rownames(tmp) <- "m1-m0"
     res <- rbind(res,tmp)
     
     tmp <- matrix(c(mean(x$unadjusted.results$ratio, na.rm=TRUE), sd(x$unadjusted.results$ratio, na.rm=TRUE), mean(x$unadjusted.results$ratio, na.rm=TRUE)/sd(x$unadjusted.results$ratio, na.rm=TRUE),
                     ifelse(mean(x$unadjusted.results$ratio, na.rm=TRUE)/sd(x$unadjusted.results$ratio, na.rm=TRUE)<0,
                            2*pnorm(mean(x$unadjusted.results$ratio, na.rm=TRUE)/sd(x$unadjusted.results$ratio, na.rm=TRUE)),
                            2*(1-pnorm(mean(x$unadjusted.results$ratio, na.rm=TRUE)/sd(x$unadjusted.results$ratio, na.rm=TRUE))))), nrow=1)
-    rownames(tmp) <- "M1/M0"
+    rownames(tmp) <- "m1/m0"
     res <- rbind(res,tmp)
     
     if (!is.null(ci.type)) {
@@ -143,6 +143,10 @@ summary.gccontinuous <- function (object, digits=4, ci.type=NULL, ci.level=0.95,
   cat(paste0("n= ",x$n))
   
   cat("\n")
+  if (!is.null(x$nimput)) {
+    if (x$nimput == 1) { cat(x$nimput, " observation imputed", sep=""); cat("\n") }
+    if (x$nimput > 1) { cat(x$nimput, " observations imputed", sep=""); cat("\n") }
+  }
   if(x$missing==1) { cat(x$missing, " observation deleted due to missingness", sep=""); cat("\n") }
   if(x$missing >1) { cat(x$missing, " observations deleted due to missingness", sep=""); cat("\n") }
   

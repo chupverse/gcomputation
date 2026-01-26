@@ -78,16 +78,13 @@ Chatton et al. G-computation and doubly robust standardisation for continuous-ti
 \examples{
 data(dataPROPHYVAP)
 
-dataPROPHYVAP$DEATH_num <- ifelse(dataPROPHYVAP$DEATH == "Yes",1,0)
-dataPROPHYVAP$GROUP_num <- ifelse(dataPROPHYVAP$GROUP == "Placebo",0,1)
-
-.f <- formula(Surv(TIME_DEATH, DEATH_num) ~ GROUP_num + AGE +
+.f <- formula(Surv(TIME_DEATH, DEATH) ~ GROUP + AGE +
               SEX + BMI + DIABETES)
 
 ### In practice use larger values of boot.number (e.g., 500)
 ### We set boot.number at 10 for speed in CRAN checks
 gc1 <- gc_times(formula=.f, model="lasso", data=dataPROPHYVAP,
-              group="GROUP_num", boot.type="bcv",
+              group="GROUP", boot.type="bcv",
               boot.number=10,  effect="ATE", progress=TRUE , pro.time=10,
               boot.tune=FALSE)
 

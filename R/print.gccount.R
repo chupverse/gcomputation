@@ -13,13 +13,13 @@ print.gccount<- function (x, digits=4, ...)
     dput(x$tuning.parameters)}
   cat("\n")
   
-  cat("Estimates : \n")
+  cat("Estimates: \n")
   res <- matrix(c(mean(x$adjusted.results$c0, na.rm=TRUE),
                   mean(x$adjusted.results$c1, na.rm=TRUE),
                   mean(x$adjusted.results$delta, na.rm=TRUE),
                   mean(x$adjusted.results$ratio, na.rm=TRUE)),
                 nrow = 1)
-  colnames(res) <- c("C0", "C1", "C1-C0", "C1/C0")
+  colnames(res) <- c("c0", "c1", "c1-c0", "c1/c0")
   rownames(res) <- ""
   
   printCoefmat(res, digits = digits, ..., P.values = FALSE, has.Pvalue = FALSE, na.print = "")
@@ -29,6 +29,10 @@ print.gccount<- function (x, digits=4, ...)
   cat(paste0("n= ",x$n))
 
   cat("\n")
+  if (!is.null(x$nimput)) {
+    if (x$nimput == 1) { cat(x$nimput, " observation imputed", sep=""); cat("\n") }
+    if (x$nimput > 1) { cat(x$nimput, " observations imputed", sep=""); cat("\n") }
+  }
   if(x$missing==1) { cat(x$missing, " observation deleted due to missingness", sep=""); cat("\n") }
   if(x$missing >1) { cat(x$missing, " observations deleted due to missingness", sep=""); cat("\n") }
 }

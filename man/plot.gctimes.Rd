@@ -30,16 +30,13 @@ This plotting method supports two distinct types of calibration:
 \examples{
 data(dataPROPHYVAP)
 
-dataPROPHYVAP$DEATH_num <- ifelse(dataPROPHYVAP$DEATH == "Yes", 1, 0)
-dataPROPHYVAP$GROUP_num <- ifelse(dataPROPHYVAP$GROUP == "Placebo", 0, 1)
-
-.f <- formula(Surv(TIME_DEATH, DEATH_num) ~ GROUP_num + AGE + SEX +
+.f <- formula(Surv(TIME_DEATH, DEATH) ~ GROUP + AGE + SEX +
               BMI + DIABETES)
               
 ### In practice use larger values for cv and boot.number
 ### We set boot.number and cv at 10 for speed in CRAN checks
 gc1 <- gc_times(formula=.f, model="lasso", data=dataPROPHYVAP,
-              group="GROUP_num", param.tune=NULL, boot.type="bcv", cv=10,
+              group="GROUP", param.tune=NULL, boot.type="bcv", cv=10,
               boot.number=10, effect="ATE", progress=TRUE , pro.time=10,
               boot.tune=TRUE)
 

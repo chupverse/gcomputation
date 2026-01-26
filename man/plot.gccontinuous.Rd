@@ -53,14 +53,11 @@ This plotting method supports two distinct types of visualizations:
 \examples{
 data("dataPROPHYVAP")
 
-dataPROPHYVAP$VAP_num <- ifelse(dataPROPHYVAP$VAP == "Yes",1,0)
-dataPROPHYVAP$GROUP_num <- ifelse(dataPROPHYVAP$GROUP == "Placebo",0,1)
-
-.f <- formula(VAP_num ~ GROUP_num * (AGE + SEX + ALCOOL + BMI + DIABETES))
+.f <- formula(VAP ~ GROUP * (AGE + SEX + ALCOHOL + BMI + DIABETES))
 
 ### In practice use larger values of boot.number (e.g., 500).
 ### Here we set boot.number = 10 for speed in CRAN checks.
-gc1 <- gc_continuous(formula=.f, model="all", data=dataPROPHYVAP, group="GROUP_num",
+gc1 <- gc_continuous(formula=.f, model="all", data=dataPROPHYVAP, group="GROUP",
                     cv=10, boot.type="boot", boot.number=10, boot.tune=TRUE,
                     effect="ATE", progress=TRUE, seed=5192)
 

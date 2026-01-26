@@ -13,7 +13,7 @@ print.gctimes <- function (x, digits=4, ...)
     dput(x$tuning.parameters)}
   cat("\n")
   
-  cat("Estimates : \n")
+  cat("Estimates: \n")
   res <- matrix(c( mean(x$adjusted.results$AHR, na.rm=TRUE),
                    mean(x$adjusted.results$RMST0, na.rm=TRUE),
                    mean(x$adjusted.results$RMST1, na.rm=TRUE),
@@ -27,9 +27,9 @@ print.gctimes <- function (x, digits=4, ...)
                      paste0("RMST0(to ", x$pro.time,")"),
                      paste0("RMST1(to ", x$pro.time,")"),
                      "RMST1-RMST0",
-                     paste0("S0(at ", x$pro.time,")"),
-                     paste0("S1(at ", x$pro.time,")"),
-                     paste0("S1 - S0(at ", x$pro.time,")"))
+                     paste0("s0(at ", x$pro.time,")"),
+                     paste0("s1(at ", x$pro.time,")"),
+                     paste0("s1 - s0(at ", x$pro.time,")"))
   rownames(res) <- ""
   
   printCoefmat(res, digits = digits, ..., P.values = FALSE, has.Pvalue = FALSE, na.print = "")
@@ -42,6 +42,10 @@ print.gctimes <- function (x, digits=4, ...)
     cat(paste0("n= ",x$n))
   }
   cat("\n")
+  if (!is.null(x$nimput)) {
+    if (x$nimput == 1) { cat(x$nimput, " observation imputed", sep=""); cat("\n") }
+    if (x$nimput > 1) { cat(x$nimput, " observations imputed", sep=""); cat("\n") }
+  }
   if(x$missing==1) { cat(x$missing, " observation deleted due to missingness", sep=""); cat("\n") } 
   if(x$missing >1) { cat(x$missing, " observations deleted due to missingness", sep=""); cat("\n") } 
 }

@@ -9,6 +9,12 @@
     set.seed(seed)
   }
   
+  if (any(is.na(data))) {
+    nmiss_initial <- nrow(data) - nrow(na.omit(data))
+  } else {
+    nmiss_initial <- 0
+  }
+  
   mice_args <- list(...)
   mice_args$data <- data
   mice_args$m <- m
@@ -104,6 +110,7 @@
   final_res$call <- cl
   final_res$m <- m
   final_res$initial.data <- data
+  final_res$nimput <- nmiss_initial
     
   if (model %in% c("all","aic","bic")) {
     final_res$tuning.parameters <- formulas

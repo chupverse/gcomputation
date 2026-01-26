@@ -20,28 +20,28 @@ summary.gcbinary <- function (object, digits=4, ci.type=NULL, ci.level=0.95, una
   cat("\n")
 
   
-  cat("G-computation : \n")
+  cat("G-computation: \n")
   tmp <- matrix(c(mean(x$adjusted.results$p0, na.rm=TRUE), sd(x$adjusted.results$p0, na.rm=TRUE), mean(x$adjusted.results$p0, na.rm=TRUE)/sd(x$adjusted.results$p0, na.rm=TRUE), NA), nrow=1)
   colnames(tmp) <- c("Estimate", "Std. Error", "z value", "Pr(>|z|)")
-  rownames(tmp) <- "P0"
+  rownames(tmp) <- "p0"
   res <- tmp
   
   tmp <- matrix(c(mean(x$adjusted.results$p1, na.rm=TRUE), sd(x$adjusted.results$p1, na.rm=TRUE), mean(x$adjusted.results$p1, na.rm=TRUE)/sd(x$adjusted.results$p1, na.rm=TRUE), NA), nrow=1)
-  rownames(tmp) <- "P1"
+  rownames(tmp) <- "p1"
   res <- rbind(res,tmp)
   
   tmp <- matrix(c(mean(x$adjusted.results$delta, na.rm=TRUE), sd(x$adjusted.results$delta, na.rm=TRUE), mean(x$adjusted.results$delta, na.rm=TRUE)/sd(x$adjusted.results$delta, na.rm=TRUE),
                   ifelse(mean(x$adjusted.results$delta, na.rm=TRUE)/sd(x$adjusted.results$delta, na.rm=TRUE)<0,
                          2*pnorm(mean(x$adjusted.results$delta, na.rm=TRUE)/sd(x$adjusted.results$delta, na.rm=TRUE)),
                          2*(1-pnorm(mean(x$adjusted.results$delta, na.rm=TRUE)/sd(x$adjusted.results$delta, na.rm=TRUE))))), nrow=1)
-  rownames(tmp) <- "P1-P0"
+  rownames(tmp) <- "p1-p0"
   res <- rbind(res,tmp)
   
   tmp <- matrix(c(mean(x$adjusted.results$ratio, na.rm=TRUE), sd(x$adjusted.results$ratio, na.rm=TRUE), mean(x$adjusted.results$ratio, na.rm=TRUE)/sd(x$adjusted.results$ratio, na.rm=TRUE),
                   ifelse(mean(x$adjusted.results$ratio, na.rm=TRUE)/sd(x$adjusted.results$ratio, na.rm=TRUE)<0,
                          2*pnorm(mean(x$adjusted.results$ratio, na.rm=TRUE)/sd(x$adjusted.results$ratio, na.rm=TRUE)),
                          2*(1-pnorm(mean(x$adjusted.results$ratio, na.rm=TRUE)/sd(x$adjusted.results$ratio, na.rm=TRUE))))), nrow=1)
-  rownames(tmp) <- "P1/P0"
+  rownames(tmp) <- "p1/p0"
   res <- rbind(res,tmp)
   
   tmp <- matrix(c(mean(x$adjusted.results$OR, na.rm=TRUE), sd(x$adjusted.results$OR, na.rm=TRUE), mean(x$adjusted.results$OR, na.rm=TRUE)/sd(x$adjusted.results$OR, na.rm=TRUE),
@@ -94,28 +94,28 @@ summary.gcbinary <- function (object, digits=4, ci.type=NULL, ci.level=0.95, una
   
   if (!is.null(object$newdata)) {unadjusted = FALSE}
   if (unadjusted == TRUE) {
-    cat("Unadjusted : \n")
+    cat("Unadjusted: \n")
     tmp <- matrix(c(mean(x$unadjusted.results$p0, na.rm=TRUE), sd(x$unadjusted.results$p0, na.rm=TRUE), mean(x$unadjusted.results$p0, na.rm=TRUE)/sd(x$unadjusted.results$p0, na.rm=TRUE), NA), nrow=1)
     colnames(tmp) <- c("Estimate", "Std. Error", "z value", "Pr(>|z|)")
-    rownames(tmp) <- "P0"
+    rownames(tmp) <- "p0"
     res <- tmp
     
     tmp <- matrix(c(mean(x$unadjusted.results$p1, na.rm=TRUE), sd(x$unadjusted.results$p1, na.rm=TRUE), mean(x$unadjusted.results$p1, na.rm=TRUE)/sd(x$unadjusted.results$p1, na.rm=TRUE), NA), nrow=1)
-    rownames(tmp) <- "P1"
+    rownames(tmp) <- "p1"
     res <- rbind(res,tmp)
     
     tmp <- matrix(c(mean(x$unadjusted.results$delta, na.rm=TRUE), sd(x$unadjusted.results$delta, na.rm=TRUE), mean(x$unadjusted.results$delta, na.rm=TRUE)/sd(x$unadjusted.results$delta, na.rm=TRUE),
                     ifelse(mean(x$unadjusted.results$delta, na.rm=TRUE)/sd(x$unadjusted.results$delta, na.rm=TRUE)<0,
                            2*pnorm(mean(x$unadjusted.results$delta, na.rm=TRUE)/sd(x$unadjusted.results$delta, na.rm=TRUE)),
                            2*(1-pnorm(mean(x$unadjusted.results$delta, na.rm=TRUE)/sd(x$unadjusted.results$delta, na.rm=TRUE))))), nrow=1)
-    rownames(tmp) <- "P1-P0"
+    rownames(tmp) <- "p1-p0"
     res <- rbind(res,tmp)
     
     tmp <- matrix(c(mean(x$unadjusted.results$ratio, na.rm=TRUE), sd(x$unadjusted.results$ratio, na.rm=TRUE), mean(x$unadjusted.results$ratio, na.rm=TRUE)/sd(x$unadjusted.results$ratio, na.rm=TRUE),
                     ifelse(mean(x$unadjusted.results$ratio, na.rm=TRUE)/sd(x$unadjusted.results$ratio, na.rm=TRUE)<0,
                            2*pnorm(mean(x$unadjusted.results$ratio, na.rm=TRUE)/sd(x$unadjusted.results$ratio, na.rm=TRUE)),
                            2*(1-pnorm(mean(x$unadjusted.results$ratio, na.rm=TRUE)/sd(x$unadjusted.results$ratio, na.rm=TRUE))))), nrow=1)
-    rownames(tmp) <- "P1/P0"
+    rownames(tmp) <- "p1/p0"
     res <- rbind(res,tmp)
     
     tmp <- matrix(c(mean(x$unadjusted.results$OR, na.rm=TRUE), sd(x$unadjusted.results$OR, na.rm=TRUE), mean(x$unadjusted.results$OR, na.rm=TRUE)/sd(x$unadjusted.results$OR, na.rm=TRUE),
@@ -169,6 +169,10 @@ summary.gcbinary <- function (object, digits=4, ci.type=NULL, ci.level=0.95, una
     cat(paste0("n= ",x$n))
   }
   cat("\n")
+  if (!is.null(x$nimput)) {
+    if (x$nimput == 1) { cat(x$nimput, " observation imputed", sep=""); cat("\n") }
+    if (x$nimput > 1) { cat(x$nimput, " observations imputed", sep=""); cat("\n") }
+  }
   if(x$missing==1) { cat(x$missing, " observation deleted due to missingness", sep=""); cat("\n") }
   if(x$missing >1) { cat(x$missing, " observations deleted due to missingness", sep=""); cat("\n") }
   

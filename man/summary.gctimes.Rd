@@ -27,16 +27,13 @@ Summarize an object returned by the function \code{gc_times}.
 \examples{
 data(dataPROPHYVAP)
 
-dataPROPHYVAP$DEATH_num <- ifelse(dataPROPHYVAP$DEATH == "Yes",1,0)
-dataPROPHYVAP$GROUP_num <- ifelse(dataPROPHYVAP$GROUP == "Placebo",0,1)
-
-formula <- formula(Surv(TIME_DEATH, DEATH_num) ~ GROUP_num * AGE +
+formula <- formula(Surv(TIME_DEATH, DEATH) ~ GROUP * AGE +
               SEX + BMI + DIABETES)
 
 ### In practice use larger values of boot.number (e.g., 500)
 ### We set boot.number and cv at 10 for speed in CRAN checks
 gc1 <- gc_times(formula=formula, model="lasso", data=dataPROPHYVAP,
-              group="GROUP_num", param.tune=NULL, boot.type="bcv", cv=10,
+              group="GROUP", param.tune=NULL, boot.type="bcv", cv=10,
               boot.number=10, effect="ATE", progress=TRUE , pro.time=10,
               boot.tune=TRUE)
               
