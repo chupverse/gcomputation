@@ -1,7 +1,7 @@
 \name{plot.gctimes}
 \alias{plot.gctimes}
 \title{
-S3 Method for Plotting an 'gctimes' Object
+S3 Method for Plotting a 'gctimes' Object
 }
 \description{
 Provides graphical summaries for an object returned by the function \code{gc_times}. This S3 method offers two types of calibration plots.
@@ -23,7 +23,7 @@ Provides graphical summaries for an object returned by the function \code{gc_tim
 This plotting method supports two distinct types of calibration:
 \itemize{
 \item \code{method="survival"}: This plot compares the overall Kaplan-Meier estimate of the survival curve from the original dataset against the mean of the survival predictions derived from the G-Computation model.
-\item \code{method="calibration"}: This plot compares the mean of the predicted survivals at \code{pro.time} against the Kaplan-Meier estimatations for \code{n.groups} defined from the related percentiles. If \code{n.groups} is set too high, some groups may have too few events to reliably estimate survivals. An error can also occur if the Q-model is singular.
+\item \code{method="calibration"}: This plot compares the mean of the predicted survivals at \code{pro.time} against the Kaplan-Meier estimations for \code{n.groups} defined from the related percentiles. If \code{n.groups} is set too high, some groups may have too few events to reliably estimate survivals. An error can also occur if the Q-model is singular.
 }
 }
 \value{No return value for this S3 method.}

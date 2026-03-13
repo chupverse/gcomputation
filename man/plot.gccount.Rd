@@ -2,13 +2,12 @@
 \alias{plot.gccount}
 \title{
 
-S3 Method for Plotting an 'gccontinuous' Object
+S3 Method for Plotting a 'gccontinuous' Object
 
 }
 \description{
 
-Provides graphical summaries for an object returned by the function \code{gc_count}.
-This S3 method offers two types of plots: a calibration plot and a proportion plot.
+Provides graphical summaries for an object returned by the function \code{gc_count}. This S3 method offers two types of plots for calibration or means' representation.
 
 }
 \usage{
