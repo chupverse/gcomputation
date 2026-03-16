@@ -79,8 +79,9 @@ data("dataPROPHYVAP")
 
 ### In practice use larger values for cv and boot.number
 ### We set boot.number and cv at 10 for speed in CRAN checks
+### cv=30 and boot.number=1000 are more appropriate values
 gc1 <- gc_count(formula=.f, model="lasso", data=dataPROPHYVAP,
-              group="GROUP", param.tune=NULL, boot.type="bcv",
+              group="GROUP", param.tune=NULL, cv=10, boot.type="bcv",
               boot.number=10, effect="ATE", boot.tune=TRUE)
 
 summary(gc1)

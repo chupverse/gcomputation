@@ -29,6 +29,7 @@ data(dataPROPHYVAP)
 
 ### In practice use larger values of boot.number (e.g., 500)
 ### We set boot.number and cv at 10 for speed in CRAN checks
+### cv=30 and boot.number=1000 are more appropriate values
 gc1 <- gc_binary(formula=.f, model="ridge", data=dataPROPHYVAP,
               group="GROUP", param.tune=NULL, boot.type="bcv", cv=10,
               boot.number=10, effect="ATE", progress=TRUE, boot.tune=TRUE)

@@ -83,9 +83,10 @@ data(dataPROPHYVAP)
 
 ### In practice use larger values of boot.number (e.g., 500)
 ### We set boot.number at 10 for speed in CRAN checks
+### boot.number=1000 is a more appropriate value
 gc1 <- gc_times(formula=.f, model="lasso", data=dataPROPHYVAP,
               group="GROUP", boot.type="bcv",
-              boot.number=10,  effect="ATE", progress=TRUE , pro.time=10,
+              boot.number=10,  effect="ATE", progress=TRUE , pro.time=20,
               boot.tune=FALSE)
 
 summary(gc1)
@@ -94,13 +95,13 @@ summary(gc1)
 ### Adjusted survival curves :
 plot(gc1$calibration$time, gc1$calibration$surv0, type="s",
      xlab="Time (days)", ylab="Patient survival",
-     main="Adjusted Survival by Group", col="red", lty=2, lwd=2)
+    col="red3", lty=2, lwd=2)
      
 lines(gc1$calibration$time, gc1$calibration$surv1, type="s",
-      col="blue", lty=1, lwd=2)
+      col="blue3", lty=1, lwd=2)
       
 legend("bottomleft", legend=c("Placebo","Ceftriaxone"),
-       col=c("red","blue"), lty=2:1, lwd=2, bty="n")
+       col=c("red3","blue3"), lty=2:1, lwd=2, bty="n")
 }
 
 \keyword{G-computation}

@@ -27,15 +27,13 @@ data(dataPROPHYVAP)
 
 ### In practice use larger values for cv and boot.number
 ### We set boot.number and cv at 10 for speed in CRAN checks
+### cv=30 and boot.number=1000 are more appropriate values
 gc1 <- gc_binary(formula=.f, model="ridge", data=dataPROPHYVAP,
               group="GROUP", param.tune=NULL, boot.type="bcv", cv=10,
               boot.number=10, effect="ATE", progress=TRUE , boot.tune=TRUE)
 
 #Plot the calibration curve
-plot(gc1, method="calibration", n.groups=5)
-	 
-#Plot the proportions' comparison
-plot(gc1, method="proportion")
+plot(gc1, n.groups=3, col="red3")
 }
 
 \keyword{Plotting}

@@ -1,26 +1,26 @@
 \name{transport}
 \alias{transport}
 \title{
-Transport the Marginal for Another Populations
+Transport the Marginal Effect for Another Populations
 }
 \description{
-Applies an already fitted G-computation model (an object of class to estimate marginal effects for that new population.
+Applies an already fitted Q-model to estimate marginal effects for a new population (i.e., with differentially distibuted baseline characteristics used as predictors in the Q-Model).
 }
 \usage{
 transport(object, newdata, boot.number=500, seed=NULL)
 }
 \arguments{
-  \item{object}{An object returned by the function \code{\link{gc_binary}},  \code{\link{gc_continuous}}, or \code{\link{gc_times}}.}
+  \item{object}{An object returned by the function \code{\link{gc_binary}},  \code{\link{gc_continuous}},  \code{\link{gc_count}} or \code{\link{gc_times}}.}
   \item{newdata}{The new data frame with all the covariates in the \code{formula} of the \code{object}.}
-  \item{boot.number}{The number of bootstrap resamples to perform for estimating standard errors and confidence intervals of the marginal effects on the \code{newdata}. The default value is 500.}
+  \item{boot.number}{The number of resamples to perform for estimating standard errors and confidence intervals of the marginal effects on the \code{newdata}. The default value is 500.}
   \item{seed}{A random seed to ensure reproducibility during the bootstrap process. If \code{NULL} (the default), a seed is randomly assigned.}
 }
 
 \details{
 The function employs two distinct estimation strategies:
 \itemize{
-  \item \bold{Monte Carlo Simulation:} For unpenalized models (likelihood-based models like "all", "aic", or "bic"), the function uses the variance-covariance matrix of the coefficients to draw \code{boot.number} resamples from a multivariate normal distribution. This provides a distribution of adjusted results.
-  \item \bold{Single Point Estimate:} For penalized models ("lasso"", "ridge"", "elasticnet"") and survival models (\code{gctimes}), the function calculates exactly one estimate based on \code{newdata}.
+  \item \bold{Monte Carlo Simulation:} For unpenalized models (likelihood-based models like "all", "aic", or "bic"), the function uses the variance-covariance matrix of the Q-model regression coefficients to simulate Q-modelsassuming a multivariate normal distribution. This provides a distribution of adjusted results and the related confidence intervals.
+  \item \bold{Single Point Estimate:} For penalized models ("lasso"", "ridge"", "elasticnet"") and survival models (\code{gctimes}), the function does not estimate the distribution of adjusted results and the related confidence intervals.
 }
 }
 
