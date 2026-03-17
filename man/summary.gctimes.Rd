@@ -15,7 +15,7 @@ Summarize an object returned by the function \code{gc_times}.
 \item{digits}{An optional integer for the number of digits to print when summarizing numeric values.}
 \item{ci.type}{The type of confidence intervals. Two types are possible: "norm" (assumed the Normal distribution) and "perc" (non-parametric estimation by percentiles).}
 \item{ci.level}{The confidence level required. Default is 95\%.}
-\item{unadjusted}{A logicical value to print the unadjusted results. The default is \code{TRUE}}
+\item{unadjusted}{A logical value to print the unadjusted results. The default is \code{TRUE}}
 \item{...}{For future methods.}
 }
 

@@ -20,26 +20,26 @@ gc_times(formula, data, group, pro.time=NULL, effect="ATE", model,
    \item{pro.time}{An optional value for censoring the follow-up times and obtaining survival curves and related restricted mean survival times up to \code{pro.time}. If not specified, it is automatically set to the time point at which 10\% of patients remain at risk.}
    \item{effect}{The type of the marginal effect to be estimated. Three types are possible : "ATE" (by default), "ATT" and "ATU". See details.}   
    \item{model}{The modelling method used to create the Q-model. Current implemented methods are : "all", "lasso", "ridge", "elasticnet" and "aic". See details.} 
-   \item{param.tune}{An optional argument to specify the tuning parameters for the Q-model. If \code{NULL} (the default), the tuning parameter(s) is(are) estimated by \code{cv}-fold cross-validation. Otherwise, the user can propose a tuning grid. See details.}
+   \item{param.tune}{An optional argument to specify the tuning parameter(s) for theprevious  modelling method. If \code{NULL} (the default), the tuning parameter(s) is(are) estimated by \code{cv}-fold cross-validation. Otherwise, the user can propose a tuning grid. See details.}
     \item{cv}{The number of splits for cross-validation. The default value is 30.}
-    \item{boot.type}{The type of bootstrap to use. Two types are possible: "bcv" (by default) and "boot". See details.}
+    \item{boot.type}{The type of bootstrap to use. Two types are possible: "bcv" for bootstrap cross-validation (by default) and "boot" usual bootstrap. See details.}
     \item{boot.number}{The number of bootstrap resamples. The default value is 500.}
-    \item{boot.tune}{A logical value to determine whether the tuning parameter should be estimated inside of each bootstrap iteration. See details.}
-    \item{progress}{A logical value to print a progress bar in the R console. The default is \code{TRUE}}
+    \item{boot.tune}{A logical value to determine whether the tuning parameter(s) should be estimated inside of each bootstrap iteration. See details.}
+    \item{progress}{A logical value to print a progress bar. The default is \code{TRUE}}
     \item{seed}{A random seed to ensure reproducibility during the cv process. If \code{NULL}, a seed is randomly assigned.}
     \item{boot.mi}{A logical value to apply multiple imputation using the \code{\link[mice]{mice}} package. See details.}
-    \item{m}{Number of multiple imputations to perform if boot.mi is \code{TRUE}.}
+    \item{m}{Number of imputations to perform if boot.mi is \code{TRUE}.}
   \item{...}{Additional arguments to be passed directly to the \code{\link[mice]{mice}} function for customizing the multiple imputation process (e.g., \code{method}, \code{maxit}, \code{diagnostics}).}
  }
 
 \details{
-The option \code{effect="ATE"} corresponds to the Average Treatment effect on the Entire population, i.e. the marginal effect if the entire sample were treated versus untreated. The "ATT" modality allows the estimation of the Average Treatment effect on the Treated, i.e. the marginal effect if the treated patients (\code{group = 1}) would have been untreated. The "ATU" modality modality allows the estimation of the Average Treatment effect on the Untreated, i.e. the marginal effect if the untreated patients (\code{group = 0}) would have been treated.
+The option \code{effect="ATE"} corresponds to the Average Treatment effect on the Entire population, i.e. the marginal effect if the entire sample were treated versus untreated. The "ATT" modality allows the estimation of the Average Treatment effect on the Treated, i.e. the marginal effect if the treated patients (\code{group = 1}) would have been untreated. The "ATU" modality allows the estimation of the Average Treatment effect on the Untreated, i.e. the marginal effect if the untreated patients (\code{group = 0}) would have been treated.
 
 Several modelling methods can be used for the Q-model estimation:
 \tabular{lll}{
-\code{"all"} \tab A proportional hazard regression, the baseline hazard function being estimated by using the Breslow estimator and all the covariates in the formula being used.\cr
+\code{"all"} \tab A proportional hazard (PH) regression, the baseline hazard function being estimated by using the Breslow estimator and all the covariates in the linear predictor.\cr
 \code{"lasso"} \tab The same PH regression with L1 regularization allowing predictors' selection.\cr
-\code{"ridge"} \tab The same PH regression with L2 regularization.\cr
+\code{"ridge"} \tab The same PH regression with L2 regularization allowing highly correlated predictors.\cr
 \code{"elasticnet"} \tab The same PH regression which combines both L1 and L2 regularizations.\cr
 \code{"aic"} \tab The same PH regression with a AIC-based forward selection.\cr
 \code{"bic"} \tab The same PH regression with a BIC-based forward selection.
@@ -61,11 +61,11 @@ If \code{boot.mi = TRUE}, multiple imputation is considered by using the MI-BOOT
 \item{cv}{The number of splits used for cross-validation.}
 \item{missing}{The number of observations that were removed from the original dataset due to missing values.}
 \item{pro.time}{The time point up to which RMST and survival probabilities are estimated.}
-\item{boot.number}{The total number of bootstrap resamples performed.}
-\item{boot.type}{The type of bootstrap resamples performed.}
-\item{group}{A character string specifying the name of the grouping variable.}
-\item{n}{The sample size of the dataset used in calculations, after missing data removal.}
-\item{nevent}{The total number of events in the dataset used in calculations.}
+\item{boot.number}{The total number of bootstrap resamples.}
+\item{boot.type}{The type of bootstrap.}
+\item{group}{A character string specifying the name of the variable related to the exposure/treatment.}
+\item{n}{The sample size of the dataset after missing data removal (if \code{boot.mi = FALSE}).}
+\item{nevent}{The total number of events in the dataset.}
 \item{adjusted.results}{A data frame containing the adjusted results for each bootstrap sample, including: \code{AHR} (average hazard ratio), \code{RMST0} and \code{RMST1} (restricted mean survival times), \code{deltaRMST} (difference in RMST), \code{s0} and \code{s1} (survival probabilities at pro.time), and \code{delta} (difference in survival probabilities).}
 \item{unadjusted.results}{A data frame containing the unadjusted results for each bootstrap sample, including: \code{AHR} (average hazard ratio), \code{RMST0} and \code{RMST1} (restricted mean survival times), \code{deltaRMST} (difference in RMST), \code{s0} and \code{s1} (survival probabilities at pro.time), and \code{delta} (difference in survival probabilities).}
 \item{call}{The complete function call that generated the \code{gctimes} object.}
@@ -83,9 +83,10 @@ data(dataPROPHYVAP)
 
 ### In practice use larger values of boot.number (e.g., 500)
 ### We set boot.number at 10 for speed in CRAN checks
+### boot.number=1000 is a more appropriate value
 gc1 <- gc_times(formula=.f, model="lasso", data=dataPROPHYVAP,
               group="GROUP", boot.type="bcv",
-              boot.number=10,  effect="ATE", progress=TRUE , pro.time=10,
+              boot.number=10,  effect="ATE", progress=TRUE , pro.time=20,
               boot.tune=FALSE)
 
 summary(gc1)
@@ -94,13 +95,13 @@ summary(gc1)
 ### Adjusted survival curves :
 plot(gc1$calibration$time, gc1$calibration$surv0, type="s",
      xlab="Time (days)", ylab="Patient survival",
-     main="Adjusted Survival by Group", col="red", lty=2, lwd=2)
+    col="red3", lty=2, lwd=2)
      
 lines(gc1$calibration$time, gc1$calibration$surv1, type="s",
-      col="blue", lty=1, lwd=2)
+      col="blue3", lty=1, lwd=2)
       
 legend("bottomleft", legend=c("Placebo","Ceftriaxone"),
-       col=c("red","blue"), lty=2:1, lwd=2, bty="n")
+       col=c("red3","blue3"), lty=2:1, lwd=2, bty="n")
 }
 
 \keyword{G-computation}

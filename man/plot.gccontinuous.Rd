@@ -1,25 +1,16 @@
 \name{plot.gccontinuous}
 \alias{plot.gccontinuous}
 \title{
-
-S3 Method for Plotting an 'gccontinuous' Object
-
+S3 Method for Plotting a 'gccontinuous' Object
 }
 \description{
-
-Provides graphical summaries for an object returned by the function \code{gc_continuous}.
-This S3 method offers two types of plots: a calibration plot and a proportion plot.
-
+Provides graphical summaries for an object returned by the function \code{gc_continuous}. This S3 method offers two types of plots for calibration or means' representation.
 }
 \usage{
-
 \method{plot}{gccontinuous}(x, method="calibration", n.groups=5, smooth=FALSE, ...)
-
 }
 \arguments{
-
 \item{x}{An object returned by the function \code{gc_continuous}.}
-
 \item{method}{A character string specifying the type of plot. Possible values are \code{calibration} (default) or \code{proportion}.}
 
 \item{n.groups}{An integer for the number of groups to divide the predicted means into when \code{method="calibration"} is used. The default is 5. 
@@ -56,16 +47,14 @@ data("dataPROPHYVAP")
 .f <- formula(VAP ~ GROUP * (AGE + SEX + ALCOHOL + BMI + DIABETES))
 
 ### In practice use larger values of boot.number (e.g., 500).
-### Here we set boot.number = 10 for speed in CRAN checks.
+### Here we set boot.number = 10 and cv = 10 for speed in CRAN checks.
+### cv=30 and boot.number=1000 are more appropriate values
 gc1 <- gc_continuous(formula=.f, model="all", data=dataPROPHYVAP, group="GROUP",
                     cv=10, boot.type="boot", boot.number=10, boot.tune=TRUE,
                     effect="ATE", progress=TRUE, seed=5192)
 
 #Plot the calibration curve (by default)
-plot(gc1, method="calibration", n.groups=5)
-	 
-#Plot the proportion comparison
-plot(gc1, method="proportion")
+plot(gc1, n.groups=5)
 }
 
 \keyword{Plotting}

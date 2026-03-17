@@ -15,7 +15,7 @@ Summarize an object returned by the function \code{gc_binary}.
 \item{digits}{An optional integer for the number of digits to print when summarizing numeric values.}
 \item{ci.type}{The type of confidence intervals. Two types are possible: "norm" (assumed the Normal distribution) and "perc" (non-parametric estimation by percentiles).}
 \item{ci.level}{The confidence level required. Default is 95\%.}
-\item{unadjusted}{A logicical value to print the unadjusted results. The default is \code{TRUE}}
+\item{unadjusted}{A logical value to print the unadjusted results. The default is \code{TRUE}}
 \item{...}{For future methods.}
 }
 \value{
@@ -29,6 +29,7 @@ data(dataPROPHYVAP)
 
 ### In practice use larger values of boot.number (e.g., 500)
 ### We set boot.number and cv at 10 for speed in CRAN checks
+### cv=30 and boot.number=1000 are more appropriate values
 gc1 <- gc_binary(formula=.f, model="ridge", data=dataPROPHYVAP,
               group="GROUP", param.tune=NULL, boot.type="bcv", cv=10,
               boot.number=10, effect="ATE", progress=TRUE, boot.tune=TRUE)

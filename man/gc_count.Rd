@@ -13,34 +13,34 @@ gc_count(formula, data, group, effect="ATE", model,
 }
 
 \arguments{
-  \item{formula}{A regression formula related to the Q-model with the the variable \code{group} among the predictors.}
+  \item{formula}{A regression formula related to the Q-model with the variable \code{group} among the predictors.}
   \item{data}{A data frame in which to look for the variables related to the outcome, the studied (\code{group}) and the predictors included in the previous model.}
   \item{group}{The name of the variable related to the exposure/treatment. This variable shall have only two modalities encoded 0 for the untreated/unexposed patients and 1 for the treated/exposed ones.}
    \item{effect}{The type of the marginal effect to be estimated. Three types are possible : "ATE" (by default), "ATT" and "ATU". See details.}   
    \item{model}{The modelling method used to create the Q-model. Current implemented methods are : "all", "lasso", "ridge", "elasticnet" and "aic". See details.} 
-   \item{param.tune}{An optional argument to specify the tuning parameters for the Q-model. If \code{NULL} (the default), the tuning parameter(s) is(are) estimated by \code{cv}-fold cross-validation. Otherwise, the user can propose a tuning grid. See details.}
+   \item{param.tune}{An optional argument to specify the tuning parameter(s) for theprevious  modelling method. If \code{NULL} (the default), the tuning parameter(s) is(are) estimated by \code{cv}-fold cross-validation. Otherwise, the user can propose a tuning grid. See details.}
     \item{cv}{The number of splits for cross-validation. The default value is 30.}
-    \item{boot.type}{The type of bootstrap to use. Two types are possible: "bcv" (by default) and "boot". See details.}
+    \item{boot.type}{The type of bootstrap to use. Two types are possible: "bcv" for bootstrap cross-validation (by default) and "boot" usual bootstrap. See details.}
     \item{boot.number}{The number of bootstrap resamples. The default value is 500.}
-    \item{boot.tune}{A logical value to determine whether the tuning parameter should be estimated inside of each bootstrap iteration. See details.}
-    \item{progress}{A logical value to print a progress bar in the R console. The default is \code{TRUE}}
+    \item{boot.tune}{A logical value to determine whether the tuning parameter(s) should be estimated inside of each bootstrap iteration. See details.}
+    \item{progress}{A logical value to print a progress bar. The default is \code{TRUE}}
     \item{seed}{A random seed to ensure reproducibility during the cv process. If \code{NULL}, a seed is randomly assigned.}
     \item{boot.mi}{A logical value to apply multiple imputation using the \code{\link[mice]{mice}} package. See details.}
-    \item{m}{Number of multiple imputations to perform if boot.mi is \code{TRUE}.}
+    \item{m}{Number of imputations to perform if boot.mi is \code{TRUE}.}
   \item{...}{Additional arguments to be passed directly to the \code{\link[mice]{mice}} function for customizing the multiple imputation process (e.g., \code{method}, \code{maxit}, \code{diagnostics}).}
  }
 
 \details{
-The option \code{methods="ATE"} corresponds to the Average Treatment effect on the Entire population, i.e. the marginal effect if the entire sample were treated versus untreated. The "ATT" modality allows the estimation of the Average Treatment effect on the Treated, i.e. the marginal effect if the treated patients (\code{group = 1}) would have been untreated. The "ATU" modality modality allows the estimation of the Average Treatment effect on the Untreated, i.e. the marginal effect if the untreated patients (\code{group = 0}) would have been treated.
+The option \code{methods="ATE"} corresponds to the Average Treatment effect on the Entire population, i.e. the marginal effect if the entire sample were treated versus untreated. The "ATT" modality allows the estimation of the Average Treatment effect on the Treated, i.e. the marginal effect if the treated patients (\code{group = 1}) would have been untreated. The "ATU" modality allows the estimation of the Average Treatment effect on the Untreated, i.e. the marginal effect if the untreated patients (\code{group = 0}) would have been treated.
 
 Several modelling methods can be used for the Q-model estimation:
 \tabular{lll}{
-\code{"all"} \tab A linear regression,  all the covariates in the formula being used.\cr
-\code{"lasso"} \tab L1 regularized linear regression allows predictors' selection.\cr
-\code{"ridge"} \tab L2 regularized, equivalent to Elastic Net with an alpha value of 0.\cr
-\code{"elasticnet"} \tab A linear regression which combines both L1 and L2 regularizations.\cr
-\code{"aic"} \tab A linear regression with a AIC-based forward selection.\cr
-\code{"bic"} \tab A linear regression with a BIC-based forward selection.
+\code{"all"} \tab A Poission regression,  all the covariates in the formula being used.\cr
+\code{"lasso"} \tab L1 regularized Poission regression allows predictors' selection.\cr
+\code{"ridge"} \tab L2 regularized Poission regression allows considering highly correlated predictors.\cr
+\code{"elasticnet"} \tab A Poissionregression which combines both L1 and L2 regularizations.\cr
+\code{"aic"} \tab A Poission regression with a AIC-based forward selection.\cr
+\code{"bic"} \tab A Poission regression with a BIC-based forward selection.
 }
 
 The \code{param.tune} argument allows users to specify tuning parameters penalized regression. If \code{NULL} (the default), the tuning parameters of each algorithm are estimated by cv-fold cross-validation and the default grids on the \code{glmnet} package. Otherwise, the user can propose a tuning grid for each modelling method. For "lasso" and "ridge" penalizations, it should be a vector representing the lambda penalization parameter. For "elasticnet", it should be a list or a vector of length 2, containing lambda (penalization parameter) and alpha (mixing parameter between L1 and L2 regularizations) values. The alpha value typically ranges from 0 to 1. Each object in the list declared in param.tune must have the same name as the corresponding parameter of the method. The user may propose a single value of each tuning parameter if she/he aims to define her/his own penality.
@@ -58,10 +58,10 @@ If \code{boot.mi = TRUE}, multiple imputation is considered by using the MI-BOOT
 \item{model}{The method used for the Q-model.}
 \item{cv}{The number of splits used for cross-validation.}
 \item{missing}{The number of observations that were removed from the original dataset due to missing values.}
-\item{boot.number}{The total number of bootstrap resamples performed.}
-\item{boot.type}{The type of bootstrap resamples performed.}
-\item{group}{A character string specifying the name of the grouping variable.}
-\item{n}{The sample size of the dataset used in calculations, after missing data removal.}
+\item{boot.number}{The total number of bootstrap resamples.}
+\item{boot.type}{The type of bootstrap.}
+\item{group}{A character string specifying the name of the variable related to the exposure/treatment.}
+\item{n}{The sample size of the dataset after missing data removal (if \code{boot.mi = FALSE}).}
 \item{adjusted.results}{A data frame containing the adjusted results for each bootstrap sample: \code{c1} (mean count experimental), \code{c0} (mean count control), \code{delta} (difference), and \code{ratio} (rate ratio).}
 \item{unadjusted.results}{A data frame containing the unadjusted results for each bootstrap sample: \code{c1} (mean count experimental), \code{c0} (mean count control), \code{delta} (difference), and \code{ratio} (rate ratio).}
 \item{call}{The function call that generated the \code{gccontinuous} object.}
@@ -79,8 +79,9 @@ data("dataPROPHYVAP")
 
 ### In practice use larger values for cv and boot.number
 ### We set boot.number and cv at 10 for speed in CRAN checks
+### cv=30 and boot.number=1000 are more appropriate values
 gc1 <- gc_count(formula=.f, model="lasso", data=dataPROPHYVAP,
-              group="GROUP", param.tune=NULL, boot.type="bcv",
+              group="GROUP", param.tune=NULL, cv=10, boot.type="bcv",
               boot.number=10, effect="ATE", boot.tune=TRUE)
 
 summary(gc1)
