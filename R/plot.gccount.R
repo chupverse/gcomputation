@@ -1,37 +1,6 @@
-plot.gccount <- function (x, method="calibration", n.groups=5, smooth=FALSE, ...) {
-  if (!(method %in% c("calibration","proportion"))) {stop("Method needs to be calibration or proportion")}
+plot.gccount <- function (x, n.groups=5, smooth=FALSE, ...) {
   if (!is.null(x$newdata)) {stop("Plots do not work on a transposed object, use the original object")}
-  if (method == "proportion") {
-    if (!is.null(x$m)) {stop("The \"method=proportion\" is not available when \"boot.mi=TRUE\"")}
-    
-    data = x$data
-    outcome = as.character(x$formula[[2]])
-    group = x$group
-    
-    datag0 = data[which(data[,group] == 0),]
-    datag1 = data[which(data[,group] == 1),]
-    
-    #### This part unlike survival model calibration same as obs
-    predict.c0 = mean(x$calibration$predict[which(data[,group] == 0)])
-    predict.c1 = mean(x$calibration$predict[which(data[,group] == 1)])
-    obs.c0 = mean(datag0[[outcome]]) 
-    obs.c1 = mean(datag1[[outcome]])
-    
-    
-    if (hasArg(labels) == FALSE) {
-      x_labels <- c("Group 0:\nObserved", "Group 0:\nPredicted", "Group 1:\nObserved", "Group 1:\nPredicted")
-    } else {
-      x_labels <- list(...)$labels
-    }
-    
-    plot(x=c(1,1.2,2,2.2), y=c(obs.c0,predict.c0,obs.c1,predict.c1),xlab="",ylab='',main=NULL, xaxt="n")
-    axis(1, at = c(1, 1.2, 2, 2.2), labels = x_labels)
-    
-  }
-  
-  
-  
-  if (method == "calibration") {
+
     
     if (!is.null(x$m)) {
       cols <- if (hasArg(col)) rep(list(...)$col, length.out = x$m) else rainbow(x$m)
@@ -43,7 +12,7 @@ plot.gccount <- function (x, method="calibration", n.groups=5, smooth=FALSE, ...
       all_lower = c()
       all_upper = c()
       for (i in 1:x$m) {
-        .pred = x$calibration[[i]]$predict
+        .pred = x$predictions[[i]]
         data = x$data[[i]]
         outcome = x$data[[i]][,as.character(x$formula[[2]])]
         
@@ -70,16 +39,18 @@ plot.gccount <- function (x, method="calibration", n.groups=5, smooth=FALSE, ...
         
         .lower <- sapply(1:n.groups, function(x) {
           .indic <- .mod$data$grps == x
-          l <- mean(.mod$data$outcome[.indic])
+          mu <- mean(.mod$data$outcome[.indic])
+          sd <- sd(.mod$data$outcome[.indic])
           n <- sum(.indic)
-          l - 1.96 * sqrt(l/n)
+          mu - 1.96 * sd/sqrt(n)
         })
         
         .upper <- sapply(1:n.groups, function(x) {
           .indic <- .mod$data$grps == x
-          l <- mean(.mod$data$outcome[.indic])
+          mu <- mean(.mod$data$outcome[.indic])
+          sd <- sd(.mod$data$outcome[.indic])
           n <- sum(.indic)
-          l + 1.96 * sqrt(l/n)
+          mu + 1.96 * sd/sqrt(n)
         })
         
         if (any(sapply(.lower, function(x) length(x) == 0))) {
@@ -97,8 +68,8 @@ plot.gccount <- function (x, method="calibration", n.groups=5, smooth=FALSE, ...
         if(hasArg(lwd)==FALSE) {lwd <- 1} else {lwd <- list(...)$lwd}
         if(hasArg(pch)==FALSE) {pch <- 16} else {pch <- list(...)$pch}
         
-        if(hasArg(ylim)==FALSE) {ylim <- c(0,max(outcome))} else {ylim <- list(...)$ylim}
-        if(hasArg(xlim)==FALSE) {xlim  <- c(0,max(outcome))} else {xlim <- list(...)$xlim}
+        if(hasArg(ylim)==FALSE) {ylim <- c(min(c(.est,.obs,.lower,.upper)),max(c(.est,.obs,.lower,.upper)))} else {ylim <- list(...)$ylim}
+        if(hasArg(xlim)==FALSE) {xlim  <- c(min(c(.est,.obs,.lower,.upper)),max(c(.est,.obs,.lower,.upper)))} else {xlim <- list(...)$xlim}
         
         if(hasArg(ylab)==FALSE) {ylab <- "Observed events number"} else {ylab <- list(...)$ylab}
         if(hasArg(xlab)==FALSE) {xlab <- "Predicted events number"} else {xlab <- list(...)$xlab}
@@ -150,13 +121,9 @@ plot.gccount <- function (x, method="calibration", n.groups=5, smooth=FALSE, ...
     } else {
       
       if (any(is.na(x$data))){x$data <- na.omit(x$data) }
-      .pred = x$calibration$predict
+      .pred = x$predictions
       data = x$data
       outcome = x$data[,as.character(x$formula[[2]])]
-      
-      print(.pred)
-      print(unique(c(-Inf, quantile(.pred, seq(1/n.groups, 1, 1/n.groups)))))
-      print(c(-Inf, quantile(.pred, seq(1/n.groups, 1, 1/n.groups))))
       
       if (length(unique(c(-Inf, quantile(.pred, seq(1/n.groups, 1, 1/n.groups))))) != length(c(-Inf, quantile(.pred, seq(1/n.groups, 1, 1/n.groups))))) {
         stop("n.groups too high")
@@ -180,16 +147,18 @@ plot.gccount <- function (x, method="calibration", n.groups=5, smooth=FALSE, ...
       
       .lower <- sapply(1:n.groups, function(x) {
         .indic <- .mod$data$grps == x
-        l <- mean(.mod$data$outcome[.indic])
+        mu <- mean(.mod$data$outcome[.indic])
+        sd <- sd(.mod$data$outcome[.indic])
         n <- sum(.indic)
-        l - 1.96 * sqrt(l/n)
+        mu - 1.96 * sd/sqrt(n)
       })
       
       .upper <- sapply(1:n.groups, function(x) {
         .indic <- .mod$data$grps == x
-        l <- mean(.mod$data$outcome[.indic])
+        mu <- mean(.mod$data$outcome[.indic])
+        sd <- sd(.mod$data$outcome[.indic])
         n <- sum(.indic)
-        l + 1.96 * sqrt(l/n)
+        mu + 1.96 * sd/sqrt(n)
       })
       
       if(hasArg(cex)==FALSE) {cex <-1} else {cex <- list(...)$cex}
@@ -202,8 +171,8 @@ plot.gccount <- function (x, method="calibration", n.groups=5, smooth=FALSE, ...
       if(hasArg(lwd)==FALSE) {lwd <- 1} else {lwd <- list(...)$lwd}
       if(hasArg(pch)==FALSE) {pch <- 16} else {pch <- list(...)$pch}
       
-      if(hasArg(ylim)==FALSE) {ylim <- c(0,max(outcome))} else {ylim <- list(...)$ylim}
-      if(hasArg(xlim)==FALSE) {xlim  <- c(0,max(outcome))} else {xlim <- list(...)$xlim}
+      if(hasArg(ylim)==FALSE) {ylim <- c(min(c(.est,.obs,.lower,.upper)),max(c(.est,.obs,.lower,.upper)))} else {ylim <- list(...)$ylim}
+      if(hasArg(xlim)==FALSE) {xlim  <- c(min(c(.est,.obs,.lower,.upper)),max(c(.est,.obs,.lower,.upper)))} else {xlim <- list(...)$xlim}
       
       if(hasArg(ylab)==FALSE) {ylab <- "Observed events number"} else {ylab <- list(...)$ylab}
       if(hasArg(xlab)==FALSE) {xlab <- "Predicted events number"} else {xlab <- list(...)$xlab}
@@ -220,5 +189,4 @@ plot.gccount <- function (x, method="calibration", n.groups=5, smooth=FALSE, ...
     }
     
     
-  }
 }

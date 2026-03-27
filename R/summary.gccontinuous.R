@@ -4,23 +4,9 @@ summary.gccontinuous <- function (object, digits=4, ci.type=NULL, ci.level=0.95,
     if (length(ci.type) != 1) {stop("ci.type should be any of the values c(\"norm\",\"perc\")")}
     if (!(ci.type %in% c("norm","perc"))) {stop("ci.type should be any of the values c(\"norm\",\"perc\")")}
   }
-
-  x <- object
-  if (x$model %in% c("lasso","ridge","elasticnet")) {cat("model: ",x$model,", tuning parameters: ", sep = "")
-    if (x$model == "elasticnet") {
-      cat("lambda= ",round(x$tuning.parameters$lambda,digits=digits), " alpha= ",round(x$tuning.parameters$alpha,digits=digits),sep=" ")}
-    if (x$model == "lasso") {
-      cat("lambda= ",round(x$tuning.parameters$lambda,digits=digits),sep=" ")}
-    if (x$model == "ridge") {
-      cat("lambda= ",round(x$tuning.parameters$lambda,digits=digits),sep=" ")}
-    cat("\nCall:", "\n", sep = "")
-    dput(x$formula)}
-  if (x$model %in% c("all","aic","bic")) {cat(x$model," model \nCall:", "\n", sep = "")
-    dput(x$tuning.parameters)}
-  cat("\n")
-
   
-  cat("G-computation: \n")
+  x <- object
+  
   tmp <- matrix(c(mean(x$adjusted.results$m0, na.rm=TRUE), sd(x$adjusted.results$m0, na.rm=TRUE), mean(x$adjusted.results$m0, na.rm=TRUE)/sd(x$adjusted.results$m0, na.rm=TRUE), NA), nrow=1)
   colnames(tmp) <- c("Estimate", "Std. Error", "z value", "Pr(>|z|)")
   rownames(tmp) <- "m0"
@@ -55,7 +41,7 @@ summary.gccontinuous <- function (object, digits=4, ci.type=NULL, ci.level=0.95,
                           mean(x$adjusted.results$delta, na.rm=TRUE) + qnorm(1-(1-ci.level)/2, 0, 1)*sd(x$adjusted.results$delta, na.rm=TRUE),
                           mean(x$adjusted.results$ratio, na.rm=TRUE) - qnorm(1-(1-ci.level)/2, 0, 1)*sd(x$adjusted.results$ratio, na.rm=TRUE),
                           mean(x$adjusted.results$ratio, na.rm=TRUE) + qnorm(1-(1-ci.level)/2, 0, 1)*sd(x$adjusted.results$ratio, na.rm=TRUE)
-                            ), ncol=2, byrow=TRUE)
+      ), ncol=2, byrow=TRUE)
     }
     if (ci.type == "perc") {
       ci_vals <- matrix(c(quantile(x$adjusted.results$m0, probs = (1-ci.level)/2, na.rm = TRUE),
@@ -76,14 +62,10 @@ summary.gccontinuous <- function (object, digits=4, ci.type=NULL, ci.level=0.95,
     res <- cbind(tmp, res[,2:4])
   }
   
-  printCoefmat(res, digits = digits, P.values = TRUE, has.Pvalue = TRUE, na.print = "", ...)
-  cat("\n")
-  
   res_GC <- res
   
   if (!is.null(object$newdata)) {unadjusted = FALSE}
   if (unadjusted == TRUE) {
-    cat("Unadjusted: \n")
     tmp <- matrix(c(mean(x$unadjusted.results$m0, na.rm=TRUE), sd(x$unadjusted.results$m0, na.rm=TRUE), mean(x$unadjusted.results$m0, na.rm=TRUE)/sd(x$unadjusted.results$m0, na.rm=TRUE), NA), nrow=1)
     colnames(tmp) <- c("Estimate", "Std. Error", "z value", "Pr(>|z|)")
     rownames(tmp) <- "m0"
@@ -134,28 +116,13 @@ summary.gccontinuous <- function (object, digits=4, ci.type=NULL, ci.level=0.95,
       colnames(tmp)[1] <- "Estimate"
       res <- cbind(tmp, res[,2:4])
     }
-    
-    printCoefmat(res, digits = digits, P.values = TRUE, has.Pvalue = TRUE, na.print = "", ...)
   }
-  
-  
-  cat("\n")
-  cat(paste0("n= ",x$n))
-  
-  cat("\n")
-  if (!is.null(x$nimput)) {
-    if (x$nimput == 1) { cat(x$nimput, " observation imputed", sep=""); cat("\n") }
-    if (x$nimput > 1) { cat(x$nimput, " observations imputed", sep=""); cat("\n") }
-  }
-  if(x$missing==1) { cat(x$missing, " observation deleted due to missingness", sep=""); cat("\n") }
-  if(x$missing >1) { cat(x$missing, " observations deleted due to missingness", sep=""); cat("\n") }
   
   if (unadjusted == TRUE) {
-    invisible(list(
-      GC = res_GC,
-      unadjusted = res))
+    out <- list(adjusted = res_GC, unadjusted = res, model = x$model, formula = x$formula, tuning.parameters = x$tuning.parameters, n = x$n, nimput = x$nimput, missing = x$missing, m=x$m, digits = digits, unadjusted.flag = TRUE)
   } else {
-    invisible(list(
-      GC = res_GC))
+    out <- list(adjusted = res_GC, model = x$model, formula = x$formula, tuning.parameters = x$tuning.parameters, n = x$n, nimput = x$nimput, missing = x$missing, m=x$m, digits = digits, unadjusted.flag = FALSE)
   }
+  class(out) <- "summary.gccontinuous"
+  out
 }

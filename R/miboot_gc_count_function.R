@@ -35,7 +35,8 @@
   lambdas <- c()
   alphas <- c()
   datas <- list()
-  calibrations <- list()
+  predictions <- list()
+  qmodel.fits <- list()
   
   final_res <- NULL
   
@@ -60,7 +61,8 @@
                              boot.tune = boot.tune, progress = FALSE, seed = gc_seed)
     
     datas[[i]] <- current_imputed_data
-    calibrations[[i]] <- gc_res$calibration
+    predictions[[i]] <- gc_res$predictions
+    qmodel.fits[[i]] <- gc_res$qmodel.fit
     
     c0 <- c(c0, gc_res$adjusted.results$c0)
     c1 <- c(c1, gc_res$adjusted.results$c1)
@@ -95,7 +97,8 @@
   
   
   final_res$data <- datas
-  final_res$calibration <- calibrations
+  final_res$predictions <- predictions
+  final_res$qmodel.fit <- qmodel.fits
   
   final_res$adjusted.results <- data.frame(c1 = c1, c0 = c0, delta = delta, ratio = ratio)
   final_res$unadjusted.results <- data.frame(c1 = c1.unadj, c0 = c0.unadj, delta = delta.unadj, ratio = ratio.unadj)
@@ -106,6 +109,7 @@
   final_res$m <- m
   final_res$initial.data <- data
   final_res$nimput <- nmiss_initial
+  final_res$seed <- seed
   
   if (model %in% c("lasso", "ridge")) {
     final_res$tuning.parameters=list(lambda=lambdas)

@@ -5,19 +5,7 @@ summary.gctimes <- function (object, digits=4, ci.type=NULL, ci.level=0.95, unad
     if (!(ci.type %in% c("norm","perc"))) {stop("ci.type should be any of the values c(\"norm\",\"perc\")")}
   }
   x <- object
-  if (x$model %in% c("lasso","ridge","elasticnet")) {cat("model: ",x$model,", tuning parameters: ", sep = "")
-    if (x$model == "elasticnet") {
-      cat("lambda= ",round(x$tuning.parameters$lambda,digits=digits), " alpha= ",round(x$tuning.parameters$alpha,digits=digits),sep=" ")}
-    if (x$model == "lasso") {
-      cat("lambda= ",round(x$tuning.parameters$lambda,digits=digits),sep=" ")}
-    if (x$model == "ridge") {
-      cat("lambda= ",round(x$tuning.parameters$lambda,digits=digits),sep=" ")}
-    cat("\nCall:", "\n", sep = "")
-    dput(x$formula)}
-  if (x$model %in% c("all","aic","bic")) {cat(x$model," model \nCall:", "\n", sep = "")
-    dput(x$tuning.parameters)}
-  cat("\n")
-  cat("G-computation: \n")
+  
   res_GC <- NULL
   
   mean_AHR <- mean(x$adjusted.results$AHR, na.rm=TRUE)
@@ -35,7 +23,7 @@ summary.gctimes <- function (object, digits=4, ci.type=NULL, ci.level=0.95, unad
   mean_deltasurv <- mean(x$adjusted.results$delta, na.rm=TRUE)
   sd_deltasurv <- sd(x$adjusted.results$delta, na.rm=TRUE)
   
-
+  
   if (is.na(sd_AHR) || sd_AHR == 0) {
     z_AHR <- NA
     p_AHR <- NA
@@ -129,21 +117,18 @@ summary.gctimes <- function (object, digits=4, ci.type=NULL, ci.level=0.95, unad
         quantile(x$adjusted.results$delta, probs = 1-(1-ci.level)/2, na.rm = TRUE)
       ), ncol=2, byrow=TRUE)
       if (length(x$adjusted.results$AHR) == 1) {
-        ci_vals <- matrix(rep(NA,14), ncol=2, byrow=TRUE)
+        ci_vals_GC <- matrix(rep(NA,14), ncol=2, byrow=TRUE)
       }
     }
     tmp_GC <- cbind(res_GC[,1], `Lower CI` = ci_vals_GC[,1], `Upper CI` = ci_vals_GC[,2])
     colnames(tmp_GC)[1] <- "Estimate"
     res_GC <- cbind(tmp_GC, res_GC[,2:4])
   }
-  printCoefmat(res_GC, digits = digits, P.values = TRUE, has.Pvalue = TRUE, na.print = "", ...)
-  cat("\n")
   res_GC_return <- res_GC
   
   
   if (!is.null(object$newdata)) {unadjusted = FALSE}
   if (unadjusted == TRUE) {
-    cat("Unadjusted: \n")
     res_unadj <- NULL
     
     mean_AHR_unadj <- mean(x$unadjusted.results$AHR, na.rm=TRUE)
@@ -259,29 +244,13 @@ summary.gctimes <- function (object, digits=4, ci.type=NULL, ci.level=0.95, unad
       colnames(tmp_unadj)[1] <- "Estimate"
       res_unadj <- cbind(tmp_unadj, res_unadj[,2:4])
     }
-    printCoefmat(res_unadj, digits = digits, P.values = TRUE, has.Pvalue = TRUE, na.print = "", ...)
   }
-  
-  cat("\n")
-  if (!is.na(object$nevent)) {
-    cat(paste0("n= ",x$n,", number of events= ",x$nevent))
-  } else {
-    cat(paste0("n= ",x$n))
-  }
-  cat("\n")
-  if (!is.null(x$nimput)) {
-    if (x$nimput == 1) { cat(x$nimput, " observation imputed", sep=""); cat("\n") }
-    if (x$nimput > 1) { cat(x$nimput, " observations imputed", sep=""); cat("\n") }
-  }
-  if(x$missing==1) { cat(x$missing, " observation deleted due to missingness", sep=""); cat("\n") }
-  if(x$missing >1) { cat(x$missing, " observations deleted due to missingness", sep=""); cat("\n") }
   
   if (unadjusted == TRUE) {
-    invisible(list(
-      GC = as.data.frame(res_GC_return),
-      unadjusted = as.data.frame(res_unadj)))
+    out <- list(adjusted = as.data.frame(res_GC_return), unadjusted = as.data.frame(res_unadj), model = x$model, formula = x$formula, tuning.parameters = x$tuning.parameters, n = x$n, nevent = x$nevent, nimput = x$nimput, missing = x$missing, m=x$m, pro.time = x$pro.time, digits = digits, unadjusted.flag = TRUE)
   } else {
-    invisible(list(
-      GC = as.data.frame(res_GC_return)))
+    out <- list(adjusted = as.data.frame(res_GC_return), model = x$model, formula = x$formula, tuning.parameters = x$tuning.parameters, n = x$n, nevent = x$nevent, nimput = x$nimput, missing = x$missing, m=x$m, pro.time = x$pro.time, digits = digits, unadjusted.flag = FALSE)
   }
+  class(out) <- "summary.gctimes"
+  out
 }

@@ -40,9 +40,9 @@ data(dataPROPHYVAP)
 ### Kaplan and Meier estimation of the survival at day 60
 plot(survfit(Surv(TIME_DEATH, DEATH) ~ GROUP, data = dataPROPHYVAP),
  xlab="Post-randomization time in days", ylab="Patient survival",
- mark.time=FALSE, col=c(2,1), lty=c(2,1))
+ mark.time=FALSE, col=c("red3","blue3"), lty=c(2,1))
  
-legend("bottomleft", c("Placebo", "Ceftriaxone"), col=1:2, lty=1:2) 
+legend("bottomleft", c("Placebo", "Ceftriaxone"), col=c("red3","blue3"), lty=1:2) 
 }
 
 \keyword{Dataset}

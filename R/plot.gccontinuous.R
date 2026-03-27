@@ -1,38 +1,7 @@
-plot.gccontinuous <- function (x, method="calibration", n.groups=5, smooth=FALSE, ...) {
-  if (!(method %in% c("calibration","proportion"))) {stop("Method needs to be calibration or proportion")}
+plot.gccontinuous <- function (x, n.groups=5, smooth=FALSE, ...) {
   if (!is.null(x$newdata)) {stop("Plots do not work on a transposed object, use the original object")}
-  if (method == "proportion") {
-    if (!is.null(x$m)) {stop("The \"method=proportion\" is not available when \"boot.mi=TRUE\"")}
-    
-    data = x$data
-    outcome = as.character(x$formula[[2]])
-    group = x$group
-    
-    datag0 = data[which(data[,group] == 0),]
-    datag1 = data[which(data[,group] == 1),]
-    
-    #### This part unlike survival model calibration same as obs
-    predict.m0 = mean(x$calibration$predict[which(data[,group] == 0)])
-    predict.m1 = mean(x$calibration$predict[which(data[,group] == 1)])
-    obs.m0 = mean(datag0[[outcome]]) 
-    obs.m1 = mean(datag1[[outcome]])
-    
-    
-    if (hasArg(labels) == FALSE) {
-      x_labels <- c("Group 0:\nObserved", "Group 0:\nPredicted", "Group 1:\nObserved", "Group 1:\nPredicted")
-    } else {
-      x_labels <- list(...)$labels
-    }
-    
-    plot(x=c(1,1.2,2,2.2), y=c(obs.m0,predict.m0,obs.m1,predict.m1),xlab="",ylab='',main=NULL, xaxt="n")
-    axis(1, at = c(1, 1.2, 2, 2.2), labels = x_labels)
-    
-  }
-  
-  
-  
-  if (method == "calibration") {
-    
+ 
+
     if (!is.null(x$m)) {
       cols <- if (hasArg(col)) rep(list(...)$col, length.out = x$m) else rainbow(x$m)
       ltys <- if (hasArg(lty)) rep(list(...)$lty, length.out = x$m) else rep(1, x$m)
@@ -43,7 +12,7 @@ plot.gccontinuous <- function (x, method="calibration", n.groups=5, smooth=FALSE
       all_lower = c()
       all_upper = c()
       for (i in 1:x$m) {
-        .pred = x$calibration[[i]]$predict
+        .pred = x$predictions[[i]]
         data = x$data[[i]]
         outcome = x$data[[i]][,as.character(x$formula[[2]])]
         
@@ -99,8 +68,8 @@ plot.gccontinuous <- function (x, method="calibration", n.groups=5, smooth=FALSE
         if(hasArg(lwd)==FALSE) {lwd <- 1} else {lwd <- list(...)$lwd}
         if(hasArg(pch)==FALSE) {pch <- 16} else {pch <- list(...)$pch}
         
-        if(hasArg(ylim)==FALSE) {ylim <- c(0+min(outcome)*(min(outcome < 0)),max(outcome))} else {ylim <- list(...)$ylim}
-        if(hasArg(xlim)==FALSE) {xlim  <- c(0+min(outcome)*(min(outcome < 0)),max(outcome))} else {xlim <- list(...)$xlim}
+        if(hasArg(ylim)==FALSE) {ylim <- c(min(c(.est,.obs,.lower,.upper)),max(c(.est,.obs,.lower,.upper)))} else {ylim <- list(...)$ylim}
+        if(hasArg(xlim)==FALSE) {xlim  <- c(min(c(.est,.obs,.lower,.upper)),max(c(.est,.obs,.lower,.upper)))} else {xlim <- list(...)$xlim}
         
         if(hasArg(ylab)==FALSE) {ylab <- "Observed mean"} else {ylab <- list(...)$ylab}
         if(hasArg(xlab)==FALSE) {xlab <- "Predicted mean"} else {xlab <- list(...)$xlab}
@@ -152,7 +121,7 @@ plot.gccontinuous <- function (x, method="calibration", n.groups=5, smooth=FALSE
     } else {
       
       if (any(is.na(x$data))){x$data <- na.omit(x$data) }
-      .pred = x$calibration$predict
+      .pred = x$predictions
       data = x$data
       outcome = x$data[,as.character(x$formula[[2]])]
       
@@ -202,8 +171,8 @@ plot.gccontinuous <- function (x, method="calibration", n.groups=5, smooth=FALSE
       if(hasArg(lwd)==FALSE) {lwd <- 1} else {lwd <- list(...)$lwd}
       if(hasArg(pch)==FALSE) {pch <- 16} else {pch <- list(...)$pch}
       
-      if(hasArg(ylim)==FALSE) {ylim <- c(0+min(outcome)*(min(outcome < 0)),max(outcome))} else {ylim <- list(...)$ylim}
-      if(hasArg(xlim)==FALSE) {xlim  <- c(0+min(outcome)*(min(outcome < 0)),max(outcome))} else {xlim <- list(...)$xlim}
+      if(hasArg(ylim)==FALSE) {ylim <- c(min(c(.est,.obs,.lower,.upper)),max(c(.est,.obs,.lower,.upper)))} else {ylim <- list(...)$ylim}
+      if(hasArg(xlim)==FALSE) {xlim  <- c(min(c(.est,.obs,.lower,.upper)),max(c(.est,.obs,.lower,.upper)))} else {xlim <- list(...)$xlim}
       
       if(hasArg(ylab)==FALSE) {ylab <- "Observed mean"} else {ylab <- list(...)$ylab}
       if(hasArg(xlab)==FALSE) {xlab <- "Predicted mean"} else {xlab <- list(...)$xlab}
@@ -219,6 +188,4 @@ plot.gccontinuous <- function (x, method="calibration", n.groups=5, smooth=FALSE
       
     }
     
-    
-  }
 }
