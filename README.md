@@ -53,7 +53,7 @@ gc_bin
 summary(gc_bin, ci.type="norm")
 
 # Calibration plot
-plot(gc_bin, method="calibration")
+plot(gc_bin)
 
 
 # 2. Execution with multiple imputation
@@ -64,7 +64,7 @@ gc_mi <- gc_binary(formula=.f_mi, model="elasticnet", data=dataPROPHYVAP,
                    effect="ATE", progress=TRUE, seed=8051, boot.mi=TRUE, m=5)
 
 # Plotting the calibration curve, smoothed across m imputations
-plot(gc_mi, method="calibration", smooth=TRUE) 
+plot(gc_mi, smooth=TRUE) 
 
 # Summary specifying Non-parametric CIs ("perc")
 summary(gc_mi, ci.type="perc")
@@ -93,7 +93,10 @@ gc_surv <- gc_times(formula=.ft, model="lasso", data=dataPROPHYVAP, group="GROUP
 
 gc_surv
 summary(gc_surv, ci.type="perc")
-plot(gc_surv)
+
+#Predicted survival curves for treatment groups
+plot(gc_surv, method="survival", col=c("red3","blue3"))
+legend("bottomleft", c("Placebo", "Ceftriaxone"), col=c("red3","blue3"), lty=1)
 ```
 
 ## Installation
