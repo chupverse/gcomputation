@@ -30,11 +30,9 @@
   
   
   if (missing(pro.time) | is.null(pro.time)) {
-    warning("The argument \"pro.time\" is missing, it will be set to the time where 10% of patients remain at risk")
     km_fit <- survfit(Surv(data[,times], data[,failures]) ~ 1)
     if (min(km_fit$surv) > 0.10) {
       pro.time <- max(data[,times])
-      warning("Survival never dropped below 10% and \"pro.time\" is set to the max follow-up time")
     } else {
       pro.time <- min(km_fit$time[km_fit$surv <= 0.10])
     }
@@ -78,6 +76,7 @@ functions, stratification and clustering are not implemented") }
   if(length(mod) != 2 | ((mod[1] != 0 & mod[2] != 1) & (mod[1] != 1 & mod[2] != 0))){
     stop("Two modalities encoded 0 (for non-treated/non-exposed patients) and 1 (for treated/exposed patients) are required in the \"group\" variable")
   }
+  data[,group] <- as.numeric(as.character(data[,group]))
   
   
   if(length(data[,times])!=length(data[,failures])){
@@ -87,6 +86,7 @@ functions, stratification and clustering are not implemented") }
   if(length(mod2) != 2 | ((mod2[1] != 0 & mod2[2] != 1) & (mod2[1] != 1 & mod2[2] != 0))){
     stop("Two modalities encoded 0 (for censored patients) and 1 (for events) are required in the \"failures\" variable")
   }
+  data[,failures] <- as.numeric(as.character(data[,failures]))
   
   if (!is.numeric(data[,times])){
     stop("Time variable is not numeric")}
@@ -205,13 +205,7 @@ functions, stratification and clustering are not implemented") }
 
   
   
-  ### Effect  
 
-  
-  if(effect=="ATE"){ ttt <- which(data[,group] %in% c(0,1))
-  }else if(effect=="ATT"){ ttt <- which(data[,group] == 1)
-  }else ttt <- which(data[,group] == 0 )
-  data <- data[ttt,]
   N <- length(data[,times])
   
   ### model
@@ -385,8 +379,8 @@ if(model == "lasso"){
     H0.multi = c(H0.multi, max(H0.multi))
   }
   
-  
-  results.surv.calibration <- list(fit=fit, time=T.multi, cumhaz=H.mean, surv=S.mean, H0.multi=H0.multi, lp=lp,
+  calibration.fit=fit 
+  results.surv.calibration <- list(time=T.multi, cumhaz=H.mean, surv=S.mean, H0.multi=H0.multi, lp=lp,
                                    surv0 = S.mean.0, surv1 = S.mean.1)
   
 
@@ -409,6 +403,13 @@ if(model == "lasso"){
   surv0.unadj <- c()
   surv1.unadj <- c()
   deltasurv.unadj <- c()
+  
+  data0=data1=data
+  data0[,group] = 0
+  data1[,group] = 1
+  MM  = model.matrix(formula.all, data)[,-1]
+  MM0 = model.matrix(formula.all, data0)[,-1]
+  MM1 = model.matrix(formula.all, data1)[,-1]
   
   for (b in 1:boot.number) {
     
@@ -435,27 +436,41 @@ if(model == "lasso"){
     }
     data.valid0[,group] <- 0
     data.valid1[,group] <- 1
-    
-    data0=data1=data
-    data0[,group] = 0
-    data1[,group] = 1
+
   
 
 
+    ### Fixes the issue when there is modalities not present in valid or not in train
+
+    
+    .x.learn  = MM[id,]
+    
     if (boot.type == "bcv") {
-      .x.learn  = model.matrix(formula.all, data)[,-1][id,]
-      .x.valid0 = model.matrix(formula.all, data0)[,-1][-sort(unique(id)),]
-      .x.valid1 = model.matrix(formula.all, data1)[,-1][-sort(unique(id)),]
-      
-      if (ncol(model.matrix(formula.all, droplevels(data.learn))) < ncol(model.matrix(formula.all, data.valid))) {BCVerror <- BCVerror + 1 ; next} 
+      valid_id = -sort(unique(id))
     } else {
-      .x.learn  = model.matrix(formula.all, data)[,-1][id,]
-      .x.valid0 = model.matrix(formula.all, data0)[,-1][id,]
-      .x.valid1 = model.matrix(formula.all, data1)[,-1][id,]
+      valid_id = id
+    }
+    if (length(valid_id) == 0) {
+      BCVerror <- BCVerror + 1
+      next 
     }
     
-  
-  
+    .penalty.factor.b <- rep(1, ncol(.x.learn))
+    .penalty.factor.b[which(colnames(.x.learn) == group)] <- 0
+    
+    if (effect == "ATT") {
+      valid_id = valid_id[data[valid_id,group] == 1]
+    } else if (effect == "ATU") {
+      valid_id = valid_id[data[valid_id,group] == 0]
+    }
+    if (length(valid_id) == 0) {
+      BCVerror <- BCVerror + 1
+      next 
+    }
+    
+    .x.valid0 = MM0[valid_id, colnames(.x.learn), drop=FALSE]
+    .x.valid1 = MM1[valid_id, colnames(.x.learn), drop=FALSE]
+
     
     .y.learn <- Surv(data.learn[,times], data.learn[,failures])
 
@@ -699,19 +714,21 @@ if(model == "lasso"){
   if(progress==TRUE){ close(pb) }
   
 if (pro.time.extrapolate > 1) {warning(paste0("In at least one boostrap sample the \"pro.time\" was higher than the maximum follow-up time (survival was extrapolated in ",pro.time.extrapolate," bootstrap samples). It is advised to pick a lower value for \"pro.time\""))}
-if (BCVerror > 1) {warning(paste0("Skipped ",BCVerror," bootstrap iterations and only used ", boot.number-BCVerror," iterations due to the validation dataset containing factors not in the train dataset. Either use type=\"boot\" instead of \"bcv\" or remove factors with rare modalities."))}  
+if (BCVerror > 0) {warning(paste0("Skipped ",BCVerror," bootstrap iterations and only used ", boot.number-BCVerror," iterations due to the validation dataset containing factors not in the train dataset. Either use type=\"boot\" instead of \"bcv\" or remove factors with rare modalities."))}  
 if (!is.null(.warnen)) {warning(paste0("The optimal tuning parameter alpha was equal to ",.warnen,", using ",ifelse(.warnen==0,"ridge","lasso")," instead"))}  
   
   if (model == "aic" | model == "bic") {.tune.optimal = NULL}
   
   
 
-  res <- list(calibration=as.list(results.surv.calibration),
+  res <- list(qmodel.fit=calibration.fit,
+              calibration=as.list(results.surv.calibration),
               tuning.parameters=.tune.optimal.totalpop,
               data=datakeep,
               formula=formula.all,
               model=model,
               cv=cv,
+              penalty.factor=.penalty.factor,
               missing=nmiss,
               pro.time=pro.time,
               boot.number = boot.number,
@@ -721,7 +738,8 @@ if (!is.null(.warnen)) {warning(paste0("The optimal tuning parameter alpha was e
               nevent = nevent,
               adjusted.results = data.frame(AHR = AHR, RMST0 = RMST0, RMST1 = RMST1, deltaRMST = deltaRMST, s0 = surv0, s1 = surv1, delta = deltasurv),
               unadjusted.results = data.frame(AHR = AHR.unadj, RMST0 = RMST0.unadj, RMST1 = RMST1.unadj, deltaRMST = deltaRMST.unadj, s0 = surv0.unadj, s1 = surv1.unadj, delta = deltasurv.unadj),
-              call = match.call()
+              call = match.call(),
+              seed = seed
   )
 
 

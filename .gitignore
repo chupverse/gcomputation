@@ -2,4 +2,6 @@
 .Rhistory
 .RData
 .Ruserdata
+gcomputation.Rproj
 R/test_functions.R
+tests.R

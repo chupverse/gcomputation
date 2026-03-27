@@ -63,12 +63,13 @@ functions, stratification and clustering are not implemented") }
   if(length(mod) != 2 | ((mod[1] != 0 & mod[2] != 1) & (mod[1] != 1 & mod[2] != 0))){
     stop("Two modalities encoded 0 (for non-treated/non-exposed patients) and 1 (for treated/exposed patients) are required in the \"group\" variable")
   }
-  
+  data[,group] <- as.numeric(as.character(data[,group]))
   
   mod2 <- unique(data[,outcome])
   if(length(mod2) != 2 | ((mod2[1] != 0 & mod2[2] != 1) & (mod2[1] != 1 & mod2[2] != 0))){
     stop("Two modalities encoded 0 (for censored patients) and 1 (for events) are required in the \"failures\" variable")
   }
+  data[,outcome] <- as.numeric(as.character(data[,outcome]))
   
   
   if(length(effect)!=1)
@@ -181,12 +182,7 @@ functions, stratification and clustering are not implemented") }
   
   
   
-  ### Effect  
-  
-  if(effect=="ATE"){ ttt <- which(data[,group] %in% c(0,1))
-  }else if(effect=="ATT"){ ttt <- which(data[,group] == 1)
-  }else ttt <- which(data[,group] == 0 )
-  data <- data[ttt,]
+
   N <- length(data[,outcome])
   
   ### model
@@ -295,6 +291,13 @@ functions, stratification and clustering are not implemented") }
   delta.unadj <- c()
   ratio.unadj <- c()
   
+  data0=data1=data
+  data0[,group] = 0
+  data1[,group] = 1
+  MM  = model.matrix(formula.all, data)[,-1]
+  MM0 = model.matrix(formula.all, data0)[,-1]
+  MM1 = model.matrix(formula.all, data1)[,-1]
+  
   for (b in 1:boot.number) {
     
     if(progress == TRUE){
@@ -321,25 +324,37 @@ functions, stratification and clustering are not implemented") }
     data.valid0[,group] <- 0
     data.valid1[,group] <- 1
     
-    data0=data1=data
-    data0[,group] = 0
-    data1[,group] = 1
-    
     
     ### Fixes the issue when there is modalities not present in valid or not in train
     
+    
+    .x.learn  = MM[id,]
+    
     if (boot.type == "bcv") {
-      .x.learn  = model.matrix(formula.all, data)[,-1][id,]
-      .x.valid0 = model.matrix(formula.all, data0)[,-1][-sort(unique(id)),]
-      .x.valid1 = model.matrix(formula.all, data1)[,-1][-sort(unique(id)),]
-      
-      if (ncol(model.matrix(formula.all, droplevels(data.learn))) < ncol(model.matrix(formula.all, data.valid))) {BCVerror <- BCVerror + 1 ; next} 
+      valid_id = -sort(unique(id))
     } else {
-      .x.learn  = model.matrix(formula.all, data)[,-1][id,]
-      .x.valid0 = model.matrix(formula.all, data0)[,-1][id,]
-      .x.valid1 = model.matrix(formula.all, data1)[,-1][id,]
+      valid_id = id
+    }
+    if (length(valid_id) == 0) {
+      BCVerror <- BCVerror + 1
+      next 
     }
     
+    .penalty.factor.b <- rep(1, ncol(.x.learn))
+    .penalty.factor.b[which(colnames(.x.learn) == group)] <- 0
+    
+    if (effect == "ATT") {
+      valid_id = valid_id[data[valid_id,group] == 1]
+    } else if (effect == "ATU") {
+      valid_id = valid_id[data[valid_id,group] == 0]
+    }
+    if (length(valid_id) == 0) {
+      BCVerror <- BCVerror + 1
+      next 
+    }
+    
+    .x.valid0 = MM0[valid_id, colnames(.x.learn), drop=FALSE]
+    .x.valid1 = MM1[valid_id, colnames(.x.learn), drop=FALSE]
     
     .y.learn <- data.learn[,outcome]
     
@@ -402,12 +417,12 @@ functions, stratification and clustering are not implemented") }
     if (model == "lasso") {
       if (boot.tune) {
         .cv.lasso <- cv.glmnet(x=.x.learn, y=.y.learn, family = "binomial",  type.measure = "deviance",
-                               nfolds = cv, parallel = FALSE, alpha=1, penalty.factor = .penalty.factor,keep=F,
+                               nfolds = cv, parallel = FALSE, alpha=1, penalty.factor = .penalty.factor.b,keep=F,
                                lambda=param.tune$lambda)
         .tune.optimal=list(lambda=.cv.lasso$lambda.min)
       }
       fit <- glmnet(x = .x.learn, y = .y.learn, lambda = .tune.optimal$lambda,  type.measure = "deviance",
-                    family = "binomial", alpha = 1, penalty.factor = .penalty.factor)
+                    family = "binomial", alpha = 1, penalty.factor = .penalty.factor.b)
       
       .p0 = mean(predict(fit, newx=.x.valid0, type="response"))
       .p1 = mean(predict(fit, newx=.x.valid1, type="response"))
@@ -420,12 +435,12 @@ functions, stratification and clustering are not implemented") }
     if (model == "ridge") {
       if (boot.tune) {
         .cv.ridge <- cv.glmnet(x=.x.learn, y=.y.learn, family = "binomial",  type.measure = "deviance",
-                               parallel = FALSE, alpha=0, penalty.factor = .penalty.factor, nfolds = cv,
+                               parallel = FALSE, alpha=0, penalty.factor = .penalty.factor.b, nfolds = cv,
                                lambda=param.tune$lambda)
         .tune.optimal=list(lambda=.cv.ridge$lambda.min)
       }
       fit <- glmnet(x = .x.learn, y = .y.learn, lambda = .tune.optimal$lambda,  type.measure = "deviance",
-                    family = "binomial", alpha = 0, penalty.factor = .penalty.factor)
+                    family = "binomial", alpha = 0, penalty.factor = .penalty.factor.b)
       
       .p0 = mean(predict(fit, newx=.x.valid0, type="response"))
       .p1 = mean(predict(fit, newx=.x.valid1, type="response"))
@@ -440,7 +455,7 @@ functions, stratification and clustering are not implemented") }
         for( a in 1:length(param.tune$alpha)){
           .cv.en<-glmnet::cv.glmnet(x=.x.learn, y=.y.learn, family = "binomial",  type.measure = "deviance",
                                     parallel = FALSE, alpha=param.tune$alpha[a],
-                                    penalty.factor = .penalty.factor,
+                                    penalty.factor = .penalty.factor.b,
                                     lambda=param.tune$lambda)
           .results<-rbind(.results,
                           cbind(rep(param.tune$alpha[a],length(.cv.en$lambda)),.cv.en$lambda,.cv.en$cvm))
@@ -451,7 +466,7 @@ functions, stratification and clustering are not implemented") }
                            lambda=.results[which(.results$cvm==min(.results$cvm)),2][1] )
       }
       fit <- glmnet(x = .x.learn, y = .y.learn, lambda = .tune.optimal$lambda,  type.measure = "deviance",
-                    family = "binomial", alpha = .tune.optimal$alpha, penalty.factor = .penalty.factor)
+                    family = "binomial", alpha = .tune.optimal$alpha, penalty.factor = .penalty.factor.b)
       
       .p0 = mean(predict(fit, newx=.x.valid0, type="response"))
       .p1 = mean(predict(fit, newx=.x.valid1, type="response"))
@@ -476,17 +491,19 @@ functions, stratification and clustering are not implemented") }
   
   if(progress==TRUE){ close(pb) }
   
-  if (BCVerror > 1) {warning(paste0("Skipped ",BCVerror," bootstrap iterations and only used ", boot.number-BCVerror," iterations due to the validation dataset containing factors not in the train dataset. Either use type=\"boot\" instead of \"bcv\" or remove factors with rare modalities."))}  
+  if (BCVerror > 0) {warning(paste0("Skipped ",BCVerror," bootstrap iterations and only used ", boot.number-BCVerror," iterations due to the validation dataset containing factors not in the train dataset. Either use type=\"boot\" instead of \"bcv\" or remove factors with rare modalities."))}  
   if (!is.null(.warnen)) {warning(paste0("The optimal tuning parameter alpha was equal to ",.warnen,", using ",ifelse(.warnen==0,"ridge","lasso")," instead"))}  
   
   
   
-  res <- list(calibration=list(fit=calibration.fit,predict=calibration.predict),
+  res <- list(qmodel.fit=calibration.fit,
+              predictions=calibration.predict,
               tuning.parameters=.tune.optimal.totalpop,
               data=datakeep,
               formula=formula.all,
               model=model,
               cv=cv,
+              penalty.factor=.penalty.factor,
               missing=nmiss,
               boot.number = boot.number,
               boot.type = boot.type,
@@ -495,7 +512,8 @@ functions, stratification and clustering are not implemented") }
               nevent = nevent,
               adjusted.results = data.frame(p1 = p1, p0 = p0, delta = delta, ratio = ratio, OR = OR),
               unadjusted.results = data.frame(p1 = p1.unadj, p0 = p0.unadj, delta = delta.unadj, ratio = ratio.unadj, OR = OR.unadj),
-              call = match.call()
+              call = match.call(),
+              seed = seed
   )
   
   class(res) <- "gcbinary"

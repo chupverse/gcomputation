@@ -15,10 +15,10 @@ gc_count(formula, data, group, effect="ATE", model,
 \arguments{
   \item{formula}{A regression formula related to the Q-model with the variable \code{group} among the predictors.}
   \item{data}{A data frame in which to look for the variables related to the outcome, the studied (\code{group}) and the predictors included in the previous model.}
-  \item{group}{The name of the variable related to the exposure/treatment. This variable shall have only two modalities encoded 0 for the untreated/unexposed patients and 1 for the treated/exposed ones.}
+  \item{group}{The name of the variable related to the exposure/treatment. This variable shall have only two modalities encoded 0 for the untreated/unexposed subjects and 1 for the treated/exposed ones.}
    \item{effect}{The type of the marginal effect to be estimated. Three types are possible : "ATE" (by default), "ATT" and "ATU". See details.}   
-   \item{model}{The modelling method used to create the Q-model. Current implemented methods are : "all", "lasso", "ridge", "elasticnet" and "aic". See details.} 
-   \item{param.tune}{An optional argument to specify the tuning parameter(s) for theprevious  modelling method. If \code{NULL} (the default), the tuning parameter(s) is(are) estimated by \code{cv}-fold cross-validation. Otherwise, the user can propose a tuning grid. See details.}
+   \item{model}{The modelling method used to create the Q-model. Current implemented methods are : "all", "lasso", "ridge", "elasticnet", "aic" and "bic". See details.} 
+   \item{param.tune}{An optional argument to specify the tuning parameter(s) for the previous  modelling method. If \code{NULL} (the default), the tuning parameter(s) is(are) estimated by \code{cv}-fold cross-validation. Otherwise, the user can propose a tuning grid. See details.}
     \item{cv}{The number of splits for cross-validation. The default value is 30.}
     \item{boot.type}{The type of bootstrap to use. Two types are possible: "bcv" for bootstrap cross-validation (by default) and "boot" usual bootstrap. See details.}
     \item{boot.number}{The number of bootstrap resamples. The default value is 500.}
@@ -31,13 +31,13 @@ gc_count(formula, data, group, effect="ATE", model,
  }
 
 \details{
-The option \code{methods="ATE"} corresponds to the Average Treatment effect on the Entire population, i.e. the marginal effect if the entire sample were treated versus untreated. The "ATT" modality allows the estimation of the Average Treatment effect on the Treated, i.e. the marginal effect if the treated patients (\code{group = 1}) would have been untreated. The "ATU" modality allows the estimation of the Average Treatment effect on the Untreated, i.e. the marginal effect if the untreated patients (\code{group = 0}) would have been treated.
+The option \code{methods="ATE"} corresponds to the Average Treatment effect on the Entire population, i.e. the marginal effect if the entire sample were treated versus untreated. The "ATT" modality allows the estimation of the Average Treatment effect on the Treated, i.e. the marginal effect if the treated subjects (\code{group = 1}) would have been untreated. The "ATU" modality allows the estimation of the Average Treatment effect on the Untreated, i.e. the marginal effect if the untreated subjects (\code{group = 0}) would have been treated.
 
 Several modelling methods can be used for the Q-model estimation:
 \tabular{lll}{
 \code{"all"} \tab A Poission regression,  all the covariates in the formula being used.\cr
-\code{"lasso"} \tab L1 regularized Poission regression allows predictors' selection.\cr
-\code{"ridge"} \tab L2 regularized Poission regression allows considering highly correlated predictors.\cr
+\code{"lasso"} \tab L1 regularized Poission regression allowing predictors' selection.\cr
+\code{"ridge"} \tab L2 regularized Poission regression allowing highly correlated predictors.\cr
 \code{"elasticnet"} \tab A Poissionregression which combines both L1 and L2 regularizations.\cr
 \code{"aic"} \tab A Poission regression with a AIC-based forward selection.\cr
 \code{"bic"} \tab A Poission regression with a BIC-based forward selection.
@@ -47,16 +47,20 @@ The \code{param.tune} argument allows users to specify tuning parameters penaliz
 
 The \code{boot.tune} argument is logical value which determines whether the tuning parameter should be estimated inside of each bootstrap iteration. If \code{FALSE} (the default), the tuning parameter will be estimated once on the complete dataset.
 
+The \code{boot.type} argument controls how bootstrap estimates are computed. With \code{boot.type = "boot"}, each iteration fits the Q-model on a sampled dataset and predicts on the same patients. With \code{boot.type = "bcv"}, the Q-model is fitted on the sampled patients but predictions are made on patients not included in that sample.
+
 If \code{boot.mi = TRUE}, multiple imputation is considered by using the MI-BOOT approach proposed by Schomaker & Heumann (2018). The input \code{data} is first imputed with the \code{\link[mice]{mice}} function to create \code{m} complete datasets. GC is then performed on each imputed dataset with the specified Q-model, and bootstrap estimates from all runs are concatenated. Note that all columns in the provided dataset are used as predictors during the imputation process.
 }
 
 \value{
-\item{calibration}{A list containing the fitted Q-model (\code{fit}) and the outcome predictions (\code{predict}).}
+\item{qmodel.fit}{The fitted Q-model.}
+\item{predictions}{The outcome predictions obtained on the complete dataset.}
 \item{tuning.parameters}{The estimated tuning parameters for the Q-model. For "aic" and "bic" methods, this represents the final model.}
 \item{data}{The data frame with individual with no missing data in the formula parameters.}
-\item{formula}{The formula provided to the user.}
+\item{formula}{The formula provided by the user.}
 \item{model}{The method used for the Q-model.}
 \item{cv}{The number of splits used for cross-validation.}
+\item{penalty.factor}{The penalty factors used for the penalized regression. The variable \code{group} has a penalty factor of 0 (no penalization) and 1 for the others.}
 \item{missing}{The number of observations that were removed from the original dataset due to missing values.}
 \item{boot.number}{The total number of bootstrap resamples.}
 \item{boot.type}{The type of bootstrap.}
@@ -65,6 +69,10 @@ If \code{boot.mi = TRUE}, multiple imputation is considered by using the MI-BOOT
 \item{adjusted.results}{A data frame containing the adjusted results for each bootstrap sample: \code{c1} (mean count experimental), \code{c0} (mean count control), \code{delta} (difference), and \code{ratio} (rate ratio).}
 \item{unadjusted.results}{A data frame containing the unadjusted results for each bootstrap sample: \code{c1} (mean count experimental), \code{c0} (mean count control), \code{delta} (difference), and \code{ratio} (rate ratio).}
 \item{call}{The function call that generated the \code{gccontinuous} object.}
+\item{m}{The number of multiple imputations performed (only present if \code{mi.boot = TRUE}).}
+\item{initial.data}{The original dataset provided by the user, before any imputation (only present if \code{mi.boot = TRUE}).}
+\item{nimput}{The number of observations with missing values that were removed from the dataset prior to imputation (only present if \code{mi.boot = TRUE}).}
+\item{seed}{The random seed used.}
 }
 
 \references{

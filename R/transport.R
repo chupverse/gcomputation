@@ -1,10 +1,10 @@
-transport <- function(object, newdata, boot.number=500, seed=NULL) {
+transport <- function(object, newdata, n.sim=500, seed=NULL) {
   if (!inherits(object, c("gcbinary", "gctimes", "gccount", "gccontinuous" ))) {
     stop("object must be of class 'gcbinary', 'gctimes', 'gccontinuous' or 'gccount'")
   }
   if (!is.null(object$newdata)) {stop("Cannot transport an already transported object")}
   
-  fit <- object$calibration$fit 
+  fit <- object$qmodel.fit
   model <- object$model
   
   if(model %in% c("lasso","ridge","elasticnet")) {
@@ -68,7 +68,8 @@ transport <- function(object, newdata, boot.number=500, seed=NULL) {
       .ratio <- .p1 / .p0
       
       res <- list(
-        calibration = object$calibration,
+        qmodel.fit = object$qmodel.fit,
+        predictions = object$predictions,
         tuning.parameters = object$tuning.parameters,
         data = object$data,
         newdata = newdata,
@@ -76,7 +77,7 @@ transport <- function(object, newdata, boot.number=500, seed=NULL) {
         model = model,
         cv = object$cv,
         missing = nmiss,
-        boot.number = 1,
+        n.sim = 1,
         group = group,
         n = nrow(newdata) - nmiss,
         nevent = NA,
@@ -92,7 +93,7 @@ transport <- function(object, newdata, boot.number=500, seed=NULL) {
       beta.hat <- coef(fit)
       V.beta <- vcov(fit)
 
-    sim_betas <- MASS::mvrnorm(n = boot.number, mu = beta.hat, Sigma = V.beta)
+    sim_betas <- MASS::mvrnorm(n = n.sim, mu = beta.hat, Sigma = V.beta)
     
     
     p0 <- c()
@@ -101,7 +102,7 @@ transport <- function(object, newdata, boot.number=500, seed=NULL) {
     delta <- c()
     ratio <- c()
     
-    for(b in 1:boot.number) {
+    for(b in 1:n.sim) {
       coef.mc <- sim_betas[b,]
       
       data.valid0 <- data.valid1 <- data.valid <- newdata
@@ -127,7 +128,8 @@ transport <- function(object, newdata, boot.number=500, seed=NULL) {
       ratio <- c(ratio, .ratio)  
       }
     
-    res <- list(calibration=object$calibration, 
+    res <- list(qmodel.fit = object$qmodel.fit,
+                predictions = object$predictions,
                 tuning.parameters=object$tuning.parameters, 
                 data=object$data, 
                 newdata=newdata,
@@ -135,7 +137,7 @@ transport <- function(object, newdata, boot.number=500, seed=NULL) {
                 model=model,
                 cv=object$cv, 
                 missing=nmiss,
-                boot.number = boot.number,
+                n.sim = n.sim,
                 group=group,
                 n = nrow(newdata) - nmiss,
                 nevent = NA,
@@ -201,6 +203,7 @@ transport <- function(object, newdata, boot.number=500, seed=NULL) {
     .surv1 <- .S.mean.1[findInterval(pro.time, T.multi, rightmost.closed = TRUE)]
     
     res <- list(
+      qmodel.fit = object$qmodel.fit,
       calibration = object$calibration,
       tuning.parameters = object$tuning.parameters,
       data = object$data,
@@ -210,7 +213,7 @@ transport <- function(object, newdata, boot.number=500, seed=NULL) {
       cv = object$cv,
       missing = nmiss,
       pro.time = pro.time,
-      boot.number = 1,
+      n.sim = 1,
       group = group,
       n = nrow(newdata) - nmiss,
       nevent = NA,
@@ -246,7 +249,7 @@ transport <- function(object, newdata, boot.number=500, seed=NULL) {
         model = model,
         cv = object$cv,
         missing = nmiss,
-        boot.number = 1, 
+        n.sim = 1, 
         group = group,
         n = nrow(newdata) - nmiss,
         adjusted.results = data.frame(c1 = .c1, c0 = .c0, delta = .delta, ratio = .ratio),
@@ -259,11 +262,11 @@ transport <- function(object, newdata, boot.number=500, seed=NULL) {
     } else { 
       beta.hat <- coef(fit)
       V.beta <- vcov(fit)
-      sim_betas <- MASS::mvrnorm(n = boot.number, mu = beta.hat, Sigma = V.beta)
+      sim_betas <- MASS::mvrnorm(n = n.sim, mu = beta.hat, Sigma = V.beta)
       
       c0 <- c(); c1 <- c(); delta <- c(); ratio <- c()
       
-      for(b in 1:boot.number) {
+      for(b in 1:n.sim) {
         coef.mc <- sim_betas[b,]
         data.valid0 <- data.valid1 <- data.valid <- newdata
         data.valid0[,group] <- 0
@@ -294,7 +297,7 @@ transport <- function(object, newdata, boot.number=500, seed=NULL) {
         model = model,
         cv = object$cv,
         missing = nmiss,
-        boot.number = boot.number,
+        n.sim = n.sim,
         group = group,
         n = nrow(newdata) - nmiss,
         adjusted.results = data.frame(c1 = c1, c0 = c0, delta = delta, ratio = ratio),
@@ -321,7 +324,8 @@ transport <- function(object, newdata, boot.number=500, seed=NULL) {
       .ratio <- .m1 / .m0 
       
       res <- list(
-        calibration = object$calibration,
+        qmodel.fit = object$qmodel.fit,
+        predictions = object$predictions,
         tuning.parameters = object$tuning.parameters,
         data = object$data,
         newdata = newdata,
@@ -329,7 +333,7 @@ transport <- function(object, newdata, boot.number=500, seed=NULL) {
         model = model,
         cv = object$cv,
         missing = nmiss,
-        boot.number = 1,
+        n.sim = 1,
         group = group,
         n = nrow(newdata) - nmiss,
         adjusted.results = data.frame(m1 = .m1, m0 = .m0, delta = .delta, ratio = .ratio),
@@ -342,14 +346,14 @@ transport <- function(object, newdata, boot.number=500, seed=NULL) {
     } else { 
       beta.hat <- coef(fit) 
       V.beta <- vcov(fit) 
-      sim_betas <- MASS::mvrnorm(n = boot.number, mu = beta.hat, Sigma = V.beta) 
+      sim_betas <- MASS::mvrnorm(n = n.sim, mu = beta.hat, Sigma = V.beta) 
       
       m0 <- c() 
       m1 <- c()
       delta <- c()
       ratio <- c() 
       
-      for (b in 1:boot.number) {
+      for (b in 1:n.sim) {
         coef.mc <- sim_betas[b, ] 
         data.valid0 <- data.valid1 <- data.valid <- newdata 
         data.valid0[, group] <- 0 
@@ -374,7 +378,8 @@ transport <- function(object, newdata, boot.number=500, seed=NULL) {
       }
       
       res <- list(
-        calibration = object$calibration,
+        qmodel.fit = object$qmodel.fit,
+        predictions = object$predictions,
         tuning.parameters = object$tuning.parameters,
         data = object$data,
         newdata = newdata,
@@ -382,7 +387,7 @@ transport <- function(object, newdata, boot.number=500, seed=NULL) {
         model = model,
         cv = object$cv,
         missing = nmiss,
-        boot.number = boot.number,
+        n.sim = n.sim,
         group = group,
         n = nrow(newdata) - nmiss,
         adjusted.results = data.frame(m1 = m1, m0 = m0, delta = delta, ratio = ratio),

@@ -36,7 +36,8 @@
   alphas <- c()
   
   datas <- list()
-  calibrations <- list()
+  predictions <- list()
+  qmodel.fits <- list()
   formulas <- list()
   
   final_res <- NULL
@@ -62,7 +63,8 @@
                           boot.tune = boot.tune, progress = FALSE, seed = gc_seed)
     
     datas[[i]] <- current_imputed_data
-    calibrations[[i]] <- gc_res$calibration
+    predictions[[i]] <- gc_res$predictions
+    qmodel.fits[[i]] <- gc_res$qmodel.fit
     
     p0 <- c(p0, gc_res$adjusted.results$p0)
     p1 <- c(p1, gc_res$adjusted.results$p1)
@@ -102,7 +104,8 @@
   
   
   final_res$data <- datas
-  final_res$calibration <- calibrations
+  final_res$predictions <- predictions
+  final_res$qmodel.fit <- qmodel.fits
   final_res$adjusted.results <- list(p1 = p1, p0 = p0, delta = delta, ratio = ratio, OR = OR)
   final_res$unadjusted.results <- list(p1 = p1.unadj, p0 = p0.unadj, delta = delta.unadj, ratio = ratio.unadj, OR = OR.unadj)
   final_res$boot.number <- m * boot.number
@@ -111,6 +114,7 @@
   final_res$m <- m
   final_res$initial.data <- data
   final_res$nimput <- nmiss_initial
+  final_res$seed <- seed
     
   if (model %in% c("all","aic","bic")) {
     final_res$tuning.parameters <- formulas

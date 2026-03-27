@@ -1,5 +1,8 @@
-print.gccontinuous<- function (x, digits=4, ...)
+
+
+print.summary.gctimes <- function (x, ...)
 {
+  digits <- x$digits
   if (x$model %in% c("lasso","ridge","elasticnet")) {
     cat("model: ",x$model, sep = "")
     if (is.null(x$m)) {
@@ -11,31 +14,30 @@ print.gccontinuous<- function (x, digits=4, ...)
       if (x$model == "ridge") {
         cat("lambda= ",round(x$tuning.parameters$lambda,digits=digits),sep=" ")}
     }
-    cat("\nfamily: gaussian(link = 'identity')")
+    cat("\nProportional hazard regression (Breslow estimator)")
     cat("\nCall:", "\n", sep = "")
     dput(x$formula)
   }
   if (x$model %in% c("all","aic","bic")) {
-    cat(x$model," model \nfamily: gaussian(link = 'identity')\nCall:", "\n", sep = "")
+    cat(x$model," model \nProportional hazard regression (Breslow estimator)\nCall:", "\n", sep = "")
     if (is.null(x$m)) {dput(x$tuning.parameters)} else {dput(x$tuning.parameters[[1]])}
   }
   cat("\n")
+  cat("G-computation: \n")
+  printCoefmat(as.matrix(x$adjusted), digits = digits, P.values = TRUE, has.Pvalue = TRUE, na.print = "", ...)
+  cat("\n")
   
-  cat("Estimates: \n")
-  res <- matrix(c(mean(x$adjusted.results$m0, na.rm=TRUE),
-                  mean(x$adjusted.results$m1, na.rm=TRUE),
-                  mean(x$adjusted.results$delta, na.rm=TRUE),
-                  mean(x$adjusted.results$ratio, na.rm=TRUE)),
-                nrow = 1)
-  colnames(res) <- c("m0", "m1", "m1-m0", "m1/m0")
-  rownames(res) <- ""
-  
-  printCoefmat(res, digits = digits, ..., P.values = FALSE, has.Pvalue = FALSE, na.print = "")
-  
+  if (x$unadjusted.flag == TRUE) {
+    cat("Unadjusted: \n")
+    printCoefmat(as.matrix(x$unadjusted), digits = digits, P.values = TRUE, has.Pvalue = TRUE, na.print = "", ...)
+  }
   
   cat("\n")
-  cat(paste0("n= ",x$n))
-  
+  if (!is.na(x$nevent)) {
+    cat(paste0("n= ",x$n,", number of events= ",x$nevent))
+  } else {
+    cat(paste0("n= ",x$n))
+  }
   cat("\n")
   if (!is.null(x$nimput)) {
     if (x$nimput == 1) { cat(x$nimput, " observation imputed", sep=""); cat("\n") }
@@ -43,4 +45,6 @@ print.gccontinuous<- function (x, digits=4, ...)
   }
   if(x$missing==1) { cat(x$missing, " observation deleted due to missingness", sep=""); cat("\n") }
   if(x$missing >1) { cat(x$missing, " observations deleted due to missingness", sep=""); cat("\n") }
+  
+  invisible(x)
 }

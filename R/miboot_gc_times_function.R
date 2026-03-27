@@ -46,6 +46,7 @@
   
   datas <- list()
   calibrations <- list()
+  qmodel.fits <- list()
   formulas <- list()
   
   final_res <- NULL
@@ -72,6 +73,7 @@
     
     datas[[i]] <- current_imputed_data
     calibrations[[i]] <- gc_res$calibration
+    qmodel.fits[[i]] <- gc_res$qmodel.fit
     
     AHR <- c(AHR, gc_res$adjusted.results$AHR)
     RMST0 <- c(RMST0, gc_res$adjusted.results$RMST0)
@@ -82,7 +84,7 @@
     delta <- c(delta, gc_res$adjusted.results$delta)
     AHR.unadj <- c(AHR.unadj, gc_res$unadjusted.results$AHR)
     RMST0.unadj <- c(RMST0.unadj, gc_res$unadjusted.results$RMST0)
-    RMST1.unadj <- c(RMST1.unadj, gc_res$unadjusted.results$RMST1.unadj)
+    RMST1.unadj <- c(RMST1.unadj, gc_res$unadjusted.results$RMST1)
     deltaRMST.unadj <- c(deltaRMST.unadj, gc_res$unadjusted.results$deltaRMST)
     s0.unadj <- c(s0.unadj, gc_res$unadjusted.results$s0)
     s1.unadj <- c(s1.unadj, gc_res$unadjusted.results$s1)
@@ -115,6 +117,7 @@
   
   final_res$data <- datas
   final_res$calibration <- calibrations
+  final_res$qmodel.fit <- qmodel.fits
   
   final_res$adjusted.results <- data.frame(AHR = AHR, RMST0 = RMST0, RMST1 = RMST1, deltaRMST = deltaRMST, s0 = s0, s1 = s1, delta = delta)
   final_res$unadjusted.results <- data.frame(AHR = AHR.unadj, RMST0 = RMST0.unadj, RMST1 = RMST1.unadj, deltaRMST = deltaRMST.unadj, s0 = s0.unadj, s1 = s1.unadj, delta = delta.unadj)
@@ -126,6 +129,7 @@
   final_res$m <- m
   final_res$initial.data <- data
   final_res$nimput <- nmiss_initial
+  final_res$seed <- seed
   
   if (model %in% c("all","aic","bic")) {
     final_res$tuning.parameters <- formulas

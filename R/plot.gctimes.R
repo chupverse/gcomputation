@@ -47,13 +47,13 @@ plot.gctimes <- function (x, method="calibration", n.groups=5, pro.time=NULL, sm
     if(hasArg(xlab)==FALSE) {xlab <- ""} else {xlab <- list(...)$xlab}
     if(hasArg(main)==FALSE) {main <- ""} else {main <- list(...)$main}
     
-    plot(.time, .s0, type="l",
+    plot(.time, .s0, type="s",
          col = col[1], lty = lty[1], lwd = lwd,
          ylim = ylim, xlim = xlim,
          xlab = xlab, ylab = ylab, main = main,
          cex = cex, cex.lab = cex.lab, cex.axis = cex.axis, cex.main = cex.main)
     
-    lines(.time, .s1, col = col[2], lty = lty[2], lwd = lwd)
+    lines(.time, .s1, col = col[2], lty = lty[2], lwd = lwd, type="s")
   }
   
   
@@ -123,8 +123,8 @@ plot.gctimes <- function (x, method="calibration", n.groups=5, pro.time=NULL, sm
         if(hasArg(lwd)==FALSE) {lwd <- 1} else {lwd <- list(...)$lwd}
         if(hasArg(pch)==FALSE) {pch <- 16} else {pch <- list(...)$pch}
         
-        if(hasArg(ylim)==FALSE) {ylim <- c(0,1)} else {ylim <- list(...)$ylim}
-        if(hasArg(xlim)==FALSE) {xlim  <- c(0,1)} else {xlim <- list(...)$xlim}
+        if(hasArg(ylim)==FALSE) {ylim <- c(min(c(.est,.obs,.lower,.upper)),max(c(.est,.obs,.lower,.upper)))} else {ylim <- list(...)$ylim}
+        if(hasArg(xlim)==FALSE) {xlim  <- c(min(c(.est,.obs,.lower,.upper)),max(c(.est,.obs,.lower,.upper)))} else {xlim <- list(...)$xlim}
         
         if(hasArg(ylab)==FALSE) {ylab <- "Observed survival"} else {ylab <- list(...)$ylab}
         if(hasArg(xlab)==FALSE) {xlab <- "Predicted survival"} else {xlab <- list(...)$xlab}
@@ -218,8 +218,8 @@ plot.gctimes <- function (x, method="calibration", n.groups=5, pro.time=NULL, sm
       if(hasArg(lwd)==FALSE) {lwd <- 1} else {lwd <- list(...)$lwd}
       if(hasArg(pch)==FALSE) {pch <- 16} else {pch <- list(...)$pch}
       
-      if(hasArg(ylim)==FALSE) {ylim <- c(0,1)} else {ylim <- list(...)$ylim}
-      if(hasArg(xlim)==FALSE) {xlim  <- c(0,1)} else {xlim <- list(...)$xlim}
+      if(hasArg(ylim)==FALSE) {ylim <- c(min(c(.est,.obs,.lower,.upper)),max(c(.est,.obs,.lower,.upper)))} else {ylim <- list(...)$ylim}
+      if(hasArg(xlim)==FALSE) {xlim  <- c(min(c(.est,.obs,.lower,.upper)),max(c(.est,.obs,.lower,.upper)))} else {xlim <- list(...)$xlim}
       
       if(hasArg(ylab)==FALSE) {ylab <- "Observed survival"} else {ylab <- list(...)$ylab}
       if(hasArg(xlab)==FALSE) {xlab <- "Predicted survival"} else {xlab <- list(...)$xlab}

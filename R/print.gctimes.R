@@ -1,16 +1,24 @@
 print.gctimes <- function (x, digits=4, ...)
 {
-  if (x$model %in% c("lasso","ridge","elasticnet")) {cat("model: ",x$model,", tuning parameters: ", sep = "")
-    if (x$model == "elasticnet") {
-      cat("lambda= ",round(x$tuning.parameters$lambda,digits=digits), " alpha= ",round(x$tuning.parameters$alpha,digits=digits),sep=" ")}
-    if (x$model == "lasso") {
-      cat("lambda= ",round(x$tuning.parameters$lambda,digits=digits),sep=" ")}
-    if (x$model == "ridge") {
-      cat("lambda= ",round(x$tuning.parameters$lambda,digits=digits),sep=" ")}
+  if (x$model %in% c("lasso","ridge","elasticnet")) {
+    cat("model: ",x$model, sep = "")
+    if (is.null(x$m)) {
+      cat(", tuning parameters: ", sep = "")
+      if (x$model == "elasticnet") {
+        cat("lambda= ",round(x$tuning.parameters$lambda,digits=digits), " alpha= ",round(x$tuning.parameters$alpha,digits=digits),sep=" ")}
+      if (x$model == "lasso") {
+        cat("lambda= ",round(x$tuning.parameters$lambda,digits=digits),sep=" ")}
+      if (x$model == "ridge") {
+        cat("lambda= ",round(x$tuning.parameters$lambda,digits=digits),sep=" ")}
+    }
+    cat("\nProportional hazard regression (Breslow estimator)")
     cat("\nCall:", "\n", sep = "")
-    dput(x$formula)}
-  if (x$model %in% c("all","aic","bic")) {cat(x$model," model \nCall:", "\n", sep = "")
-    dput(x$tuning.parameters)}
+    dput(x$formula)
+  }
+  if (x$model %in% c("all","aic","bic")) {
+    cat(x$model," model \nProportional hazard regression (Breslow estimator)\nCall:", "\n", sep = "")
+    if (is.null(x$m)) {dput(x$tuning.parameters)} else {dput(x$tuning.parameters[[1]])}
+  }
   cat("\n")
   
   cat("Estimates: \n")
