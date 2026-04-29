@@ -45,7 +45,7 @@ transport <- function(object, newdata, n.sim=500, seed=NULL) {
     nmiss <- 0
   }
   
-  if(is.null(seed)) {seed <- sample(1:10000,1)}
+  if(!is.null(seed)) {set.seed(seed)}
   set.seed(seed)
   
   if (inherits(object, "gcbinary")) {

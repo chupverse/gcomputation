@@ -124,7 +124,6 @@
   
   
   final_res$boot.number <- m * boot.number
-  final_res$seed <- seed
   final_res$call <- cl
   final_res$m <- m
   final_res$initial.data <- data

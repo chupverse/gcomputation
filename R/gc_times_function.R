@@ -26,7 +26,7 @@
   datakeep <- data[,which(colnames(data) %in% all.vars(formula))]
   data <- data[,which(colnames(data) %in% all.vars(formula))]
   
-  if(is.null(seed)) {seed <- sample(1:1000,1)}
+  if(!is.null(seed)) {set.seed(seed)}
   
   
   if (missing(pro.time) | is.null(pro.time)) {

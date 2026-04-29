@@ -104,7 +104,6 @@
   final_res$unadjusted.results <- data.frame(c1 = c1.unadj, c0 = c0.unadj, delta = delta.unadj, ratio = ratio.unadj)
   
   final_res$boot.number <- m * boot.number
-  final_res$seed <- seed
   final_res$call <- cl
   final_res$m <- m
   final_res$initial.data <- data

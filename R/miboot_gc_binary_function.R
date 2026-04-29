@@ -109,7 +109,6 @@
   final_res$adjusted.results <- list(p1 = p1, p0 = p0, delta = delta, ratio = ratio, OR = OR)
   final_res$unadjusted.results <- list(p1 = p1.unadj, p0 = p0.unadj, delta = delta.unadj, ratio = ratio.unadj, OR = OR.unadj)
   final_res$boot.number <- m * boot.number
-  final_res$seed <- seed
   final_res$call <- cl
   final_res$m <- m
   final_res$initial.data <- data
