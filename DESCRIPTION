@@ -1,10 +1,10 @@
 Package: gcomputation
 Type: Package
-Title: An R Package for Causal Inference by using G-Computation
+Title: Causal Inference by using G-Computation
 Version: 0.34
 Depends: R (>= 4.0.0), survival, hdnom, glmnet, MASS, mice
 Imports: graphics, utils, methods, grDevices, stats
-Description: Several functions and S3 methods for G-computation and emulation of clinical trials. It allows for flexible estimation of the outcome model, especially  penalized regressions (Lasso, Ridge, or Elasticnet) for binary, continuous, counting, or right-censored time-to-event outcomes. Average treatment effect among the entire population (ATE) or among the treated population (ATT) can be estimated. The method for time-to-events is described in <doi:10.1038/s41598-020-65917-x>.  For a binary outcome, details are available at <doi:10.1177/09622802211047345>.
+Description: Several functions and S3 methods for G-computation and emulation of clinical trials. It allows for flexible estimation of the outcome model, especially  penalized regressions (Lasso, Ridge, or Elasticnet) for binary, continuous, counting, or right-censored time-to-event outcomes. Average treatment effect among the entire population (ATE) or among the treated population (ATT) can be estimated. The method for time-to-events is described by Chatton et al. (2020) <doi:10.1038/s41598-020-65917-x>.  For a binary outcome, details are available in the paper proposed by Chatton et al. (2022) <doi:10.1177/09622802211047345>.
 License: GPL (>=2)
 Encoding: UTF-8
 LazyLoad: yes
