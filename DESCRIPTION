@@ -1,7 +1,7 @@
 Package: gcomputation
 Type: Package
 Title: Causal Inference by using G-Computation
-Version: 0.35
+Version: 0.36
 Depends:
     R (>= 4.0.0), mice, survival, glmnet, hdnom
 Imports:

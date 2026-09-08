@@ -1,4 +1,4 @@
-transport <- function(object, newdata, estim_var, nboot = 100, n.sim=500, seed=NULL) {
+transport <- function(object, newdata, estim_var, nboot=1000, n.sim=500, seed=NULL) {
   if (!inherits(object, c("gcbinary", "gctimes", "gccount", "gccontinuous" ))) {
     stop("object must be of class 'gcbinary', 'gctimes', 'gccontinuous' or 'gccount'")
   }
