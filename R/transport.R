@@ -517,6 +517,10 @@ transport <- function(object, newdata, estim_var, nboot = 100, n.sim=500, seed=N
       stop("bootstrap for object gctimes not implemented.")
     }
     
+    if(model %in% c("aic", "bic")){
+      stop("bootstrap is not yet implemented for models selected using AIC or BIC.")
+    }
+    
     form <- object$formula
     data_form <- object$data %>%
       dplyr::select(all.vars(form))  
@@ -690,7 +694,8 @@ create_mestim_obj <- function(gc, data_target){
               grp_var = grp_var,
               formula = form,
               family = family,
-              root_start = root_start)
+              root_start = root_start,
+              qmodel_fit = gc$qmodel.fit)
   
   class(out) <- c(paste0("mestim_", family), "mestim_list")
   
@@ -737,7 +742,7 @@ Mestimation_process.mestim_gaussian <- function(mestim_list, ...){
   n_estimands    <- length(estimands)
   estimands_names <- names(estimands)
   
-  fun_mestimate <- function(data, m, n, formula, group_var, family){
+  fun_mestimate <- function(data, m, n, formula, model_terms, group_var, family){
     
     vars_f <- all.vars(formula)
     
@@ -760,9 +765,11 @@ Mestimation_process.mestim_gaussian <- function(mestim_list, ...){
     data0[ ,group_var] <- 0
     data1[ ,group_var] <- 1
     
-    mm <- model.matrix(object = delete.response(terms(formula)), data = data)
-    mm0 <- model.matrix(object = delete.response(terms(formula)), data = data0)
-    mm1 <- model.matrix(object = delete.response(terms(formula)), data = data1)
+    mm  <- model.matrix(model_terms, data = data)
+    mm0 <- model.matrix(model_terms, data = data0)
+    mm1 <- model.matrix(model_terms, data = data1)
+    
+    
     
     function(theta){
       
@@ -778,6 +785,8 @@ Mestimation_process.mestim_gaussian <- function(mestim_list, ...){
         ((m + n)/m)*(1-S)*link_fun(lp0) - theta[p+1],
         ((m + n)/m)*(1-S)*link_fun(lp1) - theta[p+2]
       )
+      
+      
       
       eq_estimands <- vapply(seq_len(n_estimands), function(i){
         estimands[[i]](theta[p+1], theta[p+2]) - theta[p+2+i]
@@ -796,7 +805,8 @@ Mestimation_process.mestim_gaussian <- function(mestim_list, ...){
     data   = mestim_list$data,
     outer_args = list(n = mestim_list$n, 
                       m = mestim_list$m, 
-                      formula = mestim_list$formula,
+                      formula = mestim_list$form,
+                      model_terms = delete.response(terms(mestim_list$qmodel_fit)), 
                       group_var = mestim_list$grp_var,
                       family = mestim_list$family),
     root_control = geex::setup_root_control(start = mestim_list$root_start))
@@ -815,7 +825,7 @@ Mestimation_process.mestim_gaussian <- function(mestim_list, ...){
   )
   
   attr(out, "model.matrix") <- mm
-
+  
   return(out)
   
 }

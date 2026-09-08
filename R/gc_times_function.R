@@ -18,6 +18,8 @@
   
   if (as.character(class(formula)) != "formula") stop("The argument \"formula\" must be a formula")
   
+  if (!attr(terms(formula), "intercept")) {stop("The formula must include an intercept")}
+  
   times <- as.character(formula[[2]][2]) 
   failures <- as.character(formula[[2]][3])
   all_terms <- attr(terms(formula), "term.labels")
